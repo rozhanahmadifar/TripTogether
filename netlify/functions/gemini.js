@@ -34,6 +34,9 @@ export const handler = async (event) => {
         parts: [{ text: m.text }],
       })),
       ...(systemPrompt ? { systemInstruction: { parts: [{ text: systemPrompt }] } } : {}),
+      // Extended "thinking" pushes response times past Netlify's function
+      // timeout often enough to matter, so it's disabled here.
+      generationConfig: { thinkingConfig: { thinkingBudget: 0 } },
     }
 
     const response = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
