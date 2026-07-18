@@ -230,7 +230,6 @@ export function CreateGroupTripScreen({ navigate, params = {}, startGroupTrip, u
             <div style={{ marginBottom: 16 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                 <p style={{ fontSize: 12, fontWeight: 700, color: COLORS.warmGrey, letterSpacing: 0.3 }}>Email</p>
-                <span style={{ fontSize: 11, color: '#A79E93', fontWeight: 500 }}>Recommended</span>
               </div>
               <div style={fieldWrap(emailInput)}>
                 <input
