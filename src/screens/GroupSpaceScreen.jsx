@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { TEXT, COLORS, SPACING, SHADOW_CARD } from '../styles'
 import { BackButton } from '../components/BackButton'
-import { ActionMenu, PencilIcon, TrashIcon } from '../components/ActionMenu'
+import { ActionMenu, PencilIcon, TrashIcon, EyeOffIcon } from '../components/ActionMenu'
 
 // Trip dates are stored as an ISO string (`startDate`) alongside the
 // human-readable label (`dates`) so we can compute a real countdown here.
@@ -20,7 +20,7 @@ function countdownLabel(days) {
   return 'Trip underway'
 }
 
-export function GroupSpaceScreen({ navigate, currentTrip, groupItems, allCategories, addCustomCategory, renameCategory, deleteCategory }) {
+export function GroupSpaceScreen({ navigate, currentTrip, groupItems, allCategories, addCustomCategory, renameCategory, deleteCategory, toggleCategoryHidden }) {
   const tripMembers = currentTrip?.members || []
   const [addingSection, setAddingSection] = useState(false)
   const [sectionName, setSectionName]     = useState('')
@@ -28,6 +28,9 @@ export function GroupSpaceScreen({ navigate, currentTrip, groupItems, allCategor
   const [renamingId, setRenamingId]       = useState(null)
   const [renameValue, setRenameValue]     = useState('')
   const [deletingCat, setDeletingCat]     = useState(null)
+  const [hiddenOpen, setHiddenOpen]       = useState(false)
+  const visibleCategories = allCategories.filter(c => !c.hidden)
+  const hiddenCategories = allCategories.filter(c => c.hidden)
 
   const getContributors = (categoryId) => {
     const items = groupItems.filter(i => i.categoryIds.includes(categoryId))
@@ -101,7 +104,7 @@ export function GroupSpaceScreen({ navigate, currentTrip, groupItems, allCategor
 
         {/* Per-category progress — one lightweight line each */}
         <div style={{ marginBottom: SPACING.sectionGap }}>
-          {allCategories.map(cat => {
+          {visibleCategories.map(cat => {
             const count = groupItems.filter(i => i.categoryIds.includes(cat.id)).length
             return (
               <p key={cat.id} style={{ fontSize: 12, color: COLORS.warmGrey, lineHeight: 1.7 }}>
@@ -115,7 +118,7 @@ export function GroupSpaceScreen({ navigate, currentTrip, groupItems, allCategor
           background: COLORS.cardBg, borderRadius: 16, overflow: 'hidden',
           boxShadow: SHADOW_CARD,
         }}>
-          {allCategories.map((cat, i) => {
+          {visibleCategories.map((cat, i) => {
             const contributors = getContributors(cat.id)
             const count = groupItems.filter(i => i.categoryIds.includes(cat.id)).length
             const isRenaming = renamingId === cat.id
@@ -215,6 +218,7 @@ export function GroupSpaceScreen({ navigate, currentTrip, groupItems, allCategor
               anchorRect={menuCat.anchor}
               rows={[
                 { icon: <PencilIcon />, label: 'Rename', color: COLORS.charcoal, onClick: () => startRename(menuCat.cat) },
+                { icon: <EyeOffIcon />, label: 'Hide', color: COLORS.charcoal, onClick: () => { toggleCategoryHidden(menuCat.cat.id); setMenuCat(null) } },
                 { icon: <TrashIcon />, label: 'Delete', color: COLORS.danger, onClick: () => { setDeletingCat(menuCat.cat); setMenuCat(null) } },
               ]}
               onClose={() => setMenuCat(null)}
@@ -275,6 +279,41 @@ export function GroupSpaceScreen({ navigate, currentTrip, groupItems, allCategor
               </div>
             )}
           </div>
+
+          {/* Hidden categories — collapsed out of the main list, one tap to bring back */}
+          {hiddenCategories.length > 0 && (
+            <div style={{ borderTop: `1px solid ${COLORS.borderLight}`, padding: '8px 16px 12px' }}>
+              <button
+                onClick={() => setHiddenOpen(o => !o)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  fontSize: 13, color: COLORS.warmGrey, fontWeight: 600, padding: '6px 0',
+                }}
+              >
+                {hiddenCategories.length} hidden {hiddenCategories.length === 1 ? 'category' : 'categories'} {hiddenOpen ? '▾' : '▸'}
+              </button>
+              {hiddenOpen && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 4 }}>
+                  {hiddenCategories.map(cat => (
+                    <div key={cat.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 0' }}>
+                      <span style={{ fontSize: 15, flexShrink: 0 }}>{cat.icon}</span>
+                      <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: COLORS.warmGrey }}>{cat.label}</span>
+                      <button
+                        onClick={() => toggleCategoryHidden(cat.id)}
+                        style={{
+                          background: COLORS.tealTint, color: COLORS.teal, border: 'none',
+                          borderRadius: 8, padding: '5px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                        }}
+                      >
+                        Show
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

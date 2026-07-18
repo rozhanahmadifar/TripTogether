@@ -88,7 +88,7 @@ export function SaveSomethingScreen({ navigate, params = {}, allCategories, save
 
   const doShare = (tripId) => {
     if (tripId) openTrip(tripId)
-    addToGroup({ title, note: noteValue.trim(), link: linkValue.trim(), platform: resolvedSource || 'Other', categoryIds, hasPhoto: !!photo, photo })
+    addToGroup({ title, note: noteValue.trim(), link: linkValue.trim(), platform: resolvedSource, categoryIds, hasPhoto: !!photo, photo })
     navigate('shareSuccess', { categoryIds })
   }
 
@@ -139,7 +139,7 @@ export function SaveSomethingScreen({ navigate, params = {}, allCategories, save
 
   const handleKeep = () => {
     if (!canSave) return
-    saveToMyIdeas({ title, note: noteValue.trim(), link: linkValue.trim(), platform: resolvedSource || 'Other', categoryIds, hasPhoto: !!photo, photo })
+    saveToMyIdeas({ title, note: noteValue.trim(), link: linkValue.trim(), platform: resolvedSource, categoryIds, hasPhoto: !!photo, photo })
     goBack()
   }
 
@@ -398,29 +398,31 @@ export function SaveSomethingScreen({ navigate, params = {}, allCategories, save
           )}
         </div>
 
-        {/* Action buttons */}
-        <button
-          onClick={handleShare}
-          disabled={!canSave || !hasGroup}
-          style={{
-            width: '100%', minHeight: SPACING.buttonMinHeight, borderRadius: 14, border: isGroupMode ? `2.5px solid ${COLORS.teal}` : 'none',
-            background: canSave && hasGroup ? COLORS.teal : COLORS.border,
-            color: canSave && hasGroup ? 'white' : '#A79E93',
-            fontSize: 15, fontWeight: 600, cursor: canSave && hasGroup ? 'pointer' : 'default',
-            marginBottom: 10, letterSpacing: -0.2,
-          }}
-        >
-          Share with Group
-        </button>
-
-        {!hasGroup && (
+        {/* Action buttons — either "Share with Group" (once a trip exists) or
+            "Create a group trip" (before one does), never both at once, so
+            saving content and starting a trip don't get mixed together. */}
+        {hasGroup ? (
+          <button
+            onClick={handleShare}
+            disabled={!canSave}
+            style={{
+              width: '100%', minHeight: SPACING.buttonMinHeight, borderRadius: 14, border: isGroupMode ? `2.5px solid ${COLORS.teal}` : 'none',
+              background: canSave ? COLORS.teal : COLORS.border,
+              color: canSave ? 'white' : '#A79E93',
+              fontSize: 15, fontWeight: 600, cursor: canSave ? 'pointer' : 'default',
+              marginBottom: 10, letterSpacing: -0.2,
+            }}
+          >
+            Share with Group
+          </button>
+        ) : (
           <button
             onClick={openCreateGroup}
             style={{
-              display: 'block', width: '100%', textAlign: 'center',
-              background: 'none', border: 'none', cursor: 'pointer',
-              fontSize: 13, fontWeight: 700, color: COLORS.teal,
-              marginBottom: 12, padding: '4px 0',
+              width: '100%', minHeight: SPACING.buttonMinHeight, borderRadius: 14, border: 'none',
+              background: COLORS.teal, color: 'white',
+              fontSize: 15, fontWeight: 600, cursor: 'pointer',
+              marginBottom: 10, letterSpacing: -0.2,
             }}
           >
             Create a group trip

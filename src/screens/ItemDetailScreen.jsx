@@ -185,13 +185,15 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, currentTrip, 
                   {c.icon} {c.label}
                 </span>
               ))}
-              <span style={{
-                background: PLATFORM_COLORS[item.platform] || COLORS.warmGrey,
-                color: 'white', fontSize: 12, fontWeight: 700,
-                borderRadius: 8, padding: '5px 12px',
-              }}>
-                {item.platform}
-              </span>
+              {item.platform && (
+                <span style={{
+                  background: PLATFORM_COLORS[item.platform] || COLORS.warmGrey,
+                  color: 'white', fontSize: 12, fontWeight: 700,
+                  borderRadius: 8, padding: '5px 12px',
+                }}>
+                  {item.platform}
+                </span>
+              )}
             </div>
 
             {/* Photo/video */}

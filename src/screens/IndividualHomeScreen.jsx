@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { TEXT, COLORS, SPACING, SHADOW_CARD } from '../styles'
 import { truncateName } from '../data'
-import { ActionMenu, PencilIcon, TrashIcon } from '../components/ActionMenu'
+import { ActionMenu, PencilIcon, TrashIcon, EyeOffIcon } from '../components/ActionMenu'
 
-export function IndividualHomeScreen({ navigate, userName, myIdeas, currentTrip, openTrip, allCategories, addCustomCategory, renameCategory, deleteCategory }) {
+export function IndividualHomeScreen({ navigate, userName, myIdeas, currentTrip, openTrip, allCategories, addCustomCategory, renameCategory, deleteCategory, toggleCategoryHidden }) {
   const [ideasOpen, setIdeasOpen]       = useState(false)
   const [addingSection, setAddingSection] = useState(false)
   const [sectionName, setSectionName]   = useState('')
@@ -11,9 +11,12 @@ export function IndividualHomeScreen({ navigate, userName, myIdeas, currentTrip,
   const [renamingId, setRenamingId]     = useState(null)
   const [renameValue, setRenameValue]   = useState('')
   const [deletingCat, setDeletingCat]   = useState(null)
+  const [hiddenOpen, setHiddenOpen]     = useState(false)
 
   const initial = userName ? userName.charAt(0).toUpperCase() : '?'
   const totalItems = myIdeas.length
+  const visibleCategories = allCategories.filter(c => !c.hidden)
+  const hiddenCategories = allCategories.filter(c => c.hidden)
 
   const handleAddSection = () => {
     if (!sectionName.trim()) return
@@ -95,7 +98,7 @@ export function IndividualHomeScreen({ navigate, userName, myIdeas, currentTrip,
             {ideasOpen && (
               <>
                 <div style={{ height: 1, background: COLORS.borderLight }} />
-                {allCategories.map((cat, i) => {
+                {visibleCategories.map((cat, i) => {
                   const count = myIdeas.filter(item => item.categoryIds.includes(cat.id)).length
                   const isRenaming = renamingId === cat.id
                   return (
@@ -103,7 +106,7 @@ export function IndividualHomeScreen({ navigate, userName, myIdeas, currentTrip,
                       key={cat.id}
                       style={{
                         display: 'flex', alignItems: 'center',
-                        borderBottom: i < allCategories.length - 1 ? `1px solid ${COLORS.borderLight}` : 'none',
+                        borderBottom: i < visibleCategories.length - 1 ? `1px solid ${COLORS.borderLight}` : 'none',
                       }}
                     >
                       <div style={{
@@ -170,6 +173,7 @@ export function IndividualHomeScreen({ navigate, userName, myIdeas, currentTrip,
                     anchorRect={menuCat.anchor}
                     rows={[
                       { icon: <PencilIcon />, label: 'Rename', color: COLORS.charcoal, onClick: () => startRename(menuCat.cat) },
+                      { icon: <EyeOffIcon />, label: 'Hide', color: COLORS.charcoal, onClick: () => { toggleCategoryHidden(menuCat.cat.id); setMenuCat(null) } },
                       { icon: <TrashIcon />, label: 'Delete', color: COLORS.danger, onClick: () => { setDeletingCat(menuCat.cat); setMenuCat(null) } },
                     ]}
                     onClose={() => setMenuCat(null)}
@@ -230,6 +234,41 @@ export function IndividualHomeScreen({ navigate, userName, myIdeas, currentTrip,
                     </div>
                   )}
                 </div>
+
+                {/* Hidden categories — collapsed out of the main list, one tap to bring back */}
+                {hiddenCategories.length > 0 && (
+                  <div style={{ borderTop: `1px solid ${COLORS.borderLight}`, padding: '8px 16px 12px' }}>
+                    <button
+                      onClick={() => setHiddenOpen(o => !o)}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 6,
+                        background: 'none', border: 'none', cursor: 'pointer',
+                        fontSize: 13, color: COLORS.warmGrey, fontWeight: 600, padding: '6px 0',
+                      }}
+                    >
+                      {hiddenCategories.length} hidden {hiddenCategories.length === 1 ? 'category' : 'categories'} {hiddenOpen ? '▾' : '▸'}
+                    </button>
+                    {hiddenOpen && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 4 }}>
+                        {hiddenCategories.map(cat => (
+                          <div key={cat.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 0' }}>
+                            <span style={{ fontSize: 15, flexShrink: 0 }}>{cat.icon}</span>
+                            <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: COLORS.warmGrey }}>{cat.label}</span>
+                            <button
+                              onClick={() => toggleCategoryHidden(cat.id)}
+                              style={{
+                                background: COLORS.tealTint, color: COLORS.teal, border: 'none',
+                                borderRadius: 8, padding: '5px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                              }}
+                            >
+                              Show
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </>
             )}
           </div>

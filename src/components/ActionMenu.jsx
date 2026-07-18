@@ -17,6 +17,16 @@ export function PlusIcon({ size = 22, color = 'white' }) {
   )
 }
 
+export function EyeOffIcon({ size = 16, color = COLORS.charcoal }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 10 8 10 8a17.4 17.4 0 0 1-3.05 4.14M6.6 6.6C3.5 8.5 2 12 2 12s3 8 10 8a9.26 9.26 0 0 0 5.4-1.6" />
+      <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" />
+      <line x1="2" y1="2" x2="22" y2="22" />
+    </svg>
+  )
+}
+
 export function TrashIcon({ size = 16, color = COLORS.danger }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

@@ -96,6 +96,7 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
 
   const tripMembers = currentTrip.members || []
   const pinnedThread = (customThreads?.[currentTrip.id] || []).find(t => t.pinned)
+  const visibleCategories = allCategories.filter(c => !c.hidden)
 
   const startEdit = (field, value = '') => { setEditField(field); setEditValue(value) }
   const cancelEdit = () => { setEditField(null); setEditValue(''); setEditDateRange({ start: null, end: null }) }
@@ -368,10 +369,16 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
           padding: 16, borderLeft: `3px solid ${COLORS.teal}`,
           marginBottom: SPACING.cardGap,
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 4 }}>
             <span style={{ flex: 1, fontSize: 11, fontWeight: 700, color: COLORS.teal, letterSpacing: 1.5, textTransform: 'uppercase' }}>
               Group Space
             </span>
+            <button
+              onClick={() => navigate('saveSomething', { mode: 'group', backTo: 'groupHome' })}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: COLORS.teal, padding: 0 }}
+            >
+              + Add
+            </button>
             <button
               onClick={() => navigate('groupSpace')}
               style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: COLORS.teal, padding: 0 }}
@@ -383,14 +390,14 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
             Everyone in the group can see these
           </p>
           <div>
-            {allCategories.map((cat, i) => (
+            {visibleCategories.map((cat, i) => (
               <GroupCategoryRow
                 key={cat.id}
                 cat={cat}
                 count={groupItems.filter(i => i.categoryIds.includes(cat.id)).length}
                 contributors={getContributors(cat.id)}
                 getMember={getMember}
-                isLast={i === allCategories.length - 1}
+                isLast={i === visibleCategories.length - 1}
                 onClick={() => navigate('groupCategory', { categoryId: cat.id, backTo: 'groupHome' })}
               />
             ))}
@@ -409,7 +416,7 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
               🔒 My Saves
             </span>
             <button
-              onClick={() => navigate('myIdeasCategory', { categoryId: allCategories[0]?.id, backTo: 'groupHome' })}
+              onClick={() => navigate('myIdeasCategory', { categoryId: visibleCategories[0]?.id, backTo: 'groupHome' })}
               style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: COLORS.teal, padding: 0 }}
             >
               See all
@@ -419,12 +426,12 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
             Private, only you can see these
           </p>
           <div>
-            {allCategories.map((cat, i) => (
+            {visibleCategories.map((cat, i) => (
               <SavesCategoryRow
                 key={cat.id}
                 cat={cat}
                 count={myIdeas.filter(i => i.categoryIds.includes(cat.id)).length}
-                isLast={i === allCategories.length - 1}
+                isLast={i === visibleCategories.length - 1}
                 onClick={() => navigate('myIdeasCategory', { categoryId: cat.id, backTo: 'groupHome' })}
               />
             ))}

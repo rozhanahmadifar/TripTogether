@@ -235,7 +235,7 @@ export function GroupCategoryScreen({ navigate, params = {}, currentTrip, groupI
             onAction={() => navigate('saveSomething', { categoryId: cat.id, mode: 'group', backTo: 'groupCategory', returnParams: { categoryId: cat.id } })}
           />
         ) : view === 'grid' ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
+          <div style={{ columnCount: 2, columnGap: 14 }}>
             {items.map(item => (
               <GridTile
                 key={item.id}

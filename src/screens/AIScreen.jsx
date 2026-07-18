@@ -2,11 +2,17 @@ import { useState, useRef, useEffect } from 'react'
 import { TEXT, COLORS } from '../styles'
 import { askGemini, parseAIResponse } from '../gemini'
 
-const SUGGESTION_CHIPS = [
-  "We're 3 students, one non-EU — what transport discounts can we get?",
-  'Which cities have cheap flights, no visa needs, and mild weather in June?',
-  'What needs booking in advance vs. what can we decide on the day?',
-]
+// The group-size chip uses the trip's real member count when one is available
+// rather than a fixed, possibly-wrong number; specifics that can't be known
+// (like nationality) are left out entirely rather than guessed.
+function buildSuggestionChips(currentTrip) {
+  const count = currentTrip?.members?.length
+  return [
+    count ? `We're a group of ${count} — what discounts might we qualify for as students?` : 'What discounts might we qualify for as students?',
+    'Which cities have cheap flights, no visa needs, and mild weather in June?',
+    'What needs booking in advance vs. what can we decide on the day?',
+  ]
+}
 
 const ERROR_TEXT = 'Sorry, I could not connect right now. Please try again in a moment.'
 
@@ -20,11 +26,12 @@ function TypingDots() {
   )
 }
 
-export function AIScreen() {
+export function AIScreen({ currentTrip }) {
   const [messages, setMessages] = useState([])
   const [input, setInput]       = useState('')
   const [sending, setSending]   = useState(false)
   const bottomRef               = useRef(null)
+  const suggestionChips         = buildSuggestionChips(currentTrip)
 
   const showEmptyState = messages.length === 0 && input === ''
 
@@ -78,7 +85,7 @@ export function AIScreen() {
               Ask me anything about your trip and I will help you think it through.
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%' }}>
-              {SUGGESTION_CHIPS.map((q, i) => (
+              {suggestionChips.map((q, i) => (
                 <button
                   key={i}
                   onClick={() => sendMessage(q)}

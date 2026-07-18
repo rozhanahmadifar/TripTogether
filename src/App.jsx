@@ -109,6 +109,12 @@ export default function App() {
     setGroupItems(p => p.map(i => ({ ...i, categoryIds: i.categoryIds.filter(cid => cid !== id) })))
   }
 
+  // Hiding is the lightweight, reversible alternative to deleting — it just
+  // collapses a category out of the list, nothing about tagged items changes.
+  const toggleCategoryHidden = (id) => {
+    setCategories(p => p.map(c => c.id === id ? { ...c, hidden: !c.hidden } : c))
+  }
+
   // Items are stored flat with a `categoryIds` array so a single item can be
   // tagged into more than one category view (see MyIdeasCategoryScreen /
   // GroupCategoryScreen, which filter by `categoryIds.includes(cat.id)`).
@@ -217,7 +223,7 @@ export default function App() {
     navigate, params, userName, setUserName,
     appMode, myIdeas, groupItems,
     trips, currentTrip, hasGroup,
-    allCategories, addCustomCategory, renameCategory, deleteCategory,
+    allCategories, addCustomCategory, renameCategory, deleteCategory, toggleCategoryHidden,
     saveToMyIdeas, addToGroup, toggleHeart,
     deleteMyIdea, deleteGroupItem, updateMyIdea, updateGroupItem,
     startGroupTrip, openTrip, updateTrip,
