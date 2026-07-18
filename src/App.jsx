@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { CATEGORIES, MEMBER_COLORS } from './data'
 import { HouseIcon, SuitcaseIcon, ChatIcon, SparkleIcon } from './components/TabIcons'
+import { PlusIcon } from './components/ActionMenu'
 
 import { WelcomeScreen }         from './screens/WelcomeScreen'
 import { YourNameScreen }        from './screens/YourNameScreen'
@@ -279,12 +280,12 @@ export default function App() {
               style={{
                 width: 52, height: 52, borderRadius: '50%',
                 background: '#1E5F5F', color: 'white', border: 'none',
-                fontSize: 28, fontWeight: 300, cursor: 'pointer',
+                cursor: 'pointer',
                 boxShadow: '0 3px 10px rgba(0,0,0,0.22)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}
             >
-              +
+              <PlusIcon size={24} />
             </button>
             <span style={{ fontSize: 9, fontWeight: 700, color: '#1E5F5F', letterSpacing: 0.2 }}>
               {plusCtx.label}

@@ -377,13 +377,12 @@ export function CreateGroupTripScreen({ navigate, params = {}, startGroupTrip, u
 
             <button
               onClick={handleStart}
-              disabled={members.length === 0}
               style={{
                 width: '100%', height: 52, borderRadius: 14, border: 'none',
-                background: members.length > 0 ? COLORS.teal : COLORS.border,
-                color: members.length > 0 ? 'white' : '#A79E93',
+                background: COLORS.teal,
+                color: 'white',
                 fontSize: 15, fontWeight: 600,
-                cursor: members.length > 0 ? 'pointer' : 'default',
+                cursor: 'pointer',
                 letterSpacing: -0.2,
               }}
             >

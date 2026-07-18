@@ -81,9 +81,6 @@ body {
   .phone-notch {
     display: none;
   }
-  .screen {
-    padding-top: env(safe-area-inset-top, 0px);
-  }
 }
 
 .screen {
@@ -94,6 +91,15 @@ body {
   overflow: hidden;
   padding-top: 44px;
   background: #F7F4F0;
+}
+
+/* This must come after the base .screen rule above — same specificity, so
+   source order decides the winner, and the 44px reserved for the desktop
+   notch mockup must not leak onto real phones where the notch is hidden. */
+@media (max-width: 480px) {
+  .screen {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
 }
 
 .screen-scroll {
