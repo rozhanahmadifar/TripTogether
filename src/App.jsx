@@ -13,6 +13,7 @@ import { ShareSuccessScreen }    from './screens/ShareSuccessScreen'
 import { CreateGroupTripScreen } from './screens/CreateGroupTripScreen'
 import { GroupHomeScreen }       from './screens/GroupHomeScreen'
 import { GroupSpaceScreen }      from './screens/GroupSpaceScreen'
+import { MySavesScreen }         from './screens/MySavesScreen'
 import { GroupCategoryScreen }   from './screens/GroupCategoryScreen'
 import { AIScreen }              from './screens/AIScreen'
 import { MyTripsScreen }         from './screens/MyTripsScreen'
@@ -30,6 +31,7 @@ const SCREEN_MAP = {
   createTrip:      CreateGroupTripScreen,
   groupHome:       GroupHomeScreen,
   groupSpace:      GroupSpaceScreen,
+  mySaves:         MySavesScreen,
   groupCategory:   GroupCategoryScreen,
   ai:              AIScreen,
   myTrips:         MyTripsScreen,
@@ -45,20 +47,22 @@ const MAIN_NAV = [
 ]
 
 // Screens that show the bottom tab bar
-const NAV_SCREENS = new Set(['individualHome', 'myTrips', 'ai', 'groupHome', 'groupSpace', 'discuss'])
+const NAV_SCREENS = new Set(['individualHome', 'myTrips', 'ai', 'groupHome', 'groupSpace', 'mySaves', 'discuss'])
 
-// Screens that show the floating + button (ai excluded; groupCategory added)
-const PLUS_BTN_SCREENS = new Set(['individualHome', 'myTrips', 'groupHome', 'groupSpace', 'groupCategory'])
+// Screens that show the floating + button (ai excluded; groupCategory added).
+// It's the only add action on each of these screens — no duplicate "+ Add"
+// text links alongside it.
+const PLUS_BTN_SCREENS = new Set(['individualHome', 'myTrips', 'groupHome', 'groupSpace', 'groupCategory', 'mySaves'])
 
 const getActiveTab = (s) => {
   if (s === 'ai') return 'ai'
   if (s === 'discuss' || s === 'discussThread') return 'discuss'
-  if (s === 'myTrips' || s === 'groupHome' || s === 'groupSpace') return 'trips'
+  if (s === 'myTrips' || s === 'groupHome' || s === 'groupSpace' || s === 'mySaves') return 'trips'
   return 'home'
 }
 
 const getPlusBtnCtx = (s, p) => {
-  if (s === 'groupSpace' || s === 'groupCategory') {
+  if (s === 'groupSpace' || s === 'groupCategory' || s === 'groupHome') {
     return { label: 'Add to group', navParams: { mode: 'group', categoryId: p?.categoryId || '', backTo: s } }
   }
   return { label: 'Save idea', navParams: { mode: 'personal', backTo: s } }

@@ -209,26 +209,6 @@ export function CreateGroupTripScreen({ navigate, params = {}, startGroupTrip, u
 
         {step === 2 && (
           <>
-            {/* Creator — already joined, no need to add yourself */}
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px',
-              background: 'white', borderRadius: 12, marginBottom: 14,
-              boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-            }}>
-              <div style={{
-                width: 38, height: 38, borderRadius: '50%', background: '#D4724A',
-                border: '2px solid white', boxShadow: `0 0 0 1px ${COLORS.border}`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 14, fontWeight: 700, color: 'white', flexShrink: 0,
-              }}>
-                {(userName || '?').charAt(0).toUpperCase()}
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontSize: 15, fontWeight: 600, color: COLORS.charcoal, letterSpacing: -0.2 }} title={userName}>{truncateName(userName)}</p>
-                <p style={{ fontSize: 12, color: COLORS.teal, fontWeight: 600, marginTop: 2 }}>You · Already joined</p>
-              </div>
-            </div>
-
             {/* Name field */}
             <div style={{ marginBottom: 14 }}>
               <p style={{ fontSize: 12, fontWeight: 700, color: COLORS.warmGrey, letterSpacing: 0.3, marginBottom: 6 }}>
@@ -279,15 +259,29 @@ export function CreateGroupTripScreen({ navigate, params = {}, startGroupTrip, u
               Add
             </button>
 
-            {members.length === 0 ? (
-              <div style={{
-                background: 'white', borderRadius: 12, padding: '28px 16px',
-                textAlign: 'center', border: `1.5px dashed ${COLORS.border}`, marginBottom: 20,
-              }}>
-                <p style={{ fontSize: 14, color: COLORS.warmGrey, fontWeight: 500 }}>No crew members added yet</p>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
+            {/* Everyone on the trip — creator first (non-removable), then
+                anyone added — as one consistent list, not split across
+                different parts of the screen. */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px',
+                  background: 'white', borderRadius: 12,
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                }}>
+                  <div style={{
+                    width: 38, height: 38, borderRadius: '50%', background: '#D4724A',
+                    border: '2px solid white', boxShadow: `0 0 0 1px ${COLORS.border}`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 14, fontWeight: 700, color: 'white', flexShrink: 0,
+                  }}>
+                    {(userName || '?').charAt(0).toUpperCase()}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: 15, fontWeight: 600, color: COLORS.charcoal, letterSpacing: -0.2 }} title={userName}>{truncateName(userName)}</p>
+                    <p style={{ fontSize: 12, color: COLORS.teal, fontWeight: 600, marginTop: 2 }}>You · Already joined</p>
+                  </div>
+                </div>
+
                 {members.map((m) => (
                   <div
                     key={m.id}
@@ -364,8 +358,7 @@ export function CreateGroupTripScreen({ navigate, params = {}, startGroupTrip, u
                     )}
                   </div>
                 ))}
-              </div>
-            )}
+            </div>
 
             <p style={{ fontSize: 12, color: COLORS.warmGrey, lineHeight: 1.5, marginBottom: 20, fontWeight: 500 }}>
               Members with an email address will receive an invite link to join your trip. Members without one can be added manually later.

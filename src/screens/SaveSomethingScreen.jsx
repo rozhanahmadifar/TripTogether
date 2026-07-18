@@ -17,15 +17,15 @@ function MemberCircle({ m }) {
 }
 
 export function SaveSomethingScreen({ navigate, params = {}, allCategories, saveToMyIdeas, addToGroup, addCustomCategory, hasGroup, trips, openTrip, openModal, closeModal }) {
-  const [titleValue, setTitleValue]   = useState(params.draftTitle || '')
-  const [linkValue, setLinkValue]     = useState(params.draftLink || '')
-  const [noteValue, setNoteValue]     = useState(params.draftNote || '')
-  const [photo, setPhoto]             = useState(params.draftPhoto || '')
+  const [titleValue, setTitleValue]   = useState('')
+  const [linkValue, setLinkValue]     = useState('')
+  const [noteValue, setNoteValue]     = useState('')
+  const [photo, setPhoto]             = useState('')
   const fileInputRef                  = useRef(null)
-  const [platform, setPlatform]       = useState(params.draftPlatform || '')
-  const [customSource, setCustomSource] = useState(params.draftCustomSource || '')
+  const [platform, setPlatform]       = useState('')
+  const [customSource, setCustomSource] = useState('')
   const [sourceFocused, setSourceFocused] = useState(false)
-  const [categoryIds, setCategoryIds] = useState(params.draftCategoryIds || (params.categoryId ? [params.categoryId] : []))
+  const [categoryIds, setCategoryIds] = useState(params.categoryId ? [params.categoryId] : [])
   const [addingCategory, setAddingCategory] = useState(false)
   const [newCategoryName, setNewCategoryName] = useState('')
 
@@ -35,29 +35,6 @@ export function SaveSomethingScreen({ navigate, params = {}, allCategories, save
   const resolvedSource = platform === 'Other' && customSource.trim() ? customSource.trim() : platform
 
   const goBack = () => navigate(params.backTo || 'individualHome', params.returnParams || {})
-
-  const openCreateGroup = () => {
-    const draft = {
-      ...params,
-      categoryIds,
-      draftTitle: titleValue,
-      draftLink: linkValue,
-      draftNote: noteValue,
-      draftPhoto: photo,
-      draftPlatform: platform,
-      draftCustomSource: customSource,
-      draftCategoryIds: categoryIds,
-    }
-    // returnTo/returnParams fire on successful trip creation; backTo/backParams
-    // fire if the user cancels out of trip creation instead — both land back
-    // here with the in-progress draft restored, never at the home screen.
-    navigate('createTrip', {
-      returnTo: 'saveSomething',
-      returnParams: draft,
-      backTo: 'saveSomething',
-      backParams: draft,
-    })
-  }
 
   const handleLinkChange = (e) => {
     const value = e.target.value
@@ -398,10 +375,9 @@ export function SaveSomethingScreen({ navigate, params = {}, allCategories, save
           )}
         </div>
 
-        {/* Action buttons — either "Share with Group" (once a trip exists) or
-            "Create a group trip" (before one does), never both at once, so
-            saving content and starting a trip don't get mixed together. */}
-        {hasGroup ? (
+        {/* "Share with Group" only appears once a trip exists — starting a
+            trip is the home screen's job, not this one's. */}
+        {hasGroup && (
           <button
             onClick={handleShare}
             disabled={!canSave}
@@ -414,18 +390,6 @@ export function SaveSomethingScreen({ navigate, params = {}, allCategories, save
             }}
           >
             Share with Group
-          </button>
-        ) : (
-          <button
-            onClick={openCreateGroup}
-            style={{
-              width: '100%', minHeight: SPACING.buttonMinHeight, borderRadius: 14, border: 'none',
-              background: COLORS.teal, color: 'white',
-              fontSize: 15, fontWeight: 600, cursor: 'pointer',
-              marginBottom: 10, letterSpacing: -0.2,
-            }}
-          >
-            Create a group trip
           </button>
         )}
 

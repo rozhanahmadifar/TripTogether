@@ -98,6 +98,14 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
   const pinnedThread = (customThreads?.[currentTrip.id] || []).find(t => t.pinned)
   const visibleCategories = allCategories.filter(c => !c.hidden)
 
+  // Trip home is a compact preview — only categories that actually have
+  // something in them, plus a one-line summary. The full 6-category list
+  // (including empty ones) lives behind "See all" instead.
+  const groupCategoriesWithItems = visibleCategories.filter(cat => groupItems.some(i => i.categoryIds.includes(cat.id)))
+  const savesCategoriesWithItems = visibleCategories.filter(cat => myIdeas.some(i => i.categoryIds.includes(cat.id)))
+  const summaryLine = (items, categories) =>
+    `${items.length} ${items.length === 1 ? 'item' : 'items'} across ${categories.length} ${categories.length === 1 ? 'category' : 'categories'}`
+
   const startEdit = (field, value = '') => { setEditField(field); setEditValue(value) }
   const cancelEdit = () => { setEditField(null); setEditValue(''); setEditDateRange({ start: null, end: null }) }
 
@@ -374,12 +382,6 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
               Group Space
             </span>
             <button
-              onClick={() => navigate('saveSomething', { mode: 'group', backTo: 'groupHome' })}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: COLORS.teal, padding: 0 }}
-            >
-              + Add
-            </button>
-            <button
               onClick={() => navigate('groupSpace')}
               style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: COLORS.teal, padding: 0 }}
             >
@@ -387,17 +389,17 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
             </button>
           </div>
           <p style={{ fontSize: 12, color: COLORS.warmGrey, fontStyle: 'italic', marginBottom: 10 }}>
-            Everyone in the group can see these
+            {groupItems.length === 0 ? 'Nothing saved yet' : summaryLine(groupItems, groupCategoriesWithItems)}
           </p>
           <div>
-            {visibleCategories.map((cat, i) => (
+            {groupCategoriesWithItems.map((cat, i) => (
               <GroupCategoryRow
                 key={cat.id}
                 cat={cat}
                 count={groupItems.filter(i => i.categoryIds.includes(cat.id)).length}
                 contributors={getContributors(cat.id)}
                 getMember={getMember}
-                isLast={i === visibleCategories.length - 1}
+                isLast={i === groupCategoriesWithItems.length - 1}
                 onClick={() => navigate('groupCategory', { categoryId: cat.id, backTo: 'groupHome' })}
               />
             ))}
@@ -416,22 +418,22 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
               🔒 My Saves
             </span>
             <button
-              onClick={() => navigate('myIdeasCategory', { categoryId: visibleCategories[0]?.id, backTo: 'groupHome' })}
+              onClick={() => navigate('mySaves')}
               style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: COLORS.teal, padding: 0 }}
             >
               See all
             </button>
           </div>
           <p style={{ fontSize: 12, color: COLORS.warmGrey, fontStyle: 'italic', marginBottom: 10 }}>
-            Private, only you can see these
+            {myIdeas.length === 0 ? 'Nothing saved yet' : summaryLine(myIdeas, savesCategoriesWithItems)}
           </p>
           <div>
-            {visibleCategories.map((cat, i) => (
+            {savesCategoriesWithItems.map((cat, i) => (
               <SavesCategoryRow
                 key={cat.id}
                 cat={cat}
                 count={myIdeas.filter(i => i.categoryIds.includes(cat.id)).length}
-                isLast={i === visibleCategories.length - 1}
+                isLast={i === savesCategoriesWithItems.length - 1}
                 onClick={() => navigate('myIdeasCategory', { categoryId: cat.id, backTo: 'groupHome' })}
               />
             ))}
