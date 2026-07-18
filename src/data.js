@@ -3,7 +3,8 @@ export const CATEGORIES = [
   { id: 'destination',   icon: '📍', label: 'Destination',   color: '#5B8DBE' },
   { id: 'accommodation', icon: '🏨', label: 'Accommodation', color: '#6BAE8A' },
   { id: 'activities',    icon: '🎯', label: 'Activities',    color: '#D9805A' },
-  { id: 'travel',        icon: '✈️', label: 'Travel',        color: '#9B8AC4' },
+  { id: 'transport',     icon: '🚌', label: 'Transport',     color: '#9B8AC4' },
+  { id: 'food',          icon: '🍔', label: 'Food',          color: '#C2678D' },
 ]
 
 export const EMPTY_STATE_COPY = {
@@ -23,9 +24,13 @@ export const EMPTY_STATE_COPY = {
     emojis: ['🎯', '🧭'],
     subtext: 'Start saving the adventures you don’t want to miss.',
   },
-  travel: {
+  transport: {
     emojis: ['✈️', '🧳'],
     subtext: 'Start saving flights, trains, and the way you’ll get there.',
+  },
+  food: {
+    emojis: ['🍔', '🍜'],
+    subtext: 'Start saving restaurants and dishes you don’t want to miss.',
   },
   default: {
     emojis: ['✨', '💡'],
@@ -46,6 +51,32 @@ export const PLATFORM_COLORS = {
 }
 
 export const MEMBER_COLORS = ['#1E5F5F', '#D4724A', '#6BAE8A', '#5B8DBE', '#9B8AC4', '#E8B84A']
+
+// Keeps long member names from breaking avatar/member-list layouts.
+export function truncateName(name, max = 20) {
+  if (!name) return ''
+  return name.length > max ? `${name.slice(0, max)}…` : name
+}
+
+// Matches a pasted link against known domains so the source chip can be
+// pre-selected automatically. Returns '' when nothing matches.
+export function detectSourceFromLink(url) {
+  if (!url) return ''
+  const lower = url.toLowerCase()
+  if (lower.includes('instagram.com'))  return 'Instagram'
+  if (lower.includes('tiktok.com'))     return 'TikTok'
+  if (lower.includes('airbnb.com'))     return 'Airbnb'
+  if (lower.includes('booking.com'))    return 'Booking.com'
+  if (lower.includes('google'))         return 'Google'
+  return ''
+}
+
+// item.photo is either a real image data URL (from FileReader) or, for
+// videos, just the filename as a placeholder — this tells them apart so we
+// never try to render a video filename as an <img> src.
+export function isImagePhoto(photo) {
+  return typeof photo === 'string' && photo.startsWith('data:image')
+}
 
 export const timeAgo = (ts) => {
   const mins = Math.floor((Date.now() - ts) / 60000)

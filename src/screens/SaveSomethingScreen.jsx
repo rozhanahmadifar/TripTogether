@@ -1,14 +1,7 @@
-import { useState } from 'react'
-import { PLATFORMS } from '../data'
+import { useState, useRef } from 'react'
+import { PLATFORMS, detectSourceFromLink, isImagePhoto } from '../data'
 import { TEXT, COLORS, SPACING } from '../styles'
 import { BackButton } from '../components/BackButton'
-
-const INPUT_OPTIONS = [
-  { id: 'link', icon: '🌐', label: 'Add a link' },
-  { id: 'note', icon: '✏️', label: 'Write a note' },
-  { id: 'photo', icon: '📷', label: 'Upload photo or video' },
-  { id: 'file', icon: '📎', label: 'Add a file' },
-]
 
 function MemberCircle({ m }) {
   return (
@@ -24,48 +17,79 @@ function MemberCircle({ m }) {
 }
 
 export function SaveSomethingScreen({ navigate, params = {}, allCategories, saveToMyIdeas, addToGroup, addCustomCategory, hasGroup, trips, openTrip, openModal, closeModal }) {
-  const [activeInput, setActiveInput] = useState(params.draftActiveInput || null)
-  const [linkValue, setLinkValue]     = useState(params.draftLinkValue || '')
-  const [noteValue, setNoteValue]     = useState(params.draftNoteValue || '')
+  const [titleValue, setTitleValue]   = useState(params.draftTitle || '')
+  const [linkValue, setLinkValue]     = useState(params.draftLink || '')
+  const [noteValue, setNoteValue]     = useState(params.draftNote || '')
+  const [photo, setPhoto]             = useState(params.draftPhoto || '')
+  const fileInputRef                  = useRef(null)
   const [platform, setPlatform]       = useState(params.draftPlatform || '')
   const [customSource, setCustomSource] = useState(params.draftCustomSource || '')
   const [sourceFocused, setSourceFocused] = useState(false)
-  const [categoryId, setCategoryId]   = useState(params.categoryId || '')
+  const [categoryIds, setCategoryIds] = useState(params.draftCategoryIds || (params.categoryId ? [params.categoryId] : []))
   const [addingCategory, setAddingCategory] = useState(false)
   const [newCategoryName, setNewCategoryName] = useState('')
 
-  const title = activeInput === 'link' ? linkValue.trim() : activeInput === 'note' ? noteValue.trim() : ''
-  const canSave = title && categoryId
+  const title = titleValue.trim()
+  const canSave = title && categoryIds.length > 0
   const isGroupMode = params.mode === 'group'
   const resolvedSource = platform === 'Other' && customSource.trim() ? customSource.trim() : platform
 
   const goBack = () => navigate(params.backTo || 'individualHome', params.returnParams || {})
 
   const openCreateGroup = () => {
+    const draft = {
+      ...params,
+      categoryIds,
+      draftTitle: titleValue,
+      draftLink: linkValue,
+      draftNote: noteValue,
+      draftPhoto: photo,
+      draftPlatform: platform,
+      draftCustomSource: customSource,
+      draftCategoryIds: categoryIds,
+    }
+    // returnTo/returnParams fire on successful trip creation; backTo/backParams
+    // fire if the user cancels out of trip creation instead — both land back
+    // here with the in-progress draft restored, never at the home screen.
     navigate('createTrip', {
       returnTo: 'saveSomething',
-      returnParams: {
-        ...params,
-        categoryId,
-        draftActiveInput: activeInput,
-        draftLinkValue: linkValue,
-        draftNoteValue: noteValue,
-        draftPlatform: platform,
-        draftCustomSource: customSource,
-      },
+      returnParams: draft,
+      backTo: 'saveSomething',
+      backParams: draft,
     })
   }
 
-  const handleOptionTap = (id) => {
-    if (id === 'photo') { alert('Photo and video upload coming soon'); return }
-    if (id === 'file')  { alert('File upload coming soon'); return }
-    setActiveInput(prev => prev === id ? null : id)
+  const handleLinkChange = (e) => {
+    const value = e.target.value
+    setLinkValue(value)
+    const detected = detectSourceFromLink(value)
+    if (detected) setPlatform(detected)
+  }
+
+  const toggleCategory = (id) => {
+    setCategoryIds(prev => prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id])
+  }
+
+  // Images are read into a data URL and stored alongside the item's other
+  // fields, same as notes and links — no server upload for this prototype.
+  // Videos just keep their filename as a placeholder for now.
+  const handleFileChange = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    if (file.type.startsWith('video/')) {
+      setPhoto(file.name)
+    } else {
+      const reader = new FileReader()
+      reader.onload = () => setPhoto(reader.result)
+      reader.readAsDataURL(file)
+    }
+    e.target.value = ''
   }
 
   const doShare = (tripId) => {
     if (tripId) openTrip(tripId)
-    addToGroup({ title, platform: resolvedSource || 'Other', categoryId })
-    navigate('shareSuccess', { categoryId })
+    addToGroup({ title, note: noteValue.trim(), link: linkValue.trim(), platform: resolvedSource || 'Other', categoryIds, hasPhoto: !!photo, photo })
+    navigate('shareSuccess', { categoryIds })
   }
 
   const handleShare = () => {
@@ -115,7 +139,7 @@ export function SaveSomethingScreen({ navigate, params = {}, allCategories, save
 
   const handleKeep = () => {
     if (!canSave) return
-    saveToMyIdeas({ title, platform: resolvedSource || 'Other', categoryId })
+    saveToMyIdeas({ title, note: noteValue.trim(), link: linkValue.trim(), platform: resolvedSource || 'Other', categoryIds, hasPhoto: !!photo, photo })
     goBack()
   }
 
@@ -123,7 +147,7 @@ export function SaveSomethingScreen({ navigate, params = {}, allCategories, save
     const name = newCategoryName.trim()
     if (!name) return
     const newId = addCustomCategory(name)
-    setCategoryId(newId)
+    setCategoryIds(prev => [...prev, newId])
     setNewCategoryName('')
     setAddingCategory(false)
   }
@@ -142,64 +166,93 @@ export function SaveSomethingScreen({ navigate, params = {}, allCategories, save
 
       <div className="screen-scroll" style={{ padding: `20px ${SPACING.screenX}px 40px` }}>
 
-        {/* 2x2 input option grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
-          {INPUT_OPTIONS.map(opt => {
-            const selected = activeInput === opt.id
-            return (
+        {/* Title — required, becomes the card's display name */}
+        <p style={{ ...TEXT.sectionHeading, marginBottom: 8 }}>
+          Title
+        </p>
+        <input
+          value={titleValue}
+          onChange={e => setTitleValue(e.target.value)}
+          placeholder="Give it a name (e.g. Cliffs of Moher hike)"
+          style={{
+            width: '100%', minHeight: SPACING.inputMinHeight, borderRadius: 12,
+            border: `1.5px solid ${titleValue ? COLORS.teal : COLORS.border}`, padding: '0 16px',
+            fontSize: 15, fontWeight: 600, color: COLORS.charcoal, background: COLORS.bgMyIdeas,
+            fontFamily: 'inherit', marginBottom: 18, boxSizing: 'border-box',
+          }}
+        />
+
+        {/* Link — optional */}
+        <p style={{ ...TEXT.sectionHeading, marginBottom: 8 }}>
+          Link <span style={{ textTransform: 'none', fontWeight: 500, color: '#A79E93' }}>Optional</span>
+        </p>
+        <input
+          value={linkValue}
+          onChange={handleLinkChange}
+          placeholder="Paste a URL…"
+          style={{
+            width: '100%', minHeight: SPACING.inputMinHeight, borderRadius: 12,
+            border: `1.5px solid ${COLORS.teal}`, padding: '0 16px',
+            fontSize: 14, color: COLORS.charcoal, background: COLORS.bgMyIdeas,
+            fontFamily: 'inherit', marginBottom: 14, boxSizing: 'border-box',
+          }}
+        />
+
+        {/* Note — always visible under the link field */}
+        <textarea
+          value={noteValue}
+          onChange={e => setNoteValue(e.target.value)}
+          placeholder="Add a note so you remember what this is (e.g. Cozy café near Temple Bar)"
+          rows={3}
+          style={{
+            width: '100%', border: `1.5px solid ${COLORS.teal}`,
+            borderRadius: 14, padding: '14px 16px',
+            fontSize: 14, color: COLORS.charcoal, background: COLORS.bgMyIdeas,
+            fontFamily: 'inherit', resize: 'none', lineHeight: 1.6,
+            marginBottom: 14, boxSizing: 'border-box',
+          }}
+        />
+
+        {/* Photo/video — optional, combinable, read client-side and stored as a data URL */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*,video/*"
+          onChange={handleFileChange}
+          style={{ display: 'none' }}
+        />
+        <div style={{ marginBottom: 28 }}>
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              border: `1.5px solid ${photo ? COLORS.teal : COLORS.border}`,
+              borderRadius: 12, padding: '10px 14px',
+              background: photo ? COLORS.tealTint : 'white', cursor: 'pointer',
+              fontFamily: 'inherit',
+            }}
+          >
+            <span style={{ fontSize: 16 }}>{photo && !isImagePhoto(photo) ? '🎬' : '📷'}</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: photo ? COLORS.teal : COLORS.warmGrey }}>
+              {!photo ? 'Add a photo or video' : isImagePhoto(photo) ? 'Photo attached' : `Video attached: ${photo}`}
+            </span>
+          </button>
+          {photo && isImagePhoto(photo) && (
+            <div style={{ marginTop: 10, position: 'relative', width: 90, height: 90 }}>
+              <img src={photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 12 }} />
               <button
-                key={opt.id}
-                onClick={() => handleOptionTap(opt.id)}
+                onClick={() => setPhoto('')}
                 style={{
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                  gap: 8, padding: '18px 12px',
-                  border: `2px solid ${selected ? COLORS.teal : COLORS.border}`,
-                  borderRadius: 14,
-                  background: selected ? COLORS.tealTint : 'white',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-                  cursor: 'pointer',
+                  position: 'absolute', top: -8, right: -8, width: 24, height: 24, borderRadius: '50%',
+                  border: '2px solid white', background: COLORS.danger, color: 'white',
+                  fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}
               >
-                <span style={{ fontSize: 28, color: COLORS.teal }}>{opt.icon}</span>
-                <span style={{ fontSize: 13, fontWeight: 600, color: COLORS.charcoal, textAlign: 'center', lineHeight: 1.3 }}>
-                  {opt.label}
-                </span>
+                ×
               </button>
-            )
-          })}
+            </div>
+          )}
         </div>
-
-        {/* Expanded input */}
-        {activeInput === 'link' && (
-          <input
-            autoFocus
-            value={linkValue}
-            onChange={e => setLinkValue(e.target.value)}
-            placeholder="Paste a URL…"
-            style={{
-              width: '100%', minHeight: SPACING.inputMinHeight, borderRadius: 12,
-              border: `1.5px solid ${COLORS.teal}`, padding: '0 16px',
-              fontSize: 14, color: COLORS.charcoal, background: COLORS.bgMyIdeas,
-              fontFamily: 'inherit', marginBottom: 16, boxSizing: 'border-box',
-            }}
-          />
-        )}
-        {activeInput === 'note' && (
-          <textarea
-            autoFocus
-            value={noteValue}
-            onChange={e => setNoteValue(e.target.value)}
-            placeholder="Write a description or note…"
-            rows={4}
-            style={{
-              width: '100%', border: `1.5px solid ${COLORS.teal}`,
-              borderRadius: 14, padding: '14px 16px',
-              fontSize: 14, color: COLORS.charcoal, background: COLORS.bgMyIdeas,
-              fontFamily: 'inherit', resize: 'none', lineHeight: 1.6,
-              marginBottom: 16, boxSizing: 'border-box',
-            }}
-          />
-        )}
 
         {/* Source selector */}
         <p style={{ ...TEXT.sectionHeading, marginBottom: 12 }}>
@@ -251,17 +304,17 @@ export function SaveSomethingScreen({ navigate, params = {}, allCategories, save
           />
         </div>
 
-        {/* Category selector */}
+        {/* Tags — multi-select */}
         <p style={{ ...TEXT.sectionHeading, marginBottom: 12 }}>
-          Where does this belong?
+          Tag it (choose one or more)
         </p>
         <div style={{ borderRadius: 14, overflow: 'hidden', marginBottom: 32, border: `1px solid ${COLORS.border}` }}>
           {allCategories.map((cat, i) => {
-            const selected = categoryId === cat.id
+            const selected = categoryIds.includes(cat.id)
             return (
               <button
                 key={cat.id}
-                onClick={() => setCategoryId(selected ? '' : cat.id)}
+                onClick={() => toggleCategory(cat.id)}
                 style={{
                   width: '100%', border: 'none', cursor: 'pointer',
                   display: 'flex', alignItems: 'center', gap: 14,
@@ -271,11 +324,19 @@ export function SaveSomethingScreen({ navigate, params = {}, allCategories, save
                   borderLeft: selected ? `3px solid ${COLORS.terracotta}` : '3px solid transparent',
                 }}
               >
+                <span style={{
+                  width: 20, height: 20, borderRadius: 6, flexShrink: 0,
+                  border: `2px solid ${selected ? COLORS.terracotta : COLORS.border}`,
+                  background: selected ? COLORS.terracotta : 'white',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 12, color: 'white', fontWeight: 800,
+                }}>
+                  {selected ? '✓' : ''}
+                </span>
                 <span style={{ fontSize: 18, width: 24, flexShrink: 0 }}>{cat.icon}</span>
                 <span style={{ ...TEXT.categoryRowName, flex: 1, color: selected ? COLORS.terracotta : COLORS.charcoal }}>
                   {cat.label}
                 </span>
-                {selected && <span style={{ fontSize: 15, color: COLORS.terracotta }}>✓</span>}
               </button>
             )
           })}

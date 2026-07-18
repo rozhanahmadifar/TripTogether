@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CATEGORIES, MEMBER_COLORS } from '../data'
+import { MEMBER_COLORS, truncateName } from '../data'
 import { DateRangePicker, fmtDate } from '../components/DateRangePicker'
 import { BackButton } from '../components/BackButton'
 import { TEXT, COLORS, SPACING, SHADOW_CARD } from '../styles'
@@ -74,8 +74,8 @@ function GroupCategoryRow({ cat, count, contributors, getMember, isLast, onClick
   )
 }
 
-export function GroupHomeScreen({ navigate, currentTrip, myIdeas, groupItems, updateTrip }) {
-  const [editField, setEditField]       = useState(null)
+export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, groupItems, updateTrip, customThreads, allCategories }) {
+  const [editField, setEditField]       = useState(params.openDateEdit ? 'dates' : null)
   const [editValue, setEditValue]       = useState('')
   const [editDateRange, setEditDateRange] = useState({ start: null, end: null })
   const [newMemberName, setNewMemberName] = useState('')
@@ -95,6 +95,7 @@ export function GroupHomeScreen({ navigate, currentTrip, myIdeas, groupItems, up
   }
 
   const tripMembers = currentTrip.members || []
+  const pinnedThread = (customThreads?.[currentTrip.id] || []).find(t => t.pinned)
 
   const startEdit = (field, value = '') => { setEditField(field); setEditValue(value) }
   const cancelEdit = () => { setEditField(null); setEditValue(''); setEditDateRange({ start: null, end: null }) }
@@ -111,7 +112,7 @@ export function GroupHomeScreen({ navigate, currentTrip, myIdeas, groupItems, up
       const label = editDateRange.end
         ? `${fmtDate(editDateRange.start)} – ${fmtDate(editDateRange.end)}`
         : fmtDate(editDateRange.start)
-      updateTrip(currentTrip.id, { dates: label })
+      updateTrip(currentTrip.id, { dates: label, startDate: editDateRange.start.toISOString() })
     }
     setEditField(null)
     setEditDateRange({ start: null, end: null })
@@ -132,7 +133,7 @@ export function GroupHomeScreen({ navigate, currentTrip, myIdeas, groupItems, up
   }
 
   const getContributors = (categoryId) => {
-    const items = groupItems[categoryId] || []
+    const items = groupItems.filter(i => i.categoryIds.includes(categoryId))
     return [...new Set(items.map(i => i.savedBy))]
   }
 
@@ -275,7 +276,7 @@ export function GroupHomeScreen({ navigate, currentTrip, myIdeas, groupItems, up
                   }}>
                     {m.initial}
                   </div>
-                  <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.8)', fontWeight: 600 }}>{m.name}</span>
+                  <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.8)', fontWeight: 600 }} title={m.name}>{truncateName(m.name)}</span>
                 </div>
               ))}
             </div>
@@ -300,7 +301,7 @@ export function GroupHomeScreen({ navigate, currentTrip, myIdeas, groupItems, up
                   <div style={{ width: 28, height: 28, borderRadius: '50%', background: m.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: 'white', flexShrink: 0 }}>
                     {m.initial}
                   </div>
-                  <span style={{ flex: 1, color: 'white', fontSize: 13, fontWeight: 600 }}>{m.name}</span>
+                  <span style={{ flex: 1, color: 'white', fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }} title={m.name}>{truncateName(m.name)}</span>
                   {m.id !== 'me' && (
                     <button onClick={() => removeMemberFromTrip(m.id)} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '50%', width: 26, height: 26, cursor: 'pointer', color: 'white', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>×</button>
                   )}
@@ -335,43 +336,37 @@ export function GroupHomeScreen({ navigate, currentTrip, myIdeas, groupItems, up
           </div>
         )}
 
-        {/* My Saves — still your private space, even inside a group trip */}
-        <div style={{
-          background: COLORS.cardBg, borderRadius: 14, boxShadow: SHADOW_CARD,
-          padding: 16, borderLeft: `3px solid ${COLORS.terracotta}`,
-          marginBottom: SPACING.cardGap,
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
-            <span style={{ flex: 1, fontSize: 11, fontWeight: 700, color: COLORS.teal, letterSpacing: 1.5, textTransform: 'uppercase' }}>
-              My Saves
-            </span>
-            <button
-              onClick={() => navigate('myIdeasCategory', { categoryId: CATEGORIES[0]?.id, backTo: 'groupHome' })}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: COLORS.teal, padding: 0 }}
-            >
-              See all
-            </button>
-          </div>
-          <p style={{ fontSize: 12, color: COLORS.warmGrey, fontStyle: 'italic', marginBottom: 10 }}>
-            Private, only you can see these
-          </p>
-          <div>
-            {CATEGORIES.map((cat, i) => (
-              <SavesCategoryRow
-                key={cat.id}
-                cat={cat}
-                count={(myIdeas[cat.id] || []).length}
-                isLast={i === CATEGORIES.length - 1}
-                onClick={() => navigate('myIdeasCategory', { categoryId: cat.id, backTo: 'groupHome' })}
-              />
-            ))}
-          </div>
-        </div>
+        {/* Direct link into this trip's discussion thread — so users don't
+            have to guess which thread in the global Discuss tab is theirs. */}
+        {pinnedThread && (
+          <button
+            onClick={() => navigate('discussThread', { threadId: pinnedThread.id })}
+            style={{
+              width: '100%', display: 'flex', alignItems: 'center', gap: 12,
+              background: COLORS.cardBg, borderRadius: 14, boxShadow: SHADOW_CARD,
+              padding: 16, border: 'none', cursor: 'pointer', textAlign: 'left',
+              marginBottom: SPACING.cardGap, fontFamily: 'inherit',
+            }}
+          >
+            <span style={{ fontSize: 20 }}>💬</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontSize: 14, fontWeight: 700, color: COLORS.charcoal, letterSpacing: -0.2 }}>
+                {pinnedThread.title} discussion
+              </p>
+              <p style={{ fontSize: 12, color: COLORS.warmGrey, marginTop: 1 }}>
+                Jump into your trip's conversation
+              </p>
+            </div>
+            <span style={{ fontSize: 16, color: '#D6CCBF' }}>›</span>
+          </button>
+        )}
 
-        {/* Group Space — open, collaborative */}
+        {/* Group Space — open, collaborative. Shown first: this is the shared
+            space testers expect to land on inside a group trip. */}
         <div style={{
           background: COLORS.cardBg, borderRadius: 14, boxShadow: SHADOW_CARD,
           padding: 16, borderLeft: `3px solid ${COLORS.teal}`,
+          marginBottom: SPACING.cardGap,
         }}>
           <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
             <span style={{ flex: 1, fontSize: 11, fontWeight: 700, color: COLORS.teal, letterSpacing: 1.5, textTransform: 'uppercase' }}>
@@ -388,15 +383,49 @@ export function GroupHomeScreen({ navigate, currentTrip, myIdeas, groupItems, up
             Everyone in the group can see these
           </p>
           <div>
-            {CATEGORIES.map((cat, i) => (
+            {allCategories.map((cat, i) => (
               <GroupCategoryRow
                 key={cat.id}
                 cat={cat}
-                count={(groupItems[cat.id] || []).length}
+                count={groupItems.filter(i => i.categoryIds.includes(cat.id)).length}
                 contributors={getContributors(cat.id)}
                 getMember={getMember}
-                isLast={i === CATEGORIES.length - 1}
+                isLast={i === allCategories.length - 1}
                 onClick={() => navigate('groupCategory', { categoryId: cat.id, backTo: 'groupHome' })}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* My Saves — still your private space, even inside a group trip.
+            Orange border + lock icon + explicit "Private" label keep it
+            visually distinct so it's never mistaken for shared content. */}
+        <div style={{
+          background: COLORS.cardBg, borderRadius: 14, boxShadow: SHADOW_CARD,
+          padding: 16, borderLeft: `3px solid ${COLORS.terracotta}`,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
+            <span style={{ flex: 1, fontSize: 11, fontWeight: 700, color: COLORS.teal, letterSpacing: 1.5, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}>
+              🔒 My Saves
+            </span>
+            <button
+              onClick={() => navigate('myIdeasCategory', { categoryId: allCategories[0]?.id, backTo: 'groupHome' })}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: COLORS.teal, padding: 0 }}
+            >
+              See all
+            </button>
+          </div>
+          <p style={{ fontSize: 12, color: COLORS.warmGrey, fontStyle: 'italic', marginBottom: 10 }}>
+            Private, only you can see these
+          </p>
+          <div>
+            {allCategories.map((cat, i) => (
+              <SavesCategoryRow
+                key={cat.id}
+                cat={cat}
+                count={myIdeas.filter(i => i.categoryIds.includes(cat.id)).length}
+                isLast={i === allCategories.length - 1}
+                onClick={() => navigate('myIdeasCategory', { categoryId: cat.id, backTo: 'groupHome' })}
               />
             ))}
           </div>

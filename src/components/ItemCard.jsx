@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { timeAgo, PLATFORMS } from '../data'
+import { timeAgo, PLATFORMS, isImagePhoto } from '../data'
 import { COLORS, SHADOW_CARD, TEXT } from '../styles'
 import { PencilIcon, TrashIcon } from './ActionMenu'
 
@@ -30,19 +30,22 @@ function Pill({ label, selected, onClick }) {
   )
 }
 
-function EditForm({ item, category, description, allCategories, onCancel, onSave }) {
-  const [title, setTitle]           = useState(item.title || '')
-  const [desc, setDesc]             = useState(description || '')
-  const [source, setSource]         = useState(item.platform || '')
-  const [categoryId, setCategoryId] = useState(category.id)
-  const [pickingCategory, setPickingCategory] = useState(false)
+function EditForm({ item, categories, allCategories, onCancel, onSave }) {
+  const [title, setTitle]     = useState(item.title || '')
+  const [link, setLink]       = useState(item.link || '')
+  const [note, setNote]       = useState(item.note || '')
+  const [source, setSource]   = useState(item.platform || '')
+  const [categoryIds, setCategoryIds] = useState((categories || []).map(c => c.id))
 
-  const currentCat = allCategories.find(c => c.id === categoryId) || category
-  const canSave = title.trim().length > 0
+  const canSave = title.trim().length > 0 && categoryIds.length > 0
+
+  const toggleCategory = (id) => {
+    setCategoryIds(prev => prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id])
+  }
 
   const handleSave = () => {
     if (!canSave) return
-    onSave({ title: title.trim(), description: desc.trim(), platform: source, categoryId })
+    onSave({ title: title.trim(), link: link.trim(), note: note.trim(), platform: source, categoryIds })
   }
 
   return (
@@ -58,10 +61,21 @@ function EditForm({ item, category, description, allCategories, onCancel, onSave
           background: COLORS.bg, fontFamily: 'inherit', marginBottom: 10, boxSizing: 'border-box',
         }}
       />
+      <input
+        value={link}
+        onChange={e => setLink(e.target.value)}
+        placeholder="Link (optional)"
+        style={{
+          width: '100%', minHeight: 40, borderRadius: 10,
+          border: `1.5px solid ${COLORS.border}`, padding: '0 12px',
+          fontSize: 13, color: COLORS.charcoal,
+          background: COLORS.bg, fontFamily: 'inherit', marginBottom: 10, boxSizing: 'border-box',
+        }}
+      />
       <textarea
-        value={desc}
-        onChange={e => setDesc(e.target.value)}
-        placeholder="Add a description…"
+        value={note}
+        onChange={e => setNote(e.target.value)}
+        placeholder="Add a note…"
         rows={3}
         style={{
           width: '100%', borderRadius: 10, border: `1.5px solid ${COLORS.border}`,
@@ -80,30 +94,19 @@ function EditForm({ item, category, description, allCategories, onCancel, onSave
         ))}
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-        <span style={{ fontSize: 13, fontWeight: 600, color: COLORS.charcoal }}>
-          {currentCat.icon} {currentCat.label}
-        </span>
-        <button
-          onClick={() => setPickingCategory(v => !v)}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: COLORS.teal, padding: 0 }}
-        >
-          Change
-        </button>
+      <p style={{ fontSize: 11, fontWeight: 700, color: COLORS.warmGrey, letterSpacing: 0.6, textTransform: 'uppercase', marginBottom: 8 }}>
+        Tags — choose one or more
+      </p>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
+        {allCategories.map(c => (
+          <Pill
+            key={c.id}
+            label={`${c.icon} ${c.label}`}
+            selected={categoryIds.includes(c.id)}
+            onClick={() => toggleCategory(c.id)}
+          />
+        ))}
       </div>
-
-      {pickingCategory && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
-          {allCategories.map(c => (
-            <Pill
-              key={c.id}
-              label={`${c.icon} ${c.label}`}
-              selected={c.id === categoryId}
-              onClick={() => { setCategoryId(c.id); setPickingCategory(false) }}
-            />
-          ))}
-        </div>
-      )}
 
       <div style={{ display: 'flex', gap: 10 }}>
         <button
@@ -135,8 +138,9 @@ function EditForm({ item, category, description, allCategories, onCancel, onSave
 
 // FIX 4 — consistent item card structure: coloured preview zone with source
 // badge, contributor + title + description, then a heart/comment footer.
-export function ItemCard({ item, category, contributor, source, description, hearts = 0, hearted = false, onToggleHeart, onCommentClick, onOpen, previewHeight = 100, isOwner = true, onDelete, onSave, allCategories = [], hideFooter = false }) {
+export function ItemCard({ item, categories, contributor, source, note, hearts = 0, hearted = false, onToggleHeart, onCommentClick, onOpen, previewHeight = 100, isOwner = true, onDelete, onSave, allCategories = [], hideFooter = false }) {
   const TopTag = onOpen ? 'button' : 'div'
+  const primaryCategory = (categories && categories[0]) || { icon: '✨', color: COLORS.teal }
   const [pulsing, setPulsing] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [confirming, setConfirming] = useState(false)
@@ -185,8 +189,7 @@ export function ItemCard({ item, category, contributor, source, description, hea
         {editing ? (
           <EditForm
             item={item}
-            category={category}
-            description={description}
+            categories={categories}
             allCategories={allCategories}
             onCancel={() => setEditing(false)}
             onSave={handleEditSave}
@@ -200,13 +203,20 @@ export function ItemCard({ item, category, contributor, source, description, hea
               fontFamily: 'inherit',
             }}
           >
-            {/* Top zone — coloured preview */}
+            {/* Top zone — real photo when the item has one, coloured preview otherwise */}
             <div style={{
-              height: previewHeight, background: `${category.color}30`,
+              height: previewHeight,
+              background: isImagePhoto(item.photo) ? '#EFE8DE' : `${primaryCategory.color}30`,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              position: 'relative',
+              position: 'relative', overflow: 'hidden',
             }}>
-              <span style={{ fontSize: 38 }}>{category.icon}</span>
+              {isImagePhoto(item.photo) ? (
+                <img src={item.photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : item.photo ? (
+                <span style={{ fontSize: 38 }}>🎬</span>
+              ) : (
+                <span style={{ fontSize: 38 }}>{primaryCategory.icon}</span>
+              )}
               {source && (
                 <span style={{
                   position: 'absolute', top: 10, left: 10,
@@ -246,14 +256,40 @@ export function ItemCard({ item, category, contributor, source, description, hea
                 {item.title}
               </p>
 
-              {description && (
+              {note && (
                 <p style={{
                   ...TEXT.body, color: COLORS.warmGrey, marginTop: 6,
                   overflow: 'hidden', display: '-webkit-box',
                   WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
                 }}>
-                  {description}
+                  {note}
                 </p>
+              )}
+
+              {(item.link || (categories && categories.length > 0)) && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginTop: 10 }}>
+                  {item.link && (
+                    <span
+                      title="Has a link"
+                      style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        width: 22, height: 22, borderRadius: '50%', background: COLORS.tealTint,
+                        fontSize: 11, flexShrink: 0,
+                      }}
+                    >
+                      🔗
+                    </span>
+                  )}
+                  {(categories || []).map(c => (
+                    <span key={c.id} style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 4,
+                      background: `${c.color}1F`, color: COLORS.charcoal,
+                      fontSize: 11, fontWeight: 600, borderRadius: 20, padding: '3px 9px',
+                    }}>
+                      {c.icon} {c.label}
+                    </span>
+                  ))}
+                </div>
               )}
             </div>
           </TopTag>

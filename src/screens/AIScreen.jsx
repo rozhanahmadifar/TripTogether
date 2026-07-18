@@ -3,9 +3,9 @@ import { TEXT, COLORS } from '../styles'
 import { askGemini, parseAIResponse } from '../gemini'
 
 const SUGGESTION_CHIPS = [
-  'How many days do we need at our destination?',
-  'What is a realistic budget for a group trip?',
-  'What should we book in advance?',
+  "We're 3 students, one non-EU — what transport discounts can we get?",
+  'Which cities have cheap flights, no visa needs, and mild weather in June?',
+  'What needs booking in advance vs. what can we decide on the day?',
 ]
 
 const ERROR_TEXT = 'Sorry, I could not connect right now. Please try again in a moment.'

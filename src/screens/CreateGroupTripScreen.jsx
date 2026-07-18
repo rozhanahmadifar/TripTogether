@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { MEMBER_COLORS } from '../data'
+import { useState, useRef } from 'react'
+import { MEMBER_COLORS, truncateName } from '../data'
 import { DateRangePicker, fmtDate } from '../components/DateRangePicker'
 import { BackButton } from '../components/BackButton'
 import { COLORS, SPACING } from '../styles'
@@ -33,7 +33,7 @@ function ProgressBar({ step }) {
   )
 }
 
-export function CreateGroupTripScreen({ navigate, params = {}, startGroupTrip }) {
+export function CreateGroupTripScreen({ navigate, params = {}, startGroupTrip, userName }) {
   const [step, setStep]             = useState(1)
   const [tripName, setTripName]     = useState('')
   const [destination, setDestination] = useState('')
@@ -42,6 +42,8 @@ export function CreateGroupTripScreen({ navigate, params = {}, startGroupTrip })
   const [members, setMembers]       = useState([])
   const [nameInput, setNameInput]   = useState('')
   const [emailInput, setEmailInput] = useState('')
+  const [confirmingRemoveId, setConfirmingRemoveId] = useState(null)
+  const nextMemberId = useRef(0)
 
   const dateLabel = dateRange.start
     ? dateRange.end
@@ -54,18 +56,28 @@ export function CreateGroupTripScreen({ navigate, params = {}, startGroupTrip })
     if (!n) return
     const email = emailInput.trim()
     const color = MEMBER_COLORS[members.length % MEMBER_COLORS.length]
-    setMembers(p => [...p, { id: `m-${Date.now()}`, name: n, email, color, initial: n.charAt(0).toUpperCase() }])
+    // A counter (not just Date.now()) guarantees unique ids even when two
+    // members are added in the same millisecond — colliding ids meant
+    // removing one member could silently remove both.
+    const id = `m-${Date.now()}-${nextMemberId.current++}`
+    setMembers(p => [...p, { id, name: n, email, color, initial: n.charAt(0).toUpperCase() }])
     setNameInput('')
     setEmailInput('')
   }
 
-  const removeMember = (id) => setMembers(p => p.filter(m => m.id !== id))
+  const requestRemoveMember = (id) => setConfirmingRemoveId(id)
+  const cancelRemoveMember = () => setConfirmingRemoveId(null)
+  const confirmRemoveMember = (id) => {
+    setMembers(p => p.filter(m => m.id !== id))
+    setConfirmingRemoveId(null)
+  }
 
   const handleStart = () => {
     startGroupTrip({
       name: tripName.trim() || 'My Trip',
       destination: destination.trim(),
       dates: dateLabel || '',
+      startDate: dateRange.start ? dateRange.start.toISOString() : '',
       crewMembers: members,
       returnTo: params.returnTo,
       returnParams: params.returnParams,
@@ -89,7 +101,7 @@ export function CreateGroupTripScreen({ navigate, params = {}, startGroupTrip })
   return (
     <div className="screen" style={{ background: COLORS.bg }}>
       <div style={{ padding: '16px 20px 0', display: 'flex', alignItems: 'center', gap: 12 }}>
-        <BackButton onClick={() => step > 1 ? setStep(s => s - 1) : navigate('individualHome')} />
+        <BackButton onClick={() => step > 1 ? setStep(s => s - 1) : navigate(params.backTo || 'individualHome', params.backParams || {})} />
         <h2 style={{ fontSize: 22, fontWeight: 800, color: COLORS.charcoal, letterSpacing: -0.4 }}>
           {step === 1 ? 'Name your trip' : 'Who is coming?'}
         </h2>
@@ -197,6 +209,26 @@ export function CreateGroupTripScreen({ navigate, params = {}, startGroupTrip })
 
         {step === 2 && (
           <>
+            {/* Creator — already joined, no need to add yourself */}
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px',
+              background: 'white', borderRadius: 12, marginBottom: 14,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+            }}>
+              <div style={{
+                width: 38, height: 38, borderRadius: '50%', background: '#D4724A',
+                border: '2px solid white', boxShadow: `0 0 0 1px ${COLORS.border}`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 14, fontWeight: 700, color: 'white', flexShrink: 0,
+              }}>
+                {(userName || '?').charAt(0).toUpperCase()}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontSize: 15, fontWeight: 600, color: COLORS.charcoal, letterSpacing: -0.2 }} title={userName}>{truncateName(userName)}</p>
+                <p style={{ fontSize: 12, color: COLORS.teal, fontWeight: 600, marginTop: 2 }}>You · Already joined</p>
+              </div>
+            </div>
+
             {/* Name field */}
             <div style={{ marginBottom: 14 }}>
               <p style={{ fontSize: 12, fontWeight: 700, color: COLORS.warmGrey, letterSpacing: 0.3, marginBottom: 6 }}>
@@ -274,32 +306,62 @@ export function CreateGroupTripScreen({ navigate, params = {}, startGroupTrip })
                     }}>
                       {m.initial}
                     </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontSize: 15, fontWeight: 600, color: COLORS.charcoal, letterSpacing: -0.2 }}>{m.name}</p>
-                      {m.email ? (
-                        <p style={{
-                          fontSize: 12, color: COLORS.warmGrey, fontWeight: 500, marginTop: 2,
-                          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                        }}>
-                          {m.email}
-                        </p>
-                      ) : (
-                        <p style={{ fontSize: 12, color: COLORS.warmGrey, fontWeight: 500, fontStyle: 'italic', marginTop: 2 }}>
-                          No email added
-                        </p>
-                      )}
-                    </div>
-                    <button
-                      onClick={() => removeMember(m.id)}
-                      style={{
-                        width: 28, height: 28, borderRadius: '50%', border: 'none',
-                        background: '#EFE8DE', cursor: 'pointer', padding: 0,
-                        flexShrink: 0,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      }}
-                    >
-                      <XIcon size={12} />
-                    </button>
+                    {confirmingRemoveId === m.id ? (
+                      <>
+                        <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: COLORS.danger }}>
+                          Remove {truncateName(m.name)}?
+                        </span>
+                        <button
+                          onClick={cancelRemoveMember}
+                          style={{
+                            minHeight: 32, borderRadius: 8, border: `1.5px solid ${COLORS.border}`,
+                            background: 'white', color: COLORS.warmGrey, fontSize: 12, fontWeight: 700,
+                            cursor: 'pointer', padding: '0 12px', flexShrink: 0, fontFamily: 'inherit',
+                          }}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={() => confirmRemoveMember(m.id)}
+                          style={{
+                            minHeight: 32, borderRadius: 8, border: 'none',
+                            background: COLORS.danger, color: 'white', fontSize: 12, fontWeight: 700,
+                            cursor: 'pointer', padding: '0 12px', flexShrink: 0, fontFamily: 'inherit',
+                          }}
+                        >
+                          Remove
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ fontSize: 15, fontWeight: 600, color: COLORS.charcoal, letterSpacing: -0.2 }} title={m.name}>{truncateName(m.name)}</p>
+                          {m.email ? (
+                            <p style={{
+                              fontSize: 12, color: COLORS.warmGrey, fontWeight: 500, marginTop: 2,
+                              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                            }}>
+                              {m.email}
+                            </p>
+                          ) : (
+                            <p style={{ fontSize: 12, color: COLORS.warmGrey, fontWeight: 500, fontStyle: 'italic', marginTop: 2 }}>
+                              No email added
+                            </p>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => requestRemoveMember(m.id)}
+                          style={{
+                            width: 28, height: 28, borderRadius: '50%', border: 'none',
+                            background: '#EFE8DE', cursor: 'pointer', padding: 0,
+                            flexShrink: 0,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          }}
+                        >
+                          <XIcon size={12} />
+                        </button>
+                      </>
+                    )}
                   </div>
                 ))}
               </div>

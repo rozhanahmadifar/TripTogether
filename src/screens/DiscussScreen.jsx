@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { DEFAULT_THREAD, GENERAL_THREAD_ID, buildSimulatedThreadMessages } from '../discuss'
+import { buildSimulatedThreadMessages } from '../discuss'
 import { COLORS, SPACING, SHADOW_CARD } from '../styles'
 import { useLongPress } from '../hooks/useLongPress'
 import { ActionMenu, TrashIcon } from '../components/ActionMenu'
@@ -67,7 +67,7 @@ function NewThreadSheet({ onCreate, onClose }) {
   )
 }
 
-function ThreadCard({ thread, isGeneral, messages, onOpen, onLongPressGeneral, onDeleteThread }) {
+function ThreadCard({ thread, messages, onOpen, onLongPressPinned, onDeleteThread }) {
   const cardRef = useRef(null)
   const [menuAnchor, setMenuAnchor] = useState(null)
   const last = messages[messages.length - 1]
@@ -75,8 +75,8 @@ function ThreadCard({ thread, isGeneral, messages, onOpen, onLongPressGeneral, o
   const longPress = useLongPress(() => {
     if (!cardRef.current) return
     const rect = cardRef.current.getBoundingClientRect()
-    if (isGeneral) {
-      onLongPressGeneral()
+    if (thread.pinned) {
+      onLongPressPinned()
     } else {
       setMenuAnchor({ top: rect.top, left: rect.left, width: rect.width, height: rect.height })
     }
@@ -101,18 +101,21 @@ function ThreadCard({ thread, isGeneral, messages, onOpen, onLongPressGeneral, o
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-              <span style={{ fontSize: 16, fontWeight: 600, color: COLORS.charcoal }}>{thread.title}</span>
+              <span style={{ fontSize: 16, fontWeight: 600, color: COLORS.charcoal, display: 'flex', alignItems: 'center', gap: 5 }}>
+                {thread.pinned && <span style={{ fontSize: 12 }}>📌</span>}
+                {thread.title}
+              </span>
               <span style={{ fontSize: 12, color: COLORS.warmGrey, flexShrink: 0 }}>
                 {messages.length} {messages.length === 1 ? 'reply' : 'replies'}
               </span>
             </div>
-            {isGeneral && (
+            {thread.pinned && thread.subtext && (
               <p style={{ fontSize: 12, color: COLORS.warmGrey, fontStyle: 'italic', marginTop: 2, marginBottom: 8 }}>
                 {thread.subtext}
               </p>
             )}
             <p style={{
-              fontSize: 13, color: COLORS.warmGrey, fontStyle: last ? 'normal' : 'italic', marginTop: isGeneral ? 0 : 6,
+              fontSize: 13, color: COLORS.warmGrey, fontStyle: last ? 'normal' : 'italic', marginTop: thread.pinned ? 0 : 6,
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             }}>
               {last ? `${last.name}: ${last.text}` : 'No messages yet'}
@@ -154,11 +157,11 @@ export function DiscussScreen({ navigate, currentTrip, discussMessages, customTh
     )
   }
 
-  const threads = [DEFAULT_THREAD, ...(customThreads[currentTrip.id] || [])]
+  const threads = customThreads[currentTrip.id] || []
 
-  const getMessages = (threadId) => {
-    const simulated = buildSimulatedThreadMessages(threadId, tripMembers)
-    const sent = (discussMessages && discussMessages[`${currentTrip.id}-${threadId}`]) || []
+  const getMessages = (thread) => {
+    const simulated = buildSimulatedThreadMessages(thread.pinned, tripMembers)
+    const sent = (discussMessages && discussMessages[`${currentTrip.id}-${thread.id}`]) || []
     return [...simulated, ...sent]
   }
 
@@ -189,20 +192,16 @@ export function DiscussScreen({ navigate, currentTrip, discussMessages, customTh
 
       <div className="screen-scroll" style={{ padding: `0 ${SPACING.screenX}px ${SPACING.scrollBottomPad}px` }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {threads.map(thread => {
-            const isGeneral = thread.id === GENERAL_THREAD_ID
-            return (
-              <ThreadCard
-                key={thread.id}
-                thread={thread}
-                isGeneral={isGeneral}
-                messages={getMessages(thread.id)}
-                onOpen={() => navigate('discussThread', { threadId: thread.id })}
-                onLongPressGeneral={() => showToast('The General discussion cannot be deleted.')}
-                onDeleteThread={() => deleteDiscussThread(currentTrip.id, thread.id)}
-              />
-            )
-          })}
+          {threads.map(thread => (
+            <ThreadCard
+              key={thread.id}
+              thread={thread}
+              messages={getMessages(thread)}
+              onOpen={() => navigate('discussThread', { threadId: thread.id })}
+              onLongPressPinned={() => showToast(`The ${thread.title} discussion cannot be deleted.`)}
+              onDeleteThread={() => deleteDiscussThread(currentTrip.id, thread.id)}
+            />
+          ))}
 
           <button
             onClick={openNewThreadSheet}

@@ -1,4 +1,7 @@
+import { useState } from 'react'
 import { ItemCard } from '../components/ItemCard'
+import { GridTile } from '../components/GridTile'
+import { ViewToggle } from '../components/ViewToggle'
 import { EmptyState } from '../components/EmptyState'
 import { BackButton } from '../components/BackButton'
 import { COLORS, SPACING } from '../styles'
@@ -6,14 +9,15 @@ import { COLORS, SPACING } from '../styles'
 export function MyIdeasCategoryScreen({ navigate, params = {}, myIdeas, allCategories, userName, deleteMyIdea, updateMyIdea }) {
   const { categoryId, backTo = 'individualHome' } = params
   const cat = allCategories.find(c => c.id === categoryId) || allCategories[0] || { id: '', icon: '✨', label: 'Ideas', color: '#1E5F5F' }
-  const items = myIdeas[cat.id] || []
+  const items = myIdeas.filter(i => i.categoryIds.includes(cat.id))
   const me = { name: userName || 'You', color: COLORS.teal, initial: (userName || 'You').charAt(0).toUpperCase() }
+  const [view, setView] = useState('list')
 
   return (
     <div className="screen" style={{ background: COLORS.bgMyIdeas }}>
       <div style={{ padding: '16px 20px 14px', display: 'flex', alignItems: 'center', gap: 12, background: 'white', borderBottom: `1px solid ${COLORS.border}` }}>
         <BackButton onClick={() => navigate(backTo)} />
-        <div>
+        <div style={{ flex: 1 }}>
           <p style={{ fontSize: 19, fontWeight: 800, color: COLORS.teal, letterSpacing: -0.4 }}>
             {cat.icon} {cat.label}
           </p>
@@ -21,6 +25,7 @@ export function MyIdeasCategoryScreen({ navigate, params = {}, myIdeas, allCateg
             Private, only you can see these
           </p>
         </div>
+        {items.length > 0 && <ViewToggle view={view} setView={setView} />}
       </div>
 
       <div className="screen-scroll" style={{ padding: `16px ${SPACING.screenX}px 32px` }}>
@@ -31,22 +36,33 @@ export function MyIdeasCategoryScreen({ navigate, params = {}, myIdeas, allCateg
             actionLabel="Save something"
             onAction={() => navigate('saveSomething', { categoryId: cat.id, backTo: 'myIdeasCategory', returnParams: { categoryId: cat.id, backTo } })}
           />
+        ) : view === 'grid' ? (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
+            {items.map(item => (
+              <GridTile
+                key={item.id}
+                item={item}
+                category={cat}
+                onOpen={() => navigate('itemDetail', { itemId: item.id, categoryId: cat.id, backTo: 'myIdeasCategory', parentBackTo: backTo })}
+              />
+            ))}
+          </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: SPACING.cardGap }}>
             {items.map(item => (
               <ItemCard
                 key={item.id}
                 item={item}
-                category={cat}
+                categories={item.categoryIds.map(id => allCategories.find(c => c.id === id)).filter(Boolean)}
                 contributor={me}
                 source={item.platform}
-                description={item.description}
+                note={item.note}
                 previewHeight={100}
                 allCategories={allCategories}
                 hideFooter
                 onOpen={() => navigate('itemDetail', { itemId: item.id, categoryId: cat.id, backTo: 'myIdeasCategory', parentBackTo: backTo })}
-                onDelete={() => deleteMyIdea(cat.id, item.id)}
-                onSave={(updates) => updateMyIdea(cat.id, item.id, updates)}
+                onDelete={() => deleteMyIdea(item.id)}
+                onSave={(updates) => updateMyIdea(item.id, updates)}
               />
             ))}
           </div>

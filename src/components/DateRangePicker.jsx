@@ -37,7 +37,12 @@ export function DateRangePicker({ startDate, endDate, onChange, onDone }) {
     }
   }
 
+  // Trip dates only make sense in the future, so browsing before the
+  // current month is disabled outright rather than just greying out days.
+  const isCurrentMonth = viewYear === today.getFullYear() && viewMonth === today.getMonth()
+
   const prevMonth = () => {
+    if (isCurrentMonth) return
     if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1) }
     else setViewMonth(m => m - 1)
   }
@@ -46,12 +51,18 @@ export function DateRangePicker({ startDate, endDate, onChange, onDone }) {
     else setViewMonth(m => m + 1)
   }
 
-  const navBtn = (label, handler) => (
-    <button onClick={handler} style={{
-      width: 32, height: 32, borderRadius: '50%', border: 'none',
-      background: COLORS.sand, cursor: 'pointer', fontSize: 16, color: COLORS.charcoal,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-    }}>{label}</button>
+  const navBtn = (label, handler, disabled = false) => (
+    <button
+      onClick={handler}
+      disabled={disabled}
+      style={{
+        width: 32, height: 32, borderRadius: '50%', border: 'none',
+        background: disabled ? 'transparent' : COLORS.sand,
+        cursor: disabled ? 'default' : 'pointer',
+        fontSize: 16, color: disabled ? '#D6CCBF' : COLORS.charcoal,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}
+    >{label}</button>
   )
 
   return (
@@ -60,7 +71,7 @@ export function DateRangePicker({ startDate, endDate, onChange, onDone }) {
       borderRadius: 16, padding: '16px', marginTop: 8,
     }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-        {navBtn('‹', prevMonth)}
+        {navBtn('‹', prevMonth, isCurrentMonth)}
         <span style={{ fontSize: 14, fontWeight: 700, color: COLORS.charcoal }}>{monthName}</span>
         {navBtn('›', nextMonth)}
       </div>

@@ -7,6 +7,10 @@
   padding: 0;
 }
 
+html, body {
+  height: 100%;
+}
+
 body {
   background: #D9D2C7;
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -15,7 +19,13 @@ body {
 
 #root {
   width: 100%;
+  /* 100vh is the fallback for browsers without dvh support; 100dvh (the
+     mobile browser's actual visible viewport, accounting for the address
+     bar showing/hiding) overrides it everywhere it's supported. Using the
+     static 100vh alone made #root taller than the visible screen on real
+     mobile browsers, producing a phantom scroll area and a shifting header. */
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -79,7 +89,6 @@ body {
 .screen {
   flex: 1;
   min-height: 0;
-  height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -90,7 +99,6 @@ body {
 .screen-scroll {
   flex: 1;
   min-height: 0;
-  height: 100%;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }

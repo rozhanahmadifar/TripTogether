@@ -5,13 +5,13 @@ import { COLORS } from '../styles'
 
 export function DiscussThreadScreen({ navigate, params = {}, currentTrip, userName, discussMessages, addDiscussMessage, customThreads }) {
   const { threadId } = params
-  const threads = [DEFAULT_THREAD, ...(currentTrip ? (customThreads?.[currentTrip.id] || []) : [])]
+  const threads = currentTrip ? (customThreads?.[currentTrip.id] || []) : []
   const thread = threads.find(t => t.id === threadId) || DEFAULT_THREAD
   const tripMembers = currentTrip?.members || []
   const [text, setText] = useState('')
   const listRef = useRef(null)
 
-  const simulated = buildSimulatedThreadMessages(thread.id, tripMembers)
+  const simulated = buildSimulatedThreadMessages(thread.pinned, tripMembers)
   const sent = (currentTrip && discussMessages[`${currentTrip.id}-${thread.id}`]) || []
   const messages = [...simulated, ...sent]
 

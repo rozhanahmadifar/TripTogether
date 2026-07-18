@@ -1,4 +1,5 @@
 import { TEXT, COLORS, SPACING } from '../styles'
+import { truncateName } from '../data'
 
 export function MyTripsScreen({ navigate, trips, openTrip }) {
   return (
@@ -30,7 +31,7 @@ export function MyTripsScreen({ navigate, trips, openTrip }) {
               Start planning with your crew.
             </p>
             <button
-              onClick={() => navigate('createTrip')}
+              onClick={() => navigate('createTrip', { backTo: 'myTrips' })}
               style={{
                 minHeight: SPACING.buttonMinHeight, background: COLORS.teal, color: 'white', border: 'none',
                 borderRadius: 12, padding: '0 28px',
@@ -91,8 +92,8 @@ export function MyTripsScreen({ navigate, trips, openTrip }) {
                           }}>
                             {m.initial}
                           </div>
-                          <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.8)', fontWeight: 600 }}>
-                            {m.name}
+                          <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.8)', fontWeight: 600 }} title={m.name}>
+                            {truncateName(m.name)}
                           </span>
                         </div>
                       ))}
@@ -110,7 +111,7 @@ export function MyTripsScreen({ navigate, trips, openTrip }) {
             ))}
 
             <button
-              onClick={() => navigate('createTrip')}
+              onClick={() => navigate('createTrip', { backTo: 'myTrips' })}
               style={{
                 width: '100%', height: 52, background: 'white',
                 border: `1.5px solid ${COLORS.border}`, borderRadius: 14,

@@ -70,11 +70,11 @@ export default function App() {
   const [params, setParams]                     = useState({})
   const [userName, setUserName]                 = useState('')
   const [appMode, setAppMode]                   = useState('individual')
-  const [myIdeas, setMyIdeas]                   = useState({})
-  const [groupItems, setGroupItems]             = useState({})
+  const [myIdeas, setMyIdeas]                   = useState([])
+  const [groupItems, setGroupItems]             = useState([])
   const [trips, setTrips]                       = useState([])
   const [currentTripId, setCurrentTripId]       = useState(null)
-  const [customCategories, setCustomCategories] = useState([])
+  const [categories, setCategories]             = useState(CATEGORIES)
   const [modal, setModal]                       = useState(null)
   const [discussMessages, setDiscussMessages]   = useState({})
   const [customThreads, setCustomThreads]       = useState({})
@@ -87,92 +87,80 @@ export default function App() {
   const openModal  = (content) => setModal(content)
   const closeModal = () => setModal(null)
 
-  const allCategories = [...CATEGORIES, ...customCategories]
+  const allCategories = categories
 
   const addCustomCategory = (label) => {
     const id = `custom-${Date.now()}`
-    const color = CUSTOM_COLORS[customCategories.length % CUSTOM_COLORS.length]
-    setCustomCategories(p => [...p, { id, icon: '📌', label, color }])
+    const color = CUSTOM_COLORS[categories.length % CUSTOM_COLORS.length]
+    setCategories(p => [...p, { id, icon: '📌', label, color }])
     return id
   }
 
-  const saveToMyIdeas = ({ title, platform, categoryId }) => {
-    const item = { id: `i-${Date.now()}`, title, platform, categoryId, savedAt: Date.now() }
-    setMyIdeas(p => ({ ...p, [categoryId]: [...(p[categoryId] || []), item] }))
+  const renameCategory = (id, label) => {
+    setCategories(p => p.map(c => c.id === id ? { ...c, label } : c))
+  }
+
+  // Deleting a category untags it from every item rather than deleting the
+  // items themselves — losing a tag is recoverable, losing saved content isn't.
+  const deleteCategory = (id) => {
+    setCategories(p => p.filter(c => c.id !== id))
+    setMyIdeas(p => p.map(i => ({ ...i, categoryIds: i.categoryIds.filter(cid => cid !== id) })))
+    setGroupItems(p => p.map(i => ({ ...i, categoryIds: i.categoryIds.filter(cid => cid !== id) })))
+  }
+
+  // Items are stored flat with a `categoryIds` array so a single item can be
+  // tagged into more than one category view (see MyIdeasCategoryScreen /
+  // GroupCategoryScreen, which filter by `categoryIds.includes(cat.id)`).
+  const saveToMyIdeas = ({ title, note, link, platform, categoryIds, hasPhoto, photo }) => {
+    const item = { id: `i-${Date.now()}`, title, note, link, platform, categoryIds, hasPhoto: !!hasPhoto, photo: photo || '', savedAt: Date.now() }
+    setMyIdeas(p => [...p, item])
     return item
   }
 
-  const addToGroup = ({ title, platform, categoryId }) => {
+  const addToGroup = ({ title, note, link, platform, categoryIds, hasPhoto, photo }) => {
     const item = {
-      id: `g-${Date.now()}`, title, platform, categoryId,
+      id: `g-${Date.now()}`, title, note, link, platform, categoryIds, hasPhoto: !!hasPhoto, photo: photo || '',
       savedBy: userName, savedAt: Date.now(), hearts: 0, hearted: false,
     }
-    setGroupItems(p => ({ ...p, [categoryId]: [...(p[categoryId] || []), item] }))
+    setGroupItems(p => [...p, item])
     return item
   }
 
-  const toggleHeart = (categoryId, itemId) => {
-    setGroupItems(p => ({
-      ...p,
-      [categoryId]: (p[categoryId] || []).map(i =>
-        i.id === itemId
-          ? { ...i, hearted: !i.hearted, hearts: i.hearted ? i.hearts - 1 : i.hearts + 1 }
-          : i
-      ),
-    }))
+  const toggleHeart = (itemId) => {
+    setGroupItems(p => p.map(i =>
+      i.id === itemId
+        ? { ...i, hearted: !i.hearted, hearts: i.hearted ? i.hearts - 1 : i.hearts + 1 }
+        : i
+    ))
   }
 
-  const deleteMyIdea = (categoryId, itemId) => {
-    setMyIdeas(p => ({ ...p, [categoryId]: (p[categoryId] || []).filter(i => i.id !== itemId) }))
+  const deleteMyIdea = (itemId) => {
+    setMyIdeas(p => p.filter(i => i.id !== itemId))
   }
 
-  const deleteGroupItem = (categoryId, itemId) => {
-    setGroupItems(p => ({ ...p, [categoryId]: (p[categoryId] || []).filter(i => i.id !== itemId) }))
+  const deleteGroupItem = (itemId) => {
+    setGroupItems(p => p.filter(i => i.id !== itemId))
   }
 
-  // Moves the item to `updates.categoryId` if it differs from `categoryId`.
-  const updateMyIdea = (categoryId, itemId, updates) => {
-    setMyIdeas(p => {
-      const current = p[categoryId] || []
-      const item = current.find(i => i.id === itemId)
-      if (!item) return p
-      const updatedItem = { ...item, ...updates }
-      const newCategoryId = updates.categoryId || categoryId
-      if (newCategoryId === categoryId) {
-        return { ...p, [categoryId]: current.map(i => i.id === itemId ? updatedItem : i) }
-      }
-      return {
-        ...p,
-        [categoryId]: current.filter(i => i.id !== itemId),
-        [newCategoryId]: [...(p[newCategoryId] || []), updatedItem],
-      }
-    })
+  const updateMyIdea = (itemId, updates) => {
+    setMyIdeas(p => p.map(i => i.id === itemId ? { ...i, ...updates } : i))
   }
 
-  const updateGroupItem = (categoryId, itemId, updates) => {
-    setGroupItems(p => {
-      const current = p[categoryId] || []
-      const item = current.find(i => i.id === itemId)
-      if (!item) return p
-      const updatedItem = { ...item, ...updates }
-      const newCategoryId = updates.categoryId || categoryId
-      if (newCategoryId === categoryId) {
-        return { ...p, [categoryId]: current.map(i => i.id === itemId ? updatedItem : i) }
-      }
-      return {
-        ...p,
-        [categoryId]: current.filter(i => i.id !== itemId),
-        [newCategoryId]: [...(p[newCategoryId] || []), updatedItem],
-      }
-    })
+  const updateGroupItem = (itemId, updates) => {
+    setGroupItems(p => p.map(i => i.id === itemId ? { ...i, ...updates } : i))
   }
 
-  const startGroupTrip = ({ name, destination, dates, crewMembers, returnTo, returnParams }) => {
-    const me = { id: 'me', name: userName, color: '#D4724A', initial: userName.charAt(0).toUpperCase() }
-    const trip = { id: `t-${Date.now()}`, name, destination, dates, members: [me, ...crewMembers] }
+  const startGroupTrip = ({ name, destination, dates, startDate, crewMembers, returnTo, returnParams }) => {
+    // The creator is added as an already-joined member up front — they never
+    // have to add themselves to their own trip.
+    const me = { id: 'me', name: userName, color: '#D4724A', initial: userName.charAt(0).toUpperCase(), joined: true }
+    const trip = { id: `t-${Date.now()}`, name, destination, dates, startDate: startDate || '', members: [me, ...crewMembers] }
     setTrips(p => [...p, trip])
     setCurrentTripId(trip.id)
     setAppMode('group')
+    // Every trip gets its own named discussion thread instead of a generic
+    // "General" one, pinned so it can't be deleted.
+    addDiscussThread(trip.id, name || 'My Trip', { pinned: true, subtext: `This is ${name || 'your trip'}'s main discussion space.` })
     if (returnTo) {
       setScreen(returnTo)
       setParams(returnParams || {})
@@ -198,9 +186,10 @@ export default function App() {
     setDiscussMessages(p => ({ ...p, [key]: [...(p[key] || []), message] }))
   }
 
-  const addDiscussThread = (tripId, title) => {
+  const addDiscussThread = (tripId, title, opts = {}) => {
     const id = `thread-${Date.now()}`
-    setCustomThreads(p => ({ ...p, [tripId]: [...(p[tripId] || []), { id, title }] }))
+    const thread = { id, title, pinned: !!opts.pinned, subtext: opts.subtext || '' }
+    setCustomThreads(p => ({ ...p, [tripId]: [...(p[tripId] || []), thread] }))
     return id
   }
 
@@ -227,7 +216,7 @@ export default function App() {
     navigate, params, userName, setUserName,
     appMode, myIdeas, groupItems,
     trips, currentTrip, hasGroup,
-    allCategories, addCustomCategory,
+    allCategories, addCustomCategory, renameCategory, deleteCategory,
     saveToMyIdeas, addToGroup, toggleHeart,
     deleteMyIdea, deleteGroupItem, updateMyIdea, updateGroupItem,
     startGroupTrip, openTrip, updateTrip,

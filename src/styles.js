@@ -68,5 +68,6 @@ export const CATEGORY_COLORS = {
   destination:   '#5B8DBE', // soft blue
   accommodation: '#6BAE8A', // soft green
   activities:    '#D9805A', // soft coral
-  travel:        '#9B8AC4', // soft purple
+  transport:     '#9B8AC4', // soft purple
+  food:          '#C2678D', // soft rose
 }

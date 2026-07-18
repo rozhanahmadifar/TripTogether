@@ -1,18 +1,28 @@
 import { COLORS } from '../styles'
+import { truncateName } from '../data'
 import { BackButton } from '../components/BackButton'
 
 export function ShareSuccessScreen({ navigate, params = {}, currentTrip, openTrip, allCategories }) {
-  const cat = allCategories.find(c => c.id === params.categoryId)
+  const sharedCategories = (params.categoryIds || []).map(id => allCategories.find(c => c.id === id)).filter(Boolean)
 
   const goToGroupSpace = () => {
     if (currentTrip) openTrip(currentTrip.id)
     else navigate('groupHome')
   }
 
+  // Back returns to the category the item was just saved into, not the
+  // home screen — the item's still visible there and that's where the
+  // user's attention was.
+  const goBack = () => {
+    const firstCategoryId = params.categoryIds && params.categoryIds[0]
+    if (firstCategoryId) navigate('groupCategory', { categoryId: firstCategoryId, backTo: 'groupHome' })
+    else navigate('groupHome')
+  }
+
   return (
     <div className="screen" style={{ background: 'white' }}>
       <div style={{ padding: '12px 20px', display: 'flex', alignItems: 'center', borderBottom: `1px solid ${COLORS.border}` }}>
-        <BackButton onClick={() => navigate('individualHome')} />
+        <BackButton onClick={goBack} />
       </div>
       <div className="screen-scroll" style={{ padding: '32px 28px 48px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         {/* Success icon — gentle upward float */}
@@ -33,13 +43,17 @@ export function ShareSuccessScreen({ navigate, params = {}, currentTrip, openTri
           Added to Group Space
         </h2>
 
-        {cat && (
-          <div style={{
-            background: `${cat.color}22`, borderRadius: 10, padding: '7px 18px', marginBottom: 12,
-          }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: COLORS.charcoal }}>
-              {cat.icon} {cat.label}
-            </span>
+        {sharedCategories.length > 0 && (
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 12 }}>
+            {sharedCategories.map(cat => (
+              <div key={cat.id} style={{
+                background: `${cat.color}22`, borderRadius: 10, padding: '7px 18px',
+              }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: COLORS.charcoal }}>
+                  {cat.icon} {cat.label}
+                </span>
+              </div>
+            ))}
           </div>
         )}
 
@@ -63,7 +77,7 @@ export function ShareSuccessScreen({ navigate, params = {}, currentTrip, openTri
                   }}>
                     {m.initial}
                   </div>
-                  <span style={{ fontSize: 11, color: COLORS.warmGrey, fontWeight: 600 }}>{m.name}</span>
+                  <span style={{ fontSize: 11, color: COLORS.warmGrey, fontWeight: 600 }} title={m.name}>{truncateName(m.name)}</span>
                 </div>
               ))}
             </div>

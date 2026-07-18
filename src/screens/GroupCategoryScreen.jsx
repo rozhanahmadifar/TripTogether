@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { ItemCard } from '../components/ItemCard'
+import { GridTile } from '../components/GridTile'
+import { ViewToggle } from '../components/ViewToggle'
 import { EmptyState } from '../components/EmptyState'
 import { BackButton } from '../components/BackButton'
 import { COLORS, SPACING } from '../styles'
@@ -139,7 +141,7 @@ function CommentSheet({ initialComments, meMember, onAdd, onClose }) {
 export function GroupCategoryScreen({ navigate, params = {}, currentTrip, groupItems, addToGroup, toggleHeart, deleteGroupItem, updateGroupItem, userName, allCategories, openModal, closeModal }) {
   const { categoryId } = params
   const cat = allCategories.find(c => c.id === categoryId) || allCategories[0] || { id: '', icon: '✨', label: 'Ideas', color: '#1E5F5F' }
-  const items = groupItems[cat.id] || []
+  const items = groupItems.filter(i => i.categoryIds.includes(cat.id))
   const tripMembers = currentTrip?.members || []
 
   const contributorNames = [...new Set(items.map(i => i.savedBy))]
@@ -154,6 +156,7 @@ export function GroupCategoryScreen({ navigate, params = {}, currentTrip, groupI
   const nonContributors = tripMembers.filter(m => !contributorNames.includes(m.name))
 
   const [commentsByItem, setCommentsByItem] = useState({})
+  const [view, setView] = useState('list')
 
   const openComments = (item) => {
     const me = getMember(userName)
@@ -172,15 +175,16 @@ export function GroupCategoryScreen({ navigate, params = {}, currentTrip, groupI
     <div className="screen" style={{ background: COLORS.bgGroupSpace }}>
       <div style={{ padding: '16px 20px 14px', display: 'flex', alignItems: 'center', gap: 12, background: 'white', borderBottom: `1px solid ${COLORS.border}` }}>
         <BackButton onClick={() => navigate(params.backTo || 'groupSpace')} />
-        <div>
+        <div style={{ flex: 1 }}>
           <p style={{ fontSize: 19, fontWeight: 800, color: COLORS.teal, letterSpacing: -0.4 }}>
             {cat.icon} {cat.label}
           </p>
           <p style={{ fontSize: 12, color: COLORS.warmGrey, marginTop: 2 }}>Group Space</p>
         </div>
+        {items.length > 0 && <ViewToggle view={view} setView={setView} />}
       </div>
 
-      <div className="screen-scroll" style={{ padding: `16px ${SPACING.screenX}px 32px` }}>
+      <div className="screen-scroll" style={{ padding: `16px ${SPACING.screenX}px ${SPACING.scrollBottomPad}px` }}>
         {/* Contributors card — celebratory, not an audit */}
         <div style={{
           background: 'white', borderRadius: 14, padding: SPACING.cardPad, marginBottom: SPACING.sectionGap,
@@ -228,8 +232,19 @@ export function GroupCategoryScreen({ navigate, params = {}, currentTrip, groupI
             categoryId={cat.id}
             heading={`Nothing in ${cat.label} yet`}
             actionLabel="Add the first item"
-            onAction={() => navigate('saveSomething', { categoryId: cat.id })}
+            onAction={() => navigate('saveSomething', { categoryId: cat.id, mode: 'group', backTo: 'groupCategory', returnParams: { categoryId: cat.id } })}
           />
+        ) : view === 'grid' ? (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
+            {items.map(item => (
+              <GridTile
+                key={item.id}
+                item={item}
+                category={cat}
+                onOpen={() => openComments(item)}
+              />
+            ))}
+          </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: SPACING.cardGap }}>
             {items.map(item => {
@@ -238,19 +253,19 @@ export function GroupCategoryScreen({ navigate, params = {}, currentTrip, groupI
                 <ItemCard
                   key={item.id}
                   item={item}
-                  category={cat}
+                  categories={item.categoryIds.map(id => allCategories.find(c => c.id === id)).filter(Boolean)}
                   contributor={saver}
                   source={item.platform}
-                  description={item.description}
+                  note={item.note}
                   hearts={item.hearts}
                   hearted={item.hearted}
                   previewHeight={110}
                   allCategories={allCategories}
-                  onToggleHeart={() => toggleHeart(cat.id, item.id)}
+                  onToggleHeart={() => toggleHeart(item.id)}
                   onCommentClick={() => openComments(item)}
                   isOwner={item.savedBy === userName}
-                  onDelete={() => deleteGroupItem(cat.id, item.id)}
-                  onSave={(updates) => updateGroupItem(cat.id, item.id, updates)}
+                  onDelete={() => deleteGroupItem(item.id)}
+                  onSave={(updates) => updateGroupItem(item.id, updates)}
                 />
               )
             })}
