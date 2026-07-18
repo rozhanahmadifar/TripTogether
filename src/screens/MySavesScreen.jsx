@@ -2,11 +2,12 @@ import { useState } from 'react'
 import { TEXT, COLORS, SPACING, SHADOW_CARD } from '../styles'
 import { BackButton } from '../components/BackButton'
 import { ActionMenu, PencilIcon, TrashIcon, EyeOffIcon } from '../components/ActionMenu'
+import { ItemCard } from '../components/ItemCard'
 
 // Full My Saves list — the "See all" destination from trip home, mirroring
 // Group Space's full-list screen (all 6 categories, including empty ones,
 // with rename/hide/delete), just themed private instead of shared.
-export function MySavesScreen({ navigate, myIdeas, allCategories, addCustomCategory, renameCategory, deleteCategory, toggleCategoryHidden }) {
+export function MySavesScreen({ navigate, myIdeas, allCategories, addCustomCategory, renameCategory, deleteCategory, toggleCategoryHidden, userName, deleteMyIdea, updateMyIdea }) {
   const [addingSection, setAddingSection] = useState(false)
   const [sectionName, setSectionName]     = useState('')
   const [menuCat, setMenuCat]             = useState(null)
@@ -16,6 +17,19 @@ export function MySavesScreen({ navigate, myIdeas, allCategories, addCustomCateg
   const [hiddenOpen, setHiddenOpen]       = useState(false)
   const visibleCategories = allCategories.filter(c => !c.hidden)
   const hiddenCategories = allCategories.filter(c => c.hidden)
+  const me = { name: userName || 'You', color: COLORS.teal, initial: (userName || 'You').charAt(0).toUpperCase() }
+
+  // Sections collapse by default once more than 1-2 categories have items —
+  // a short list stays open, a long one doesn't dump everything on screen.
+  const [expandedIds, setExpandedIds] = useState(() => {
+    const withItems = visibleCategories.filter(cat => myIdeas.some(i => i.categoryIds.includes(cat.id)))
+    return new Set(withItems.length > 2 ? [] : withItems.map(c => c.id))
+  })
+  const toggleExpand = (id) => setExpandedIds(prev => {
+    const next = new Set(prev)
+    if (next.has(id)) next.delete(id); else next.add(id)
+    return next
+  })
 
   const handleAddSection = () => {
     if (!sectionName.trim()) return
@@ -56,75 +70,113 @@ export function MySavesScreen({ navigate, myIdeas, allCategories, addCustomCateg
           background: COLORS.cardBg, borderRadius: 16, overflow: 'hidden',
           boxShadow: SHADOW_CARD,
         }}>
-          {visibleCategories.map((cat, i) => {
-            const count = myIdeas.filter(item => item.categoryIds.includes(cat.id)).length
+          {visibleCategories.map((cat) => {
+            const items = myIdeas.filter(item => item.categoryIds.includes(cat.id))
             const isRenaming = renamingId === cat.id
+            const isExpanded = expandedIds.has(cat.id)
             return (
-              <div
-                key={cat.id}
-                style={{
-                  display: 'flex', alignItems: 'center',
-                  borderBottom: `1px solid ${COLORS.borderLight}`,
-                }}
-              >
-                <div style={{
-                  width: 42, height: 42, borderRadius: '50%',
-                  background: `${cat.color}2A`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 18, flexShrink: 0, marginLeft: 16,
-                }}>
-                  {cat.icon}
+              <div key={cat.id} style={{ borderBottom: `1px solid ${COLORS.borderLight}` }}>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <div style={{
+                    width: 42, height: 42, borderRadius: '50%',
+                    background: `${cat.color}2A`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 18, flexShrink: 0, marginLeft: 16,
+                  }}>
+                    {cat.icon}
+                  </div>
+
+                  {isRenaming ? (
+                    <div style={{ flex: 1, display: 'flex', gap: 8, padding: '10px 8px 10px 12px' }}>
+                      <input
+                        autoFocus
+                        value={renameValue}
+                        onChange={e => setRenameValue(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') confirmRename(); if (e.key === 'Escape') cancelRename() }}
+                        style={{
+                          flex: 1, height: 36, borderRadius: 8,
+                          border: `1.5px solid ${COLORS.teal}`, padding: '0 10px',
+                          fontSize: 14, color: COLORS.charcoal, background: COLORS.bgMyIdeas, fontFamily: 'inherit',
+                        }}
+                      />
+                      <button onClick={confirmRename} style={{ background: COLORS.teal, color: 'white', border: 'none', borderRadius: 8, padding: '0 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Save</button>
+                      <button onClick={cancelRename} style={{ background: 'none', border: 'none', color: COLORS.warmGrey, fontSize: 18, cursor: 'pointer', padding: '0 4px' }}>×</button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => toggleExpand(cat.id)}
+                      style={{
+                        flex: 1, border: 'none', background: 'none', cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', gap: 14,
+                        padding: '16px 8px 16px 14px', textAlign: 'left', minWidth: 0,
+                      }}
+                    >
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ ...TEXT.categoryRowName, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {cat.label}
+                        </p>
+                        <p style={{ ...TEXT.categoryRowSubtext, marginTop: 2 }}>
+                          {items.length === 0 ? 'Nothing added yet' : `${items.length} ${items.length === 1 ? 'item' : 'items'}`}
+                        </p>
+                      </div>
+                      <span style={{ fontSize: 13, color: '#D6CCBF', flexShrink: 0 }}>{isExpanded ? '▾' : '▸'}</span>
+                    </button>
+                  )}
+
+                  {!isRenaming && (
+                    <button
+                      onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect()
+                        setMenuCat({ cat, anchor: { top: rect.top, left: rect.left, width: rect.width, height: rect.height } })
+                      }}
+                      style={{
+                        border: 'none', background: 'none', cursor: 'pointer',
+                        padding: '16px', fontSize: 15, color: '#D6CCBF', flexShrink: 0,
+                      }}
+                    >
+                      ⋯
+                    </button>
+                  )}
                 </div>
 
-                {isRenaming ? (
-                  <div style={{ flex: 1, display: 'flex', gap: 8, padding: '10px 8px 10px 12px' }}>
-                    <input
-                      autoFocus
-                      value={renameValue}
-                      onChange={e => setRenameValue(e.target.value)}
-                      onKeyDown={e => { if (e.key === 'Enter') confirmRename(); if (e.key === 'Escape') cancelRename() }}
+                {/* Expanded content — items inline, no navigating away */}
+                {isExpanded && (
+                  <div style={{ padding: '0 14px 16px' }}>
+                    {items.length === 0 ? (
+                      <p style={{ fontSize: 13, color: COLORS.warmGrey, fontStyle: 'italic', padding: '4px 0 10px' }}>
+                        Nothing added yet.
+                      </p>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: SPACING.cardGap, marginBottom: 10 }}>
+                        {items.map(item => (
+                          <ItemCard
+                            key={item.id}
+                            item={item}
+                            categories={item.categoryIds.map(id => allCategories.find(c => c.id === id)).filter(Boolean)}
+                            contributor={me}
+                            source={item.platform}
+                            note={item.note}
+                            previewHeight={100}
+                            allCategories={allCategories}
+                            hideFooter
+                            onOpen={() => navigate('itemDetail', { itemId: item.id, categoryId: cat.id, backTo: 'mySaves' })}
+                            onDelete={() => deleteMyIdea(item.id)}
+                            onSave={(updates) => updateMyIdea(item.id, updates)}
+                          />
+                        ))}
+                      </div>
+                    )}
+                    <button
+                      onClick={() => navigate('saveSomething', { categoryId: cat.id, backTo: 'mySaves' })}
                       style={{
-                        flex: 1, height: 36, borderRadius: 8,
-                        border: `1.5px solid ${COLORS.teal}`, padding: '0 10px',
-                        fontSize: 14, color: COLORS.charcoal, background: COLORS.bgMyIdeas, fontFamily: 'inherit',
+                        width: '100%', minHeight: 40, background: 'transparent',
+                        border: `1.5px dashed #D6CCBF`, borderRadius: 10, cursor: 'pointer',
+                        fontSize: 13, fontWeight: 600, color: COLORS.warmGrey,
                       }}
-                    />
-                    <button onClick={confirmRename} style={{ background: COLORS.teal, color: 'white', border: 'none', borderRadius: 8, padding: '0 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Save</button>
-                    <button onClick={cancelRename} style={{ background: 'none', border: 'none', color: COLORS.warmGrey, fontSize: 18, cursor: 'pointer', padding: '0 4px' }}>×</button>
+                    >
+                      + Save something to {cat.label}
+                    </button>
                   </div>
-                ) : (
-                  <button
-                    onClick={() => navigate('myIdeasCategory', { categoryId: cat.id, backTo: 'mySaves' })}
-                    style={{
-                      flex: 1, border: 'none', background: 'none', cursor: 'pointer',
-                      display: 'flex', alignItems: 'center', gap: 14,
-                      padding: '16px 8px 16px 14px', textAlign: 'left', minWidth: 0,
-                    }}
-                  >
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ ...TEXT.categoryRowName, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {cat.label}
-                      </p>
-                      <p style={{ ...TEXT.categoryRowSubtext, marginTop: 2 }}>
-                        {count === 0 ? 'Nothing added yet' : `${count} ${count === 1 ? 'item' : 'items'}`}
-                      </p>
-                    </div>
-                  </button>
-                )}
-
-                {!isRenaming && (
-                  <button
-                    onClick={(e) => {
-                      const rect = e.currentTarget.getBoundingClientRect()
-                      setMenuCat({ cat, anchor: { top: rect.top, left: rect.left, width: rect.width, height: rect.height } })
-                    }}
-                    style={{
-                      border: 'none', background: 'none', cursor: 'pointer',
-                      padding: '16px', fontSize: 15, color: '#D6CCBF', flexShrink: 0,
-                    }}
-                  >
-                    ⋯
-                  </button>
                 )}
               </div>
             )

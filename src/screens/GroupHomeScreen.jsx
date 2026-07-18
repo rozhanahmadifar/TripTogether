@@ -349,7 +349,7 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
             have to guess which thread in the global Discuss tab is theirs. */}
         {pinnedThread && (
           <button
-            onClick={() => navigate('discussThread', { threadId: pinnedThread.id })}
+            onClick={() => navigate('discussThread', { threadId: pinnedThread.id, backTo: 'groupHome' })}
             style={{
               width: '100%', display: 'flex', alignItems: 'center', gap: 12,
               background: COLORS.cardBg, borderRadius: 14, boxShadow: SHADOW_CARD,

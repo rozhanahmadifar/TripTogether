@@ -44,7 +44,7 @@ export function DiscussThreadScreen({ navigate, params = {}, currentTrip, userNa
         padding: '16px 20px 14px', display: 'flex', alignItems: 'center',
         borderBottom: `1px solid ${COLORS.border}`,
       }}>
-        <BackButton onClick={() => navigate('discuss')} />
+        <BackButton onClick={() => navigate(params.backTo || 'discuss')} />
         <p style={{ flex: 1, textAlign: 'center', fontSize: 18, fontWeight: 600, color: COLORS.charcoal }}>
           {thread.title}
         </p>

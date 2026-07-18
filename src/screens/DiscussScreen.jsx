@@ -197,7 +197,7 @@ export function DiscussScreen({ navigate, currentTrip, discussMessages, customTh
               key={thread.id}
               thread={thread}
               messages={getMessages(thread)}
-              onOpen={() => navigate('discussThread', { threadId: thread.id })}
+              onOpen={() => navigate('discussThread', { threadId: thread.id, backTo: 'discuss' })}
               onLongPressPinned={() => showToast(`The ${thread.title} discussion cannot be deleted.`)}
               onDeleteThread={() => deleteDiscussThread(currentTrip.id, thread.id)}
             />

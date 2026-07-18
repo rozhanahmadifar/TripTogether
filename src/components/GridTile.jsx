@@ -60,6 +60,21 @@ export function GridTile({ item, category, onOpen }) {
         </div>
       )}
 
+      {item.starredBy?.length > 0 && (
+        <span
+          title={`Starred by ${item.starredBy.join(', ')}`}
+          style={{
+            position: 'absolute', top: 8, left: 8,
+            width: 24, height: 24, borderRadius: '50%',
+            background: '#F2C94C', color: 'white',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 12, boxShadow: '0 2px 6px rgba(0,0,0,0.18)',
+          }}
+        >
+          ⭐
+        </span>
+      )}
+
       <div style={{
         position: 'absolute', left: 0, right: 0, bottom: 0,
         padding: '24px 10px 10px',

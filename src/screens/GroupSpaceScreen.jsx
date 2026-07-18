@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { TEXT, COLORS, SPACING, SHADOW_CARD } from '../styles'
 import { BackButton } from '../components/BackButton'
 import { ActionMenu, PencilIcon, TrashIcon, EyeOffIcon } from '../components/ActionMenu'
+import { ItemCard } from '../components/ItemCard'
+import { CommentSheet, buildSimulatedComments } from '../components/CommentSheet'
 
 // Trip dates are stored as an ISO string (`startDate`) alongside the
 // human-readable label (`dates`) so we can compute a real countdown here.
@@ -20,7 +22,10 @@ function countdownLabel(days) {
   return 'Trip underway'
 }
 
-export function GroupSpaceScreen({ navigate, currentTrip, groupItems, allCategories, addCustomCategory, renameCategory, deleteCategory, toggleCategoryHidden }) {
+export function GroupSpaceScreen({
+  navigate, currentTrip, groupItems, allCategories, addCustomCategory, renameCategory, deleteCategory, toggleCategoryHidden,
+  userName, toggleHeart, toggleStar, deleteGroupItem, updateGroupItem, openModal, closeModal,
+}) {
   const tripMembers = currentTrip?.members || []
   const [addingSection, setAddingSection] = useState(false)
   const [sectionName, setSectionName]     = useState('')
@@ -29,12 +34,48 @@ export function GroupSpaceScreen({ navigate, currentTrip, groupItems, allCategor
   const [renameValue, setRenameValue]     = useState('')
   const [deletingCat, setDeletingCat]     = useState(null)
   const [hiddenOpen, setHiddenOpen]       = useState(false)
+  const [commentsByItem, setCommentsByItem] = useState({})
   const visibleCategories = allCategories.filter(c => !c.hidden)
   const hiddenCategories = allCategories.filter(c => c.hidden)
+
+  // Sections collapse by default once more than 1-2 categories have items —
+  // a short list stays open, a long one doesn't dump everything on screen.
+  const [expandedIds, setExpandedIds] = useState(() => {
+    const withItems = visibleCategories.filter(cat => groupItems.some(i => i.categoryIds.includes(cat.id)))
+    return new Set(withItems.length > 2 ? [] : withItems.map(c => c.id))
+  })
+  const toggleExpand = (id) => setExpandedIds(prev => {
+    const next = new Set(prev)
+    if (next.has(id)) next.delete(id); else next.add(id)
+    return next
+  })
 
   const getContributors = (categoryId) => {
     const items = groupItems.filter(i => i.categoryIds.includes(categoryId))
     return [...new Set(items.map(i => i.savedBy))]
+  }
+
+  const getMember = (name) => {
+    const found = tripMembers.find(m => m.name === name)
+    if (found) return found
+    if (name === userName) return { name, color: COLORS.terracotta, initial: name.charAt(0).toUpperCase() }
+    return { name, color: '#B5AA9C', initial: name.charAt(0).toUpperCase() }
+  }
+
+  const openComments = (item) => {
+    const me = getMember(userName)
+    const simulated = buildSimulatedComments(tripMembers, userName)
+    openModal(
+      <CommentSheet
+        initialComments={commentsByItem[item.id] || simulated}
+        meMember={me}
+        onAdd={(c) => setCommentsByItem(prev => ({ ...prev, [item.id]: [...(prev[item.id] || simulated), c] }))}
+        onClose={closeModal}
+        item={item}
+        starred={(item.starredBy || []).includes(userName)}
+        onToggleStar={() => toggleStar(item.id)}
+      />
+    )
   }
 
   const handleAddSection = () => {
@@ -105,10 +146,11 @@ export function GroupSpaceScreen({ navigate, currentTrip, groupItems, allCategor
         {/* Per-category progress — one lightweight line each */}
         <div style={{ marginBottom: SPACING.sectionGap }}>
           {visibleCategories.map(cat => {
-            const count = groupItems.filter(i => i.categoryIds.includes(cat.id)).length
+            const items = groupItems.filter(i => i.categoryIds.includes(cat.id))
+            const starredCount = items.filter(i => (i.starredBy || []).length > 0).length
             return (
               <p key={cat.id} style={{ fontSize: 12, color: COLORS.warmGrey, lineHeight: 1.7 }}>
-                {cat.icon} <span style={{ fontWeight: 700, color: COLORS.charcoal }}>{cat.label}</span> — {count === 0 ? 'nothing added yet' : `${count} ${count === 1 ? 'idea' : 'ideas'}, nothing decided yet`}
+                {cat.icon} <span style={{ fontWeight: 700, color: COLORS.charcoal }}>{cat.label}</span> — {items.length === 0 ? 'nothing added yet' : `${items.length} ${items.length === 1 ? 'idea' : 'ideas'}, ${starredCount} starred`}
               </p>
             )
           })}
@@ -118,96 +160,143 @@ export function GroupSpaceScreen({ navigate, currentTrip, groupItems, allCategor
           background: COLORS.cardBg, borderRadius: 16, overflow: 'hidden',
           boxShadow: SHADOW_CARD,
         }}>
-          {visibleCategories.map((cat, i) => {
+          {visibleCategories.map((cat) => {
             const contributors = getContributors(cat.id)
-            const count = groupItems.filter(i => i.categoryIds.includes(cat.id)).length
+            const items = groupItems.filter(i => i.categoryIds.includes(cat.id))
             const isRenaming = renamingId === cat.id
+            const isExpanded = expandedIds.has(cat.id)
             return (
-              <div
-                key={cat.id}
-                style={{
-                  display: 'flex', alignItems: 'center',
-                  borderBottom: `1px solid ${COLORS.borderLight}`,
-                }}
-              >
-                <div style={{
-                  width: 42, height: 42, borderRadius: '50%',
-                  background: `${cat.color}2A`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 18, flexShrink: 0, marginLeft: 16,
-                }}>
-                  {cat.icon}
+              <div key={cat.id} style={{ borderBottom: `1px solid ${COLORS.borderLight}` }}>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <div style={{
+                    width: 42, height: 42, borderRadius: '50%',
+                    background: `${cat.color}2A`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 18, flexShrink: 0, marginLeft: 16,
+                  }}>
+                    {cat.icon}
+                  </div>
+
+                  {isRenaming ? (
+                    <div style={{ flex: 1, display: 'flex', gap: 8, padding: '10px 8px 10px 12px' }}>
+                      <input
+                        autoFocus
+                        value={renameValue}
+                        onChange={e => setRenameValue(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') confirmRename(); if (e.key === 'Escape') cancelRename() }}
+                        style={{
+                          flex: 1, height: 36, borderRadius: 8,
+                          border: `1.5px solid ${COLORS.teal}`, padding: '0 10px',
+                          fontSize: 14, color: COLORS.charcoal, background: COLORS.bgGroupSpace, fontFamily: 'inherit',
+                        }}
+                      />
+                      <button onClick={confirmRename} style={{ background: COLORS.teal, color: 'white', border: 'none', borderRadius: 8, padding: '0 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Save</button>
+                      <button onClick={cancelRename} style={{ background: 'none', border: 'none', color: COLORS.warmGrey, fontSize: 18, cursor: 'pointer', padding: '0 4px' }}>×</button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => toggleExpand(cat.id)}
+                      style={{
+                        flex: 1, border: 'none', background: 'none', cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', gap: 14,
+                        padding: '16px 8px 16px 14px', textAlign: 'left', minWidth: 0,
+                      }}
+                    >
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ ...TEXT.categoryRowName, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {cat.label}
+                        </p>
+                        <p style={{ ...TEXT.categoryRowSubtext, marginTop: 2 }}>
+                          {items.length === 0 ? 'Nothing added yet' : `${items.length} ${items.length === 1 ? 'item' : 'items'}`}
+                        </p>
+                      </div>
+
+                      {contributors.length > 0 && (
+                        <div style={{ display: 'flex', marginRight: 4, flexShrink: 0 }}>
+                          {contributors.slice(0, 4).map((name, idx) => {
+                            const member = tripMembers.find(m => m.name === name)
+                            return (
+                              <div key={idx} style={{
+                                width: 26, height: 26, borderRadius: '50%',
+                                background: member?.color || COLORS.terracotta,
+                                border: '2px solid white',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                fontSize: 9, fontWeight: 700, color: 'white',
+                                marginLeft: idx > 0 ? -7 : 0,
+                              }}>
+                                {name.charAt(0).toUpperCase()}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      )}
+                      <span style={{ fontSize: 13, color: '#D6CCBF', flexShrink: 0 }}>{isExpanded ? '▾' : '▸'}</span>
+                    </button>
+                  )}
+
+                  {!isRenaming && (
+                    <button
+                      onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect()
+                        setMenuCat({ cat, anchor: { top: rect.top, left: rect.left, width: rect.width, height: rect.height } })
+                      }}
+                      style={{
+                        border: 'none', background: 'none', cursor: 'pointer',
+                        padding: '16px', fontSize: 15, color: '#D6CCBF', flexShrink: 0,
+                      }}
+                    >
+                      ⋯
+                    </button>
+                  )}
                 </div>
 
-                {isRenaming ? (
-                  <div style={{ flex: 1, display: 'flex', gap: 8, padding: '10px 8px 10px 12px' }}>
-                    <input
-                      autoFocus
-                      value={renameValue}
-                      onChange={e => setRenameValue(e.target.value)}
-                      onKeyDown={e => { if (e.key === 'Enter') confirmRename(); if (e.key === 'Escape') cancelRename() }}
-                      style={{
-                        flex: 1, height: 36, borderRadius: 8,
-                        border: `1.5px solid ${COLORS.teal}`, padding: '0 10px',
-                        fontSize: 14, color: COLORS.charcoal, background: COLORS.bgGroupSpace, fontFamily: 'inherit',
-                      }}
-                    />
-                    <button onClick={confirmRename} style={{ background: COLORS.teal, color: 'white', border: 'none', borderRadius: 8, padding: '0 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Save</button>
-                    <button onClick={cancelRename} style={{ background: 'none', border: 'none', color: COLORS.warmGrey, fontSize: 18, cursor: 'pointer', padding: '0 4px' }}>×</button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => navigate('groupCategory', { categoryId: cat.id, backTo: 'groupSpace' })}
-                    style={{
-                      flex: 1, border: 'none', background: 'none', cursor: 'pointer',
-                      display: 'flex', alignItems: 'center', gap: 14,
-                      padding: '16px 8px 16px 14px', textAlign: 'left', minWidth: 0,
-                    }}
-                  >
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ ...TEXT.categoryRowName, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {cat.label}
+                {/* Expanded content — items inline, no navigating away */}
+                {isExpanded && (
+                  <div style={{ padding: '0 14px 16px' }}>
+                    {items.length === 0 ? (
+                      <p style={{ fontSize: 13, color: COLORS.warmGrey, fontStyle: 'italic', padding: '4px 0 10px' }}>
+                        Nothing added yet.
                       </p>
-                      <p style={{ ...TEXT.categoryRowSubtext, marginTop: 2 }}>
-                        {count === 0 ? 'Nothing added yet' : `${count} ${count === 1 ? 'item' : 'items'}`}
-                      </p>
-                    </div>
-
-                    {contributors.length > 0 && (
-                      <div style={{ display: 'flex', marginRight: 4, flexShrink: 0 }}>
-                        {contributors.slice(0, 4).map((name, idx) => {
-                          const member = tripMembers.find(m => m.name === name)
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: SPACING.cardGap, marginBottom: 10 }}>
+                        {items.map(item => {
+                          const saver = getMember(item.savedBy)
                           return (
-                            <div key={idx} style={{
-                              width: 26, height: 26, borderRadius: '50%',
-                              background: member?.color || COLORS.terracotta,
-                              border: '2px solid white',
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              fontSize: 9, fontWeight: 700, color: 'white',
-                              marginLeft: idx > 0 ? -7 : 0,
-                            }}>
-                              {name.charAt(0).toUpperCase()}
-                            </div>
+                            <ItemCard
+                              key={item.id}
+                              item={item}
+                              categories={item.categoryIds.map(id => allCategories.find(c => c.id === id)).filter(Boolean)}
+                              contributor={saver}
+                              source={item.platform}
+                              note={item.note}
+                              hearts={item.hearts}
+                              hearted={item.hearted}
+                              starred={(item.starredBy || []).includes(userName)}
+                              starredBy={item.starredBy || []}
+                              onToggleStar={() => toggleStar(item.id)}
+                              previewHeight={110}
+                              allCategories={allCategories}
+                              onToggleHeart={() => toggleHeart(item.id)}
+                              onCommentClick={() => openComments(item)}
+                              isOwner={item.savedBy === userName}
+                              onDelete={() => deleteGroupItem(item.id)}
+                              onSave={(updates) => updateGroupItem(item.id, updates)}
+                            />
                           )
                         })}
                       </div>
                     )}
-                  </button>
-                )}
-
-                {!isRenaming && (
-                  <button
-                    onClick={(e) => {
-                      const rect = e.currentTarget.getBoundingClientRect()
-                      setMenuCat({ cat, anchor: { top: rect.top, left: rect.left, width: rect.width, height: rect.height } })
-                    }}
-                    style={{
-                      border: 'none', background: 'none', cursor: 'pointer',
-                      padding: '16px', fontSize: 15, color: '#D6CCBF', flexShrink: 0,
-                    }}
-                  >
-                    ⋯
-                  </button>
+                    <button
+                      onClick={() => navigate('saveSomething', { categoryId: cat.id, mode: 'group', backTo: 'groupSpace' })}
+                      style={{
+                        width: '100%', minHeight: 40, background: 'transparent',
+                        border: `1.5px dashed #D6CCBF`, borderRadius: 10, cursor: 'pointer',
+                        fontSize: 13, fontWeight: 600, color: COLORS.warmGrey,
+                      }}
+                    >
+                      + Add to {cat.label}
+                    </button>
+                  </div>
                 )}
               </div>
             )

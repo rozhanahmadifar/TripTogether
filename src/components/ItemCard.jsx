@@ -138,7 +138,7 @@ function EditForm({ item, categories, allCategories, onCancel, onSave }) {
 
 // FIX 4 — consistent item card structure: coloured preview zone with source
 // badge, contributor + title + description, then a heart/comment footer.
-export function ItemCard({ item, categories, contributor, source, note, hearts = 0, hearted = false, onToggleHeart, onCommentClick, onOpen, previewHeight = 100, isOwner = true, onDelete, onSave, allCategories = [], hideFooter = false }) {
+export function ItemCard({ item, categories, contributor, source, note, hearts = 0, hearted = false, onToggleHeart, onCommentClick, onOpen, previewHeight = 100, isOwner = true, onDelete, onSave, allCategories = [], hideFooter = false, starred = false, starredBy = [], onToggleStar }) {
   const TopTag = onOpen ? 'button' : 'div'
   const primaryCategory = (categories && categories[0]) || { icon: '✨', color: COLORS.teal }
   const [pulsing, setPulsing] = useState(false)
@@ -228,6 +228,20 @@ export function ItemCard({ item, categories, contributor, source, note, hearts =
                   {source}
                 </span>
               )}
+              {starredBy.length > 0 && (
+                <span
+                  title={`Starred by ${starredBy.join(', ')}`}
+                  style={{
+                    position: 'absolute', bottom: 10, right: 10,
+                    width: 26, height: 26, borderRadius: '50%',
+                    background: '#F2C94C', color: 'white',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 13, boxShadow: '0 2px 6px rgba(0,0,0,0.18)',
+                  }}
+                >
+                  ⭐
+                </span>
+              )}
             </div>
 
             {/* Middle zone */}
@@ -290,6 +304,12 @@ export function ItemCard({ item, categories, contributor, source, note, hearts =
                     </span>
                   ))}
                 </div>
+              )}
+
+              {starredBy.length > 0 && (
+                <p style={{ fontSize: 12, color: '#B8860B', fontWeight: 600, marginTop: 8 }}>
+                  ⭐ Starred by {starredBy.join(', ')}
+                </p>
               )}
             </div>
           </TopTag>
@@ -360,6 +380,19 @@ export function ItemCard({ item, categories, contributor, source, note, hearts =
             >
               <span className={pulsing ? 'heart-pulse' : ''} style={{ fontSize: 16 }}>{hearted ? '❤️' : '🤍'}</span>
               <span style={{ fontSize: 13, fontWeight: 600, color: hearted ? COLORS.terracotta : COLORS.warmGrey }}>{hearts}</span>
+            </button>
+            <button
+              onClick={onToggleStar}
+              disabled={!onToggleStar}
+              title={starred ? 'Remove your star' : 'Star this'}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 4,
+                background: 'none', border: 'none',
+                cursor: onToggleStar ? 'pointer' : 'default',
+                padding: '10px 8px', borderRadius: 8, minHeight: 40,
+              }}
+            >
+              <span style={{ fontSize: 16 }}>{starred ? '⭐' : '☆'}</span>
             </button>
             <button
               onClick={onCommentClick}

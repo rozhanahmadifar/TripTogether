@@ -131,7 +131,7 @@ export default function App() {
   const addToGroup = ({ title, note, link, platform, categoryIds, hasPhoto, photo }) => {
     const item = {
       id: `g-${Date.now()}`, title, note, link, platform, categoryIds, hasPhoto: !!hasPhoto, photo: photo || '',
-      savedBy: userName, savedAt: Date.now(), hearts: 0, hearted: false,
+      savedBy: userName, savedAt: Date.now(), hearts: 0, hearted: false, starredBy: [],
     }
     setGroupItems(p => [...p, item])
     return item
@@ -143,6 +143,18 @@ export default function App() {
         ? { ...i, hearted: !i.hearted, hearts: i.hearted ? i.hearts - 1 : i.hearts + 1 }
         : i
     ))
+  }
+
+  // Any number of members can star an item — it's per-member attribution
+  // (who starred it), not a single "decided" flag, so multiple things in a
+  // category can all be starred at once.
+  const toggleStar = (itemId) => {
+    setGroupItems(p => p.map(i => {
+      if (i.id !== itemId) return i
+      const starredBy = i.starredBy || []
+      const already = starredBy.includes(userName)
+      return { ...i, starredBy: already ? starredBy.filter(n => n !== userName) : [...starredBy, userName] }
+    }))
   }
 
   const deleteMyIdea = (itemId) => {
@@ -228,7 +240,7 @@ export default function App() {
     appMode, myIdeas, groupItems,
     trips, currentTrip, hasGroup,
     allCategories, addCustomCategory, renameCategory, deleteCategory, toggleCategoryHidden,
-    saveToMyIdeas, addToGroup, toggleHeart,
+    saveToMyIdeas, addToGroup, toggleHeart, toggleStar,
     deleteMyIdea, deleteGroupItem, updateMyIdea, updateGroupItem,
     startGroupTrip, openTrip, updateTrip,
     openModal, closeModal,
