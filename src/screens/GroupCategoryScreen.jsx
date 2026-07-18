@@ -4,10 +4,9 @@ import { GridTile } from '../components/GridTile'
 import { ViewToggle } from '../components/ViewToggle'
 import { EmptyState } from '../components/EmptyState'
 import { BackButton } from '../components/BackButton'
-import { CommentSheet, buildSimulatedComments } from '../components/CommentSheet'
 import { COLORS, SPACING } from '../styles'
 
-export function GroupCategoryScreen({ navigate, params = {}, currentTrip, groupItems, addToGroup, toggleHeart, toggleStar, deleteGroupItem, updateGroupItem, userName, allCategories, openModal, closeModal }) {
+export function GroupCategoryScreen({ navigate, params = {}, currentTrip, groupItems, addToGroup, toggleHeart, toggleStar, deleteGroupItem, updateGroupItem, userName, allCategories }) {
   const { categoryId } = params
   const cat = allCategories.find(c => c.id === categoryId) || allCategories[0] || { id: '', icon: '✨', label: 'Ideas', color: '#1E5F5F' }
   const items = groupItems.filter(i => i.categoryIds.includes(cat.id))
@@ -24,24 +23,7 @@ export function GroupCategoryScreen({ navigate, params = {}, currentTrip, groupI
 
   const nonContributors = tripMembers.filter(m => !contributorNames.includes(m.name))
 
-  const [commentsByItem, setCommentsByItem] = useState({})
   const [view, setView] = useState('list')
-
-  const openComments = (item) => {
-    const me = getMember(userName)
-    const simulated = buildSimulatedComments(tripMembers, userName)
-    openModal(
-      <CommentSheet
-        initialComments={commentsByItem[item.id] || simulated}
-        meMember={me}
-        onAdd={(c) => setCommentsByItem(prev => ({ ...prev, [item.id]: [...(prev[item.id] || simulated), c] }))}
-        onClose={closeModal}
-        item={item}
-        starred={(item.starredBy || []).includes(userName)}
-        onToggleStar={() => toggleStar(item.id)}
-      />
-    )
-  }
 
   return (
     <div className="screen" style={{ background: COLORS.bgGroupSpace }}>
@@ -113,7 +95,7 @@ export function GroupCategoryScreen({ navigate, params = {}, currentTrip, groupI
                 key={item.id}
                 item={item}
                 category={cat}
-                onOpen={() => openComments(item)}
+                onOpen={() => toggleStar(item.id)}
               />
             ))}
           </div>
@@ -137,7 +119,6 @@ export function GroupCategoryScreen({ navigate, params = {}, currentTrip, groupI
                   previewHeight={110}
                   allCategories={allCategories}
                   onToggleHeart={() => toggleHeart(item.id)}
-                  onCommentClick={() => openComments(item)}
                   isOwner={item.savedBy === userName}
                   onDelete={() => deleteGroupItem(item.id)}
                   onSave={(updates) => updateGroupItem(item.id, updates)}

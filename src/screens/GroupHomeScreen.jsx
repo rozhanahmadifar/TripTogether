@@ -98,13 +98,17 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
   const pinnedThread = (customThreads?.[currentTrip.id] || []).find(t => t.pinned)
   const visibleCategories = allCategories.filter(c => !c.hidden)
 
-  // Trip home is a compact preview — only categories that actually have
-  // something in them, plus a one-line summary. The full 6-category list
-  // (including empty ones) lives behind "See all" instead.
-  const groupCategoriesWithItems = visibleCategories.filter(cat => groupItems.some(i => i.categoryIds.includes(cat.id)))
-  const savesCategoriesWithItems = visibleCategories.filter(cat => myIdeas.some(i => i.categoryIds.includes(cat.id)))
-  const summaryLine = (items, categories) =>
-    `${items.length} ${items.length === 1 ? 'item' : 'items'} across ${categories.length} ${categories.length === 1 ? 'category' : 'categories'}`
+  // Trip home is a compact preview, capped to the top 3 most-active
+  // categories — otherwise a trip with content everywhere would make this
+  // look identical to "See all" and defeat the point of having both. The
+  // full 6-category list (including empty ones) lives behind "See all".
+  const countIn = (items, catId) => items.filter(i => i.categoryIds.includes(catId)).length
+  const topCategories = (items) => visibleCategories
+    .filter(cat => countIn(items, cat.id) > 0)
+    .sort((a, b) => countIn(items, b.id) - countIn(items, a.id))
+    .slice(0, 3)
+  const groupCategoriesWithItems = topCategories(groupItems)
+  const savesCategoriesWithItems = topCategories(myIdeas)
 
   const startEdit = (field, value = '') => { setEditField(field); setEditValue(value) }
   const cancelEdit = () => { setEditField(null); setEditValue(''); setEditDateRange({ start: null, end: null }) }
@@ -389,7 +393,7 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
             </button>
           </div>
           <p style={{ fontSize: 12, color: COLORS.warmGrey, fontStyle: 'italic', marginBottom: 10 }}>
-            {groupItems.length === 0 ? 'Nothing saved yet' : summaryLine(groupItems, groupCategoriesWithItems)}
+            {groupItems.length === 0 ? 'Nothing saved yet' : 'Everyone in the group can see these'}
           </p>
           <div>
             {groupCategoriesWithItems.map((cat, i) => (
@@ -425,7 +429,7 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
             </button>
           </div>
           <p style={{ fontSize: 12, color: COLORS.warmGrey, fontStyle: 'italic', marginBottom: 10 }}>
-            {myIdeas.length === 0 ? 'Nothing saved yet' : summaryLine(myIdeas, savesCategoriesWithItems)}
+            {myIdeas.length === 0 ? 'Nothing saved yet' : 'Private, only you can see these'}
           </p>
           <div>
             {savesCategoriesWithItems.map((cat, i) => (

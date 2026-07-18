@@ -138,7 +138,7 @@ function EditForm({ item, categories, allCategories, onCancel, onSave }) {
 
 // FIX 4 — consistent item card structure: coloured preview zone with source
 // badge, contributor + title + description, then a heart/comment footer.
-export function ItemCard({ item, categories, contributor, source, note, hearts = 0, hearted = false, onToggleHeart, onCommentClick, onOpen, previewHeight = 100, isOwner = true, onDelete, onSave, allCategories = [], hideFooter = false, starred = false, starredBy = [], onToggleStar }) {
+export function ItemCard({ item, categories, contributor, source, note, hearts = 0, hearted = false, onToggleHeart, onOpen, previewHeight = 100, isOwner = true, onDelete, onSave, allCategories = [], hideFooter = false, starred = false, starredBy = [], onToggleStar }) {
   const TopTag = onOpen ? 'button' : 'div'
   const primaryCategory = (categories && categories[0]) || { icon: '✨', color: COLORS.teal }
   const [pulsing, setPulsing] = useState(false)
@@ -361,12 +361,14 @@ export function ItemCard({ item, categories, contributor, source, note, hearts =
           </div>
         )}
 
-        {/* Bottom zone */}
+        {/* Bottom zone — heart and star only, grouped together on the left
+            like a familiar social-app action row (not spread to opposite
+            corners, which reads as unrelated/ambiguous for just two icons). */}
         {!editing && !hideFooter && (
           <div style={{
             borderTop: `1px solid ${COLORS.borderLight}`,
             padding: '4px 10px 4px 16px',
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            display: 'flex', alignItems: 'center', gap: 4,
           }}>
             <button
               onClick={handleHeart}
@@ -386,26 +388,14 @@ export function ItemCard({ item, categories, contributor, source, note, hearts =
               disabled={!onToggleStar}
               title={starred ? 'Remove your star' : 'Star this'}
               style={{
-                display: 'flex', alignItems: 'center', gap: 4,
+                display: 'flex', alignItems: 'center', gap: 6,
                 background: 'none', border: 'none',
                 cursor: onToggleStar ? 'pointer' : 'default',
                 padding: '10px 8px', borderRadius: 8, minHeight: 40,
               }}
             >
               <span style={{ fontSize: 16 }}>{starred ? '⭐' : '☆'}</span>
-            </button>
-            <button
-              onClick={onCommentClick}
-              disabled={!onCommentClick}
-              style={{
-                background: 'none', border: 'none',
-                cursor: onCommentClick ? 'pointer' : 'default',
-                padding: '10px 8px', borderRadius: 8, minHeight: 40, minWidth: 40,
-                fontSize: 17, color: COLORS.warmGrey,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}
-            >
-              💬
+              <span style={{ fontSize: 13, fontWeight: 600, color: starred ? '#B8860B' : COLORS.warmGrey }}>{starredBy.length}</span>
             </button>
           </div>
         )}

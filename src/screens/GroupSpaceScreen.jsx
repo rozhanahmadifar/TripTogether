@@ -3,7 +3,6 @@ import { TEXT, COLORS, SPACING, SHADOW_CARD } from '../styles'
 import { BackButton } from '../components/BackButton'
 import { ActionMenu, PencilIcon, TrashIcon, EyeOffIcon } from '../components/ActionMenu'
 import { ItemCard } from '../components/ItemCard'
-import { CommentSheet, buildSimulatedComments } from '../components/CommentSheet'
 
 // Trip dates are stored as an ISO string (`startDate`) alongside the
 // human-readable label (`dates`) so we can compute a real countdown here.
@@ -24,7 +23,7 @@ function countdownLabel(days) {
 
 export function GroupSpaceScreen({
   navigate, currentTrip, groupItems, allCategories, addCustomCategory, renameCategory, deleteCategory, toggleCategoryHidden,
-  userName, toggleHeart, toggleStar, deleteGroupItem, updateGroupItem, openModal, closeModal,
+  userName, toggleHeart, toggleStar, deleteGroupItem, updateGroupItem,
 }) {
   const tripMembers = currentTrip?.members || []
   const [addingSection, setAddingSection] = useState(false)
@@ -34,7 +33,6 @@ export function GroupSpaceScreen({
   const [renameValue, setRenameValue]     = useState('')
   const [deletingCat, setDeletingCat]     = useState(null)
   const [hiddenOpen, setHiddenOpen]       = useState(false)
-  const [commentsByItem, setCommentsByItem] = useState({})
   const visibleCategories = allCategories.filter(c => !c.hidden)
   const hiddenCategories = allCategories.filter(c => c.hidden)
 
@@ -60,22 +58,6 @@ export function GroupSpaceScreen({
     if (found) return found
     if (name === userName) return { name, color: COLORS.terracotta, initial: name.charAt(0).toUpperCase() }
     return { name, color: '#B5AA9C', initial: name.charAt(0).toUpperCase() }
-  }
-
-  const openComments = (item) => {
-    const me = getMember(userName)
-    const simulated = buildSimulatedComments(tripMembers, userName)
-    openModal(
-      <CommentSheet
-        initialComments={commentsByItem[item.id] || simulated}
-        meMember={me}
-        onAdd={(c) => setCommentsByItem(prev => ({ ...prev, [item.id]: [...(prev[item.id] || simulated), c] }))}
-        onClose={closeModal}
-        item={item}
-        starred={(item.starredBy || []).includes(userName)}
-        onToggleStar={() => toggleStar(item.id)}
-      />
-    )
   }
 
   const handleAddSection = () => {
@@ -277,7 +259,6 @@ export function GroupSpaceScreen({
                               previewHeight={110}
                               allCategories={allCategories}
                               onToggleHeart={() => toggleHeart(item.id)}
-                              onCommentClick={() => openComments(item)}
                               isOwner={item.savedBy === userName}
                               onDelete={() => deleteGroupItem(item.id)}
                               onSave={(updates) => updateGroupItem(item.id, updates)}
