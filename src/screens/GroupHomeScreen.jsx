@@ -74,7 +74,7 @@ function GroupCategoryRow({ cat, count, contributors, getMember, isLast, onClick
   )
 }
 
-export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, groupItems, updateTrip, customThreads, allCategories }) {
+export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, groupItems, updateTrip, setTripDestination, customThreads, allCategories }) {
   const [editField, setEditField]       = useState(params.openDateEdit ? 'dates' : null)
   const [editValue, setEditValue]       = useState('')
   const [editDateRange, setEditDateRange] = useState({ start: null, end: null })
@@ -115,7 +115,9 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
 
   const confirmEdit = () => {
     if (editField === 'name' && editValue.trim()) updateTrip(currentTrip.id, { name: editValue.trim() })
-    if (editField === 'destination') updateTrip(currentTrip.id, { destination: editValue.trim() })
+    // Editing the destination here is the same fact as the Destination
+    // category's decided item, not a separate value — this keeps both in sync.
+    if (editField === 'destination') setTripDestination(currentTrip.id, editValue)
     setEditField(null)
     setEditValue('')
   }

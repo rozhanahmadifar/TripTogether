@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { CATEGORIES, MEMBER_COLORS } from './data'
 import { HouseIcon, SuitcaseIcon, ChatIcon, SparkleIcon } from './components/TabIcons'
 import { PlusIcon } from './components/ActionMenu'
-import { ConfirmDestinationSheet } from './components/ConfirmDestinationSheet'
 
 import { WelcomeScreen }         from './screens/WelcomeScreen'
 import { YourNameScreen }        from './screens/YourNameScreen'
@@ -146,31 +145,60 @@ export default function App() {
     ))
   }
 
-  // Any number of members can star an item — it's per-member attribution
-  // (who starred it), not a single "decided" flag, so multiple things in a
-  // category can all be starred at once.
+  // Any number of members can star an item in most categories — it's
+  // per-member attribution, not a single "decided" flag, so multiple things
+  // can be starred at once. Destination is the one exception: a trip has
+  // exactly one real destination, so deciding a candidate there un-decides
+  // any other and updates the trip's destination field to match, always
+  // automatically — the category and the trip header are one fact, not two.
   const toggleStar = (itemId) => {
     const item = groupItems.find(i => i.id === itemId)
     if (!item) return
     const starredBy = item.starredBy || []
     const already = starredBy.includes(userName)
+    const nextStarredBy = already ? starredBy.filter(n => n !== userName) : [...starredBy, userName]
+    const isDestination = item.categoryIds.includes('destination')
 
-    setGroupItems(p => p.map(i => i.id === itemId
-      ? { ...i, starredBy: already ? starredBy.filter(n => n !== userName) : [...starredBy, userName] }
-      : i
-    ))
+    setGroupItems(p => p.map(i => {
+      if (i.id === itemId) return { ...i, starredBy: nextStarredBy }
+      if (isDestination && !already && i.categoryIds.includes('destination')) return { ...i, starredBy: [] }
+      return i
+    }))
 
-    // The very first decision on a Destination candidate offers to carry it
-    // through to the trip's own destination field — not every subsequent
-    // star on it, just the moment it actually becomes "decided".
-    if (!already && starredBy.length === 0 && currentTrip && item.categoryIds.includes('destination')) {
-      openModal(
-        <ConfirmDestinationSheet
-          placeName={item.title}
-          onConfirm={() => { updateTrip(currentTrip.id, { destination: item.title }); closeModal() }}
-          onDismiss={closeModal}
-        />
-      )
+    if (isDestination && currentTrip) {
+      if (!already) updateTrip(currentTrip.id, { destination: item.title })
+      else if (nextStarredBy.length === 0) updateTrip(currentTrip.id, { destination: '' })
+    }
+  }
+
+  // The reverse direction of the same sync: editing the trip's destination
+  // field directly marks the matching Destination candidate as decided
+  // (creating one if none exists yet with that name), and un-decides
+  // whatever candidate was decided before.
+  const setTripDestination = (tripId, destinationText) => {
+    const trimmed = destinationText.trim()
+    updateTrip(tripId, { destination: trimmed })
+
+    if (!trimmed) {
+      setGroupItems(p => p.map(i => i.categoryIds.includes('destination') ? { ...i, starredBy: [] } : i))
+      return
+    }
+
+    const match = groupItems.find(i => i.categoryIds.includes('destination') && i.title.trim().toLowerCase() === trimmed.toLowerCase())
+
+    if (match) {
+      setGroupItems(p => p.map(i => {
+        if (!i.categoryIds.includes('destination')) return i
+        if (i.id === match.id) return { ...i, starredBy: (i.starredBy || []).includes(userName) ? i.starredBy : [...(i.starredBy || []), userName] }
+        return { ...i, starredBy: [] }
+      }))
+    } else {
+      const newItem = {
+        id: `g-${Date.now()}`, title: trimmed, note: '', link: '', platform: '',
+        categoryIds: ['destination'], hasPhoto: false, photo: '',
+        savedBy: userName, savedAt: Date.now(), hearts: 0, hearted: false, starredBy: [userName],
+      }
+      setGroupItems(p => [...p.map(i => i.categoryIds.includes('destination') ? { ...i, starredBy: [] } : i), newItem])
     }
   }
 
@@ -248,7 +276,7 @@ export default function App() {
     allCategories, addCustomCategory, renameCategory, deleteCategory, toggleCategoryHidden,
     saveToMyIdeas, addToGroup, toggleHeart, toggleStar,
     deleteMyIdea, deleteGroupItem, updateMyIdea, updateGroupItem,
-    startGroupTrip, openTrip, updateTrip,
+    startGroupTrip, openTrip, updateTrip, setTripDestination,
     openModal, closeModal,
     discussMessages, addDiscussMessage,
     customThreads, addDiscussThread,
