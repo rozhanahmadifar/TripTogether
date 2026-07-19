@@ -16,9 +16,10 @@ const WARM_TONES = [
   `${CATEGORY_COLORS.food}26`,
 ]
 
-// Cycled the same way as WARM_TONES so placeholder tiles vary in height
-// like real photos do, keeping the masonry feel even in all-no-photo boards.
-const PLACEHOLDER_RATIOS = ['1 / 1', '4 / 5', '3 / 4', '5 / 6']
+// No-photo tiles all share one fixed aspect ratio so their icons line up
+// row-to-row — varying the ratio per tile (like real photos naturally do)
+// made same-content icon tiles look misaligned and inconsistently sized.
+const PLACEHOLDER_RATIO = '4 / 5'
 
 function hashString(s) {
   let h = 0
@@ -28,13 +29,12 @@ function hashString(s) {
 
 // Mood-board grid tile: real photos render at their natural aspect ratio
 // (driving the masonry effect via CSS columns on the parent), no-photo tiles
-// get a cycled warm tone + aspect ratio instead. The title overlays the
-// bottom of every tile behind a soft gradient rather than sitting below it.
+// get a cycled warm tone at a fixed aspect ratio instead. The title overlays
+// the bottom of every tile behind a soft gradient rather than sitting below it.
 export function GridTile({ item, category, onOpen }) {
   const isImage = isImagePhoto(item.photo)
   const hash = hashString(item.id || item.title || '')
   const tone = WARM_TONES[hash % WARM_TONES.length]
-  const ratio = PLACEHOLDER_RATIOS[hash % PLACEHOLDER_RATIOS.length]
 
   return (
     <button
@@ -50,7 +50,7 @@ export function GridTile({ item, category, onOpen }) {
         <img src={item.photo} alt="" style={{ width: '100%', height: 'auto', display: 'block' }} />
       ) : (
         <div style={{
-          width: '100%', aspectRatio: ratio,
+          width: '100%', aspectRatio: PLACEHOLDER_RATIO,
           background: item.photo || item.hasPhoto ? '#EFE8DE' : tone,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
