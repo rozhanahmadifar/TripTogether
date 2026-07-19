@@ -54,24 +54,32 @@ export function GridTile({ item, category, onOpen }) {
           background: item.photo || item.hasPhoto ? '#EFE8DE' : tone,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
-          <span style={{ fontSize: 34 }}>
-            {item.photo ? '🎬' : item.hasPhoto ? '🖼️' : (PLATFORM_ICONS[item.platform] || category?.icon || '✨')}
-          </span>
+          {/* Fixed-size circle so every glyph occupies the same visual
+              footprint — raw emoji at a shared font-size still render at
+              inconsistent apparent sizes depending on the glyph itself. */}
+          <div style={{
+            width: 52, height: 52, borderRadius: '50%',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <span style={{ fontSize: 26, lineHeight: 1 }}>
+              {item.photo ? '🎬' : item.hasPhoto ? '🖼️' : (PLATFORM_ICONS[item.platform] || category?.icon || '✨')}
+            </span>
+          </div>
         </div>
       )}
 
       {item.starredBy?.length > 0 && (
         <span
-          title={`Starred by ${item.starredBy.join(', ')}`}
+          title={`Marked as decided by ${item.starredBy.join(', ')}`}
           style={{
             position: 'absolute', top: 8, left: 8,
             width: 24, height: 24, borderRadius: '50%',
-            background: '#F2C94C', color: 'white',
+            background: COLORS.teal, color: 'white',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 12, boxShadow: '0 2px 6px rgba(0,0,0,0.18)',
+            fontSize: 13, fontWeight: 800, boxShadow: '0 2px 6px rgba(0,0,0,0.18)',
           }}
         >
-          ⭐
+          ✓
         </span>
       )}
 

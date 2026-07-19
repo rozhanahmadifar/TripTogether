@@ -230,16 +230,16 @@ export function ItemCard({ item, categories, contributor, source, note, hearts =
               )}
               {starredBy.length > 0 && (
                 <span
-                  title={`Starred by ${starredBy.join(', ')}`}
+                  title={`Marked as decided by ${starredBy.join(', ')}`}
                   style={{
                     position: 'absolute', bottom: 10, right: 10,
                     width: 26, height: 26, borderRadius: '50%',
-                    background: '#F2C94C', color: 'white',
+                    background: COLORS.teal, color: 'white',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 13, boxShadow: '0 2px 6px rgba(0,0,0,0.18)',
+                    fontSize: 14, fontWeight: 800, boxShadow: '0 2px 6px rgba(0,0,0,0.18)',
                   }}
                 >
-                  ⭐
+                  ✓
                 </span>
               )}
             </div>
@@ -307,8 +307,8 @@ export function ItemCard({ item, categories, contributor, source, note, hearts =
               )}
 
               {starredBy.length > 0 && (
-                <p style={{ fontSize: 12, color: '#B8860B', fontWeight: 600, marginTop: 8 }}>
-                  ⭐ Starred by {starredBy.join(', ')}
+                <p style={{ fontSize: 12, color: COLORS.teal, fontWeight: 600, marginTop: 8 }}>
+                  ✓ Marked as decided by {starredBy.join(', ')}
                 </p>
               )}
             </div>
@@ -386,16 +386,22 @@ export function ItemCard({ item, categories, contributor, source, note, hearts =
             <button
               onClick={onToggleStar}
               disabled={!onToggleStar}
-              title={starred ? 'Remove your star' : 'Star this'}
+              title={starred ? 'Unmark as decided' : 'Mark as decided'}
               style={{
                 display: 'flex', alignItems: 'center', gap: 6,
-                background: 'none', border: 'none',
+                background: starred ? COLORS.tealTint : 'none', border: 'none',
                 cursor: onToggleStar ? 'pointer' : 'default',
-                padding: '10px 8px', borderRadius: 8, minHeight: 40,
+                padding: '10px 10px', borderRadius: 20, minHeight: 40,
               }}
             >
-              <span style={{ fontSize: 16 }}>{starred ? '⭐' : '☆'}</span>
-              <span style={{ fontSize: 13, fontWeight: 600, color: starred ? '#B8860B' : COLORS.warmGrey }}>{starredBy.length}</span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: starred ? COLORS.teal : COLORS.warmGrey }}>
+                {starred ? 'Decided ✓' : 'Mark as decided'}
+              </span>
+              {starredBy.length > 0 && (
+                <span style={{ fontSize: 12, fontWeight: 600, color: starred ? COLORS.teal : COLORS.warmGrey }}>
+                  ({starredBy.length})
+                </span>
+              )}
             </button>
           </div>
         )}

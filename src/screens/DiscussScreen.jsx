@@ -2,7 +2,6 @@ import { useRef, useState } from 'react'
 import { buildSimulatedThreadMessages } from '../discuss'
 import { COLORS, SPACING, SHADOW_CARD } from '../styles'
 import { useLongPress } from '../hooks/useLongPress'
-import { ActionMenu, TrashIcon } from '../components/ActionMenu'
 
 function ChatBubbleIcon({ size = 20, color = COLORS.teal }) {
   return (
@@ -12,130 +11,57 @@ function ChatBubbleIcon({ size = 20, color = COLORS.teal }) {
   )
 }
 
-function NewThreadSheet({ onCreate, onClose }) {
-  const [title, setTitle] = useState('')
-  const canCreate = title.trim().length > 0
-
-  const handleCreate = () => {
-    const trimmed = title.trim()
-    if (!trimmed) return
-    onCreate(trimmed)
-  }
-
-  return (
-    <div
-      style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'flex-end', zIndex: 100 }}
-      onClick={e => { if (e.target === e.currentTarget) onClose() }}
-    >
-      <div className="comment-sheet-slide" style={{
-        background: 'white', borderRadius: '20px 20px 0 0', width: '100%',
-        boxShadow: '0 -4px 20px rgba(0,0,0,0.12)', padding: '12px 20px 24px',
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}>
-          <div style={{ width: 40, height: 4, borderRadius: 2, background: '#D4C9BE' }} />
-        </div>
-        <p style={{ fontSize: 17, fontWeight: 700, color: COLORS.charcoal, marginBottom: 14 }}>
-          What do you want to discuss?
-        </p>
-        <input
-          autoFocus
-          value={title}
-          onChange={e => setTitle(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && handleCreate()}
-          placeholder="Name your discussion topic"
-          style={{
-            width: '100%', minHeight: SPACING.inputMinHeight, borderRadius: 12,
-            border: `1.5px solid ${COLORS.border}`, padding: '0 16px',
-            fontSize: 14, color: COLORS.charcoal, background: COLORS.bgGroupSpace,
-            fontFamily: 'inherit', marginBottom: 14, boxSizing: 'border-box',
-          }}
-        />
-        <button
-          onClick={handleCreate}
-          disabled={!canCreate}
-          style={{
-            width: '100%', minHeight: SPACING.buttonMinHeight, borderRadius: 12, border: 'none',
-            background: COLORS.teal, color: 'white', fontSize: 15, fontWeight: 700,
-            cursor: canCreate ? 'pointer' : 'default', opacity: canCreate ? 1 : 0.5,
-            fontFamily: 'inherit',
-          }}
-        >
-          Create
-        </button>
-      </div>
-    </div>
-  )
-}
-
-function ThreadCard({ thread, messages, onOpen, onLongPressPinned, onDeleteThread }) {
+// Every trip has exactly one auto-created discussion thread, always pinned —
+// there is no way to create another, so no per-thread delete menu is needed.
+function ThreadCard({ thread, messages, onOpen, onLongPressPinned }) {
   const cardRef = useRef(null)
-  const [menuAnchor, setMenuAnchor] = useState(null)
   const last = messages[messages.length - 1]
 
-  const longPress = useLongPress(() => {
-    if (!cardRef.current) return
-    const rect = cardRef.current.getBoundingClientRect()
-    if (thread.pinned) {
-      onLongPressPinned()
-    } else {
-      setMenuAnchor({ top: rect.top, left: rect.left, width: rect.width, height: rect.height })
-    }
-  })
+  const longPress = useLongPress(() => onLongPressPinned())
 
   return (
-    <div style={{ position: 'relative' }}>
-      <button
-        ref={cardRef}
-        {...longPress}
-        onClick={onOpen}
-        style={{
-          width: '100%', textAlign: 'left', cursor: 'pointer',
-          background: COLORS.cardBg, borderRadius: 14, padding: 16,
-          boxShadow: SHADOW_CARD, border: 'none',
-          borderLeft: `3px solid ${COLORS.teal}`,
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-          <div style={{ flexShrink: 0, marginTop: 2 }}>
-            <ChatBubbleIcon />
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-              <span style={{ fontSize: 16, fontWeight: 600, color: COLORS.charcoal, display: 'flex', alignItems: 'center', gap: 5 }}>
-                {thread.pinned && <span style={{ fontSize: 12 }}>📌</span>}
-                {thread.title}
-              </span>
-              <span style={{ fontSize: 12, color: COLORS.warmGrey, flexShrink: 0 }}>
-                {messages.length} {messages.length === 1 ? 'reply' : 'replies'}
-              </span>
-            </div>
-            {thread.pinned && thread.subtext && (
-              <p style={{ fontSize: 12, color: COLORS.warmGrey, fontStyle: 'italic', marginTop: 2, marginBottom: 8 }}>
-                {thread.subtext}
-              </p>
-            )}
-            <p style={{
-              fontSize: 13, color: COLORS.warmGrey, fontStyle: last ? 'normal' : 'italic', marginTop: thread.pinned ? 0 : 6,
-              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-            }}>
-              {last ? `${last.name}: ${last.text}` : 'No messages yet'}
-            </p>
-          </div>
+    <button
+      ref={cardRef}
+      {...longPress}
+      onClick={onOpen}
+      style={{
+        width: '100%', textAlign: 'left', cursor: 'pointer',
+        background: COLORS.cardBg, borderRadius: 14, padding: 16,
+        boxShadow: SHADOW_CARD, border: 'none',
+        borderLeft: `3px solid ${COLORS.teal}`,
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+        <div style={{ flexShrink: 0, marginTop: 2 }}>
+          <ChatBubbleIcon />
         </div>
-      </button>
-
-      {menuAnchor && (
-        <ActionMenu
-          anchorRect={menuAnchor}
-          rows={[{ icon: <TrashIcon />, label: 'Delete discussion', color: COLORS.danger, onClick: () => { setMenuAnchor(null); onDeleteThread() } }]}
-          onClose={() => setMenuAnchor(null)}
-        />
-      )}
-    </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+            <span style={{ fontSize: 16, fontWeight: 600, color: COLORS.charcoal, display: 'flex', alignItems: 'center', gap: 5 }}>
+              📌 {thread.title}
+            </span>
+            <span style={{ fontSize: 12, color: COLORS.warmGrey, flexShrink: 0 }}>
+              {messages.length} {messages.length === 1 ? 'reply' : 'replies'}
+            </span>
+          </div>
+          {thread.subtext && (
+            <p style={{ fontSize: 12, color: COLORS.warmGrey, fontStyle: 'italic', marginTop: 2, marginBottom: 8 }}>
+              {thread.subtext}
+            </p>
+          )}
+          <p style={{
+            fontSize: 13, color: COLORS.warmGrey, fontStyle: last ? 'normal' : 'italic',
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          }}>
+            {last ? `${last.name}: ${last.text}` : 'No messages yet'}
+          </p>
+        </div>
+      </div>
+    </button>
   )
 }
 
-export function DiscussScreen({ navigate, currentTrip, discussMessages, customThreads, addDiscussThread, deleteDiscussThread, openModal, closeModal }) {
+export function DiscussScreen({ navigate, currentTrip, discussMessages, customThreads }) {
   const tripMembers = currentTrip?.members || []
   const [toast, setToast] = useState('')
 
@@ -170,17 +96,6 @@ export function DiscussScreen({ navigate, currentTrip, discussMessages, customTh
     setTimeout(() => setToast(''), 2200)
   }
 
-  const handleCreateThread = (title) => {
-    addDiscussThread(currentTrip.id, title)
-    closeModal()
-  }
-
-  const openNewThreadSheet = () => {
-    openModal(
-      <NewThreadSheet onCreate={handleCreateThread} onClose={closeModal} />
-    )
-  }
-
   return (
     <div className="screen" style={{ background: COLORS.bgGroupSpace }}>
       <div style={{ padding: '20px 20px 16px' }}>
@@ -199,22 +114,8 @@ export function DiscussScreen({ navigate, currentTrip, discussMessages, customTh
               messages={getMessages(thread)}
               onOpen={() => navigate('discussThread', { threadId: thread.id, backTo: 'discuss' })}
               onLongPressPinned={() => showToast(`The ${thread.title} discussion cannot be deleted.`)}
-              onDeleteThread={() => deleteDiscussThread(currentTrip.id, thread.id)}
             />
           ))}
-
-          <button
-            onClick={openNewThreadSheet}
-            style={{
-              width: '100%', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer',
-              background: COLORS.cardBg, borderRadius: 14, padding: '16px',
-              boxShadow: SHADOW_CARD, border: `1.5px dashed ${COLORS.teal}`,
-              fontFamily: 'inherit',
-            }}
-          >
-            <span style={{ fontSize: 20, fontWeight: 400, color: COLORS.teal, lineHeight: 1 }}>+</span>
-            <span style={{ fontSize: 15, fontWeight: 600, color: COLORS.teal }}>Start a new discussion</span>
-          </button>
         </div>
       </div>
 

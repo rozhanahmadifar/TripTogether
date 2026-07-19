@@ -216,17 +216,6 @@ export default function App() {
     return id
   }
 
-  const deleteDiscussThread = (tripId, threadId) => {
-    setCustomThreads(p => ({ ...p, [tripId]: (p[tripId] || []).filter(t => t.id !== threadId) }))
-    setDiscussMessages(p => {
-      const key = `${tripId}-${threadId}`
-      if (!(key in p)) return p
-      const rest = { ...p }
-      delete rest[key]
-      return rest
-    })
-  }
-
   const currentTrip = trips.find(t => t.id === currentTripId)
     || (trips.length > 0 ? trips[trips.length - 1] : null)
   const hasGroup = trips.length > 0
@@ -245,7 +234,7 @@ export default function App() {
     startGroupTrip, openTrip, updateTrip,
     openModal, closeModal,
     discussMessages, addDiscussMessage,
-    customThreads, addDiscussThread, deleteDiscussThread,
+    customThreads, addDiscussThread,
   }
 
   const CurrentScreen = SCREEN_MAP[screen] || WelcomeScreen

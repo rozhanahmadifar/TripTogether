@@ -129,10 +129,10 @@ export function GroupSpaceScreen({
         <div style={{ marginBottom: SPACING.sectionGap }}>
           {visibleCategories.map(cat => {
             const items = groupItems.filter(i => i.categoryIds.includes(cat.id))
-            const starredCount = items.filter(i => (i.starredBy || []).length > 0).length
+            const decidedCount = items.filter(i => (i.starredBy || []).length > 0).length
             return (
               <p key={cat.id} style={{ fontSize: 12, color: COLORS.warmGrey, lineHeight: 1.7 }}>
-                {cat.icon} <span style={{ fontWeight: 700, color: COLORS.charcoal }}>{cat.label}</span> — {items.length === 0 ? 'nothing added yet' : `${items.length} ${items.length === 1 ? 'idea' : 'ideas'}, ${starredCount} starred`}
+                {cat.icon} <span style={{ fontWeight: 700, color: COLORS.charcoal }}>{cat.label}</span> — {items.length === 0 ? 'nothing added yet' : `${items.length} ${items.length === 1 ? 'idea' : 'ideas'}, ${decidedCount} decided`}
               </p>
             )
           })}
