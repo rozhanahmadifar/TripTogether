@@ -28,7 +28,7 @@ export const handler = async (event) => {
       throw new Error('Request body must include a non-empty messages array')
     }
 
-    const geminiBody = {
+    const baseBody = {
       contents: messages.map(m => ({
         role: m.role === 'assistant' ? 'model' : 'user',
         parts: [{ text: m.text }],
@@ -39,11 +39,23 @@ export const handler = async (event) => {
       generationConfig: { thinkingConfig: { thinkingBudget: 0 } },
     }
 
-    const response = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
+    const callGemini = (body) => fetch(`${GEMINI_URL}?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(geminiBody),
+      body: JSON.stringify(body),
     })
+
+    // Try grounding answers in real Google Search results first, so citation
+    // links point at actual pages instead of the model's own guesses. Search
+    // grounding is billed and rate-limited separately from plain generation
+    // though, so if it's unavailable (quota, billing, transient error) we
+    // fall back to an ungrounded answer rather than failing the whole
+    // request — the system prompt tells the model to say when it has no
+    // verified source, which covers this case honestly either way.
+    let response = await callGemini({ ...baseBody, tools: [{ google_search: {} }] })
+    if (!response.ok) {
+      response = await callGemini(baseBody)
+    }
 
     const data = await response.json()
     if (!response.ok) throw new Error(data?.error?.message || 'Gemini API request failed')

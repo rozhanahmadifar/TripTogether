@@ -1,16 +1,26 @@
 import { useState, useRef, useEffect } from 'react'
 import { TEXT, COLORS } from '../styles'
-import { askGemini, parseAIResponse } from '../gemini'
+import { askGemini, parseAIResponse, buildTripContextBlock } from '../gemini'
 
-// The group-size chip uses the trip's real member count when one is available
-// rather than a fixed, possibly-wrong number; specifics that can't be known
-// (like nationality) are left out entirely rather than guessed.
+// Each chip may only reference a fact (destination, dates, traveler count)
+// that's actually present in the trip's saved data — never a guessed month,
+// traveler type, or group composition. When a fact isn't set, that chip
+// falls back to a fully generic phrasing instead of inventing one.
 function buildSuggestionChips(currentTrip) {
   const count = currentTrip?.members?.length
+  const destination = currentTrip?.destination
+  const dates = currentTrip?.dates
+
   return [
-    count ? `We're a group of ${count} — what discounts might we qualify for as students?` : 'What discounts might we qualify for as students?',
-    'Which cities have cheap flights, no visa needs, and mild weather in June?',
-    'What needs booking in advance vs. what can we decide on the day?',
+    destination
+      ? `What visa or entry requirements should we check for ${destination}?`
+      : 'What visa or entry requirements are worth checking before booking?',
+    count
+      ? `We're a group of ${count} — are there any group ticket discounts worth looking into?`
+      : 'Are there any group ticket discounts worth looking into?',
+    dates
+      ? `What typically needs booking in advance for a trip around ${dates}?`
+      : 'What typically needs booking in advance vs. can be decided closer to the trip?',
   ]
 }
 
@@ -32,6 +42,7 @@ export function AIScreen({ currentTrip }) {
   const [sending, setSending]   = useState(false)
   const bottomRef               = useRef(null)
   const suggestionChips         = buildSuggestionChips(currentTrip)
+  const tripContextBlock        = buildTripContextBlock(currentTrip)
 
   const showEmptyState = messages.length === 0 && input === ''
 
@@ -44,14 +55,20 @@ export function AIScreen({ currentTrip }) {
     if (!text || sending) return
     const userMsg = { id: Date.now(), role: 'user', text }
     const loadingId = Date.now() + 1
+    // Full prior conversation goes with every call — not just the latest
+    // message — so the model can pick up facts the user already stated
+    // (e.g. "we're students") when it later writes follow-up questions.
+    const history = [...messages, userMsg]
+      .filter(m => !m.loading)
+      .map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', text: m.text }))
     setMessages(prev => [...prev, userMsg, { id: loadingId, role: 'ai', loading: true }])
     setInput('')
     setSending(true)
 
     try {
-      const raw = await askGemini(text)
+      const { text: raw, sources } = await askGemini(history, tripContextBlock)
       const { text: aiText, questions } = parseAIResponse(raw)
-      setMessages(prev => prev.map(m => m.id === loadingId ? { id: loadingId, role: 'ai', text: aiText, questions } : m))
+      setMessages(prev => prev.map(m => m.id === loadingId ? { id: loadingId, role: 'ai', text: aiText, questions, sources } : m))
     } catch {
       setMessages(prev => prev.map(m => m.id === loadingId ? { id: loadingId, role: 'ai', text: ERROR_TEXT } : m))
     } finally {
@@ -130,9 +147,32 @@ export function AIScreen({ currentTrip }) {
                   borderRadius: '4px 16px 16px 16px',
                   padding: '12px 16px', fontSize: 14, lineHeight: 1.6, fontWeight: 500,
                   borderLeft: `3px solid ${COLORS.teal}66`,
+                  whiteSpace: 'pre-line',
                 }}>
                   {msg.loading ? <TypingDots /> : msg.text}
                 </div>
+
+                {/* Real, search-grounded source links only — never a bare
+                    source name with nothing to click, and never shown at
+                    all when grounding wasn't available for this answer. */}
+                {msg.sources && msg.sources.length > 0 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4, paddingLeft: 2 }}>
+                    {msg.sources.map((s, i) => (
+                      <a
+                        key={i}
+                        href={s.uri}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          fontSize: 12, fontWeight: 600, color: COLORS.teal,
+                          textDecoration: 'underline', wordBreak: 'break-word',
+                        }}
+                      >
+                        🔗 {s.title}
+                      </a>
+                    ))}
+                  </div>
+                )}
 
                 {/* Follow-up question chips */}
                 {msg.questions && (
