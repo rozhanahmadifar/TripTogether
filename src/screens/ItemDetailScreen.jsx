@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { PLATFORM_COLORS, timeAgo, truncateName, isImagePhoto } from '../data'
+import { PLATFORM_COLORS, CATEGORY_HINTS, timeAgo, truncateName, isImagePhoto } from '../data'
 import { TEXT, COLORS, SPACING } from '../styles'
 import { BackButton } from '../components/BackButton'
 
@@ -139,9 +139,16 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, currentTrip, 
                     }}
                   >
                     <span style={{ fontSize: 18, width: 24 }}>{c.icon}</span>
-                    <span style={{ fontSize: 14, fontWeight: selected ? 700 : 500, flex: 1, color: selected ? COLORS.terracotta : COLORS.charcoal }}>
-                      {c.label}
-                    </span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <span style={{ fontSize: 14, fontWeight: selected ? 700 : 500, display: 'block', color: selected ? COLORS.terracotta : COLORS.charcoal }}>
+                        {c.label}
+                      </span>
+                      {CATEGORY_HINTS[c.id] && (
+                        <span style={{ fontSize: 12, color: COLORS.warmGrey, display: 'block', marginTop: 1 }}>
+                          {CATEGORY_HINTS[c.id]}
+                        </span>
+                      )}
+                    </div>
                     {selected && <span style={{ color: COLORS.terracotta }}>✓</span>}
                   </button>
                 )
@@ -300,12 +307,19 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, currentTrip, 
                         }}
                       >
                         <span style={{ fontSize: 18, width: 24 }}>{c.icon}</span>
-                        <span style={{
-                          fontSize: 14, fontWeight: selected ? 700 : 500, flex: 1,
-                          color: selected ? COLORS.terracotta : COLORS.charcoal,
-                        }}>
-                          {c.label}
-                        </span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <span style={{
+                            fontSize: 14, fontWeight: selected ? 700 : 500, display: 'block',
+                            color: selected ? COLORS.terracotta : COLORS.charcoal,
+                          }}>
+                            {c.label}
+                          </span>
+                          {CATEGORY_HINTS[c.id] && (
+                            <span style={{ fontSize: 12, color: COLORS.warmGrey, display: 'block', marginTop: 1 }}>
+                              {CATEGORY_HINTS[c.id]}
+                            </span>
+                          )}
+                        </div>
                         {selected && <span style={{ color: COLORS.terracotta }}>✓</span>}
                       </button>
                     )

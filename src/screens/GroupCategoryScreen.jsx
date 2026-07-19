@@ -74,10 +74,26 @@ export function GroupCategoryScreen({ navigate, params = {}, currentTrip, groupI
               })}
             </div>
           )}
+          {/* Aggregate, not a named call-out — everyone sees the same
+              neutral count regardless of who specifically hasn't added
+              anything yet. */}
           {nonContributors.length > 0 && (
             <p style={{ fontSize: 12, color: COLORS.warmGrey, marginTop: 14, fontStyle: 'italic', fontWeight: 500 }}>
-              Waiting for {nonContributors.map(m => m.name).join(' & ')} to add something
+              {contributorNames.length} of {tripMembers.length} crew have added something
             </p>
+          )}
+          {/* A quiet, personal nudge only the non-contributor themselves
+              sees — never shown to the rest of the group as their name. */}
+          {!contributorNames.includes(userName) && tripMembers.some(m => m.name === userName) && (
+            <button
+              onClick={() => navigate('saveSomething', { categoryId: cat.id, mode: 'group', backTo: 'groupCategory', returnParams: { categoryId: cat.id } })}
+              style={{
+                marginTop: 10, background: 'none', border: 'none', cursor: 'pointer',
+                fontSize: 12, fontWeight: 700, color: COLORS.teal, padding: 0,
+              }}
+            >
+              + Add your first idea here
+            </button>
           )}
         </div>
 

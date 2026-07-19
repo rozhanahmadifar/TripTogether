@@ -7,6 +7,18 @@ export const CATEGORIES = [
   { id: 'food',          icon: '🍔', label: 'Food',          color: '#C2678D' },
 ]
 
+// One-line clarifying hints shown under each category name in the tag
+// picker, so it's obvious at a glance where something belongs instead of
+// guessing from the label alone.
+export const CATEGORY_HINTS = {
+  inspiration: 'Sparks excitement, not planned yet',
+  destination: "A place you're considering",
+  accommodation: 'Where you might stay',
+  activities: "Things you're actually planning to do",
+  transport: "How you'll get there or around",
+  food: 'Restaurants or food spots',
+}
+
 export const EMPTY_STATE_COPY = {
   inspiration: {
     emojis: ['✨', '💡'],

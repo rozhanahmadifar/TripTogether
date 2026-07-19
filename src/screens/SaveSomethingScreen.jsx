@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { PLATFORMS, detectSourceFromLink, isImagePhoto } from '../data'
+import { PLATFORMS, CATEGORY_HINTS, detectSourceFromLink, isImagePhoto } from '../data'
 import { TEXT, COLORS, SPACING } from '../styles'
 import { BackButton } from '../components/BackButton'
 
@@ -311,9 +311,16 @@ export function SaveSomethingScreen({ navigate, params = {}, allCategories, save
                   {selected ? '✓' : ''}
                 </span>
                 <span style={{ fontSize: 18, width: 24, flexShrink: 0 }}>{cat.icon}</span>
-                <span style={{ ...TEXT.categoryRowName, flex: 1, color: selected ? COLORS.terracotta : COLORS.charcoal }}>
-                  {cat.label}
-                </span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{ ...TEXT.categoryRowName, display: 'block', color: selected ? COLORS.terracotta : COLORS.charcoal }}>
+                    {cat.label}
+                  </span>
+                  {CATEGORY_HINTS[cat.id] && (
+                    <span style={{ fontSize: 12, color: COLORS.warmGrey, display: 'block', marginTop: 1 }}>
+                      {CATEGORY_HINTS[cat.id]}
+                    </span>
+                  )}
+                </div>
               </button>
             )
           })}

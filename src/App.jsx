@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { CATEGORIES, MEMBER_COLORS } from './data'
 import { HouseIcon, SuitcaseIcon, ChatIcon, SparkleIcon } from './components/TabIcons'
 import { PlusIcon } from './components/ActionMenu'
+import { ConfirmDestinationSheet } from './components/ConfirmDestinationSheet'
 
 import { WelcomeScreen }         from './screens/WelcomeScreen'
 import { YourNameScreen }        from './screens/YourNameScreen'
@@ -149,12 +150,28 @@ export default function App() {
   // (who starred it), not a single "decided" flag, so multiple things in a
   // category can all be starred at once.
   const toggleStar = (itemId) => {
-    setGroupItems(p => p.map(i => {
-      if (i.id !== itemId) return i
-      const starredBy = i.starredBy || []
-      const already = starredBy.includes(userName)
-      return { ...i, starredBy: already ? starredBy.filter(n => n !== userName) : [...starredBy, userName] }
-    }))
+    const item = groupItems.find(i => i.id === itemId)
+    if (!item) return
+    const starredBy = item.starredBy || []
+    const already = starredBy.includes(userName)
+
+    setGroupItems(p => p.map(i => i.id === itemId
+      ? { ...i, starredBy: already ? starredBy.filter(n => n !== userName) : [...starredBy, userName] }
+      : i
+    ))
+
+    // The very first decision on a Destination candidate offers to carry it
+    // through to the trip's own destination field — not every subsequent
+    // star on it, just the moment it actually becomes "decided".
+    if (!already && starredBy.length === 0 && currentTrip && item.categoryIds.includes('destination')) {
+      openModal(
+        <ConfirmDestinationSheet
+          placeName={item.title}
+          onConfirm={() => { updateTrip(currentTrip.id, { destination: item.title }); closeModal() }}
+          onDismiss={closeModal}
+        />
+      )
+    }
   }
 
   const deleteMyIdea = (itemId) => {
