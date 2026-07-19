@@ -40,6 +40,12 @@ export function GroupSpaceScreen({
     return [...new Set(items.map(i => i.savedBy))]
   }
 
+  // Collective, not individual — a count of categories with content, never
+  // who did or didn't add it, so this reads as "here's where the trip
+  // stands" rather than a call-out of any one person.
+  const categoriesWithItems = visibleCategories.filter(cat => groupItems.some(i => i.categoryIds.includes(cat.id))).length
+  const categoryCompletionLabel = `${categoriesWithItems} of ${visibleCategories.length} ${visibleCategories.length === 1 ? 'category has' : 'categories have'} ideas`
+
   const handleAddSection = () => {
     if (!sectionName.trim()) return
     addCustomCategory(sectionName.trim())
@@ -76,17 +82,24 @@ export function GroupSpaceScreen({
 
       <div className="screen-scroll" style={{ padding: `16px ${SPACING.screenX}px ${SPACING.scrollBottomPad}px` }}>
 
-        {/* Trip status strip — gives the space a sense of time */}
+        {/* Trip status strip — countdown and category completion read as one
+            motivating line about the trip's overall state, not a call-out
+            of any one person. */}
         {currentTrip?.startDate ? (
           <div style={{
             background: `linear-gradient(135deg, ${COLORS.teal} 0%, ${COLORS.tealLight} 100%)`,
             borderRadius: 14, padding: '14px 16px', marginBottom: SPACING.cardGap,
-            display: 'flex', alignItems: 'center', gap: 10,
+            display: 'flex', alignItems: 'flex-start', gap: 10,
           }}>
-            <span style={{ fontSize: 18 }}>🗓️</span>
-            <span style={{ fontSize: 14, fontWeight: 700, color: 'white' }}>
-              {countdownLabel(daysUntil(currentTrip.startDate))}
-            </span>
+            <span style={{ fontSize: 18, lineHeight: 1.4 }}>🗓️</span>
+            <div>
+              <p style={{ fontSize: 14, fontWeight: 700, color: 'white' }}>
+                {countdownLabel(daysUntil(currentTrip.startDate))}
+              </p>
+              <p style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.85)', marginTop: 2 }}>
+                {categoryCompletionLabel}
+              </p>
+            </div>
           </div>
         ) : (
           <button
@@ -94,26 +107,55 @@ export function GroupSpaceScreen({
             style={{
               width: '100%', background: COLORS.sand, border: `1.5px dashed ${COLORS.teal}`,
               borderRadius: 14, padding: '14px 16px', marginBottom: SPACING.cardGap,
-              display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontFamily: 'inherit',
+              display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', fontFamily: 'inherit',
               textAlign: 'left',
             }}
           >
-            <span style={{ fontSize: 18 }}>🗓️</span>
-            <span style={{ fontSize: 14, fontWeight: 700, color: COLORS.teal }}>
-              No dates yet — decide when you're going
-            </span>
+            <span style={{ fontSize: 18, lineHeight: 1.4 }}>🗓️</span>
+            <div>
+              <p style={{ fontSize: 14, fontWeight: 700, color: COLORS.teal }}>
+                No dates yet — decide when you're going
+              </p>
+              <p style={{ fontSize: 12, fontWeight: 600, color: COLORS.warmGrey, marginTop: 2 }}>
+                {categoryCompletionLabel}
+              </p>
+            </div>
           </button>
         )}
 
-        {/* Per-category progress — one lightweight line each */}
-        <div style={{ marginBottom: SPACING.sectionGap }}>
+        {/* Per-category progress — the decided count is the whole point of
+            this list, so it gets a teal badge that pops rather than
+            blending into the same gray text as everything else. */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: SPACING.sectionGap }}>
           {visibleCategories.map(cat => {
             const items = groupItems.filter(i => i.categoryIds.includes(cat.id))
             const decidedCount = items.filter(i => (i.starredBy || []).length > 0).length
             return (
-              <p key={cat.id} style={{ fontSize: 12, color: COLORS.warmGrey, lineHeight: 1.7 }}>
-                {cat.icon} <span style={{ fontWeight: 700, color: COLORS.charcoal }}>{cat.label}</span> — {items.length === 0 ? 'nothing added yet' : `${items.length} ${items.length === 1 ? 'idea' : 'ideas'}, ${decidedCount} decided`}
-              </p>
+              <div key={cat.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 14, flexShrink: 0 }}>{cat.icon}</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: COLORS.charcoal, flexShrink: 0 }}>{cat.label}</span>
+                <span style={{ flex: 1, height: 1 }} />
+                {items.length === 0 ? (
+                  <span style={{ fontSize: 12, color: COLORS.warmGrey, fontStyle: 'italic' }}>Nothing added yet</span>
+                ) : (
+                  <>
+                    <span style={{ fontSize: 12, color: COLORS.warmGrey }}>
+                      {items.length} {items.length === 1 ? 'idea' : 'ideas'}
+                    </span>
+                    {decidedCount > 0 ? (
+                      <span style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 4,
+                        background: COLORS.tealTint, color: COLORS.teal,
+                        fontSize: 12, fontWeight: 800, borderRadius: 20, padding: '3px 10px',
+                      }}>
+                        ✓ {decidedCount} decided
+                      </span>
+                    ) : (
+                      <span style={{ fontSize: 12, color: COLORS.warmGrey }}>0 decided</span>
+                    )}
+                  </>
+                )}
+              </div>
             )
           })}
         </div>
