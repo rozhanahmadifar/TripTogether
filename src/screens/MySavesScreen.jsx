@@ -2,12 +2,11 @@ import { useState } from 'react'
 import { TEXT, COLORS, SPACING, SHADOW_CARD } from '../styles'
 import { BackButton } from '../components/BackButton'
 import { ActionMenu, PencilIcon, TrashIcon, EyeOffIcon } from '../components/ActionMenu'
-import { ItemCard } from '../components/ItemCard'
 
 // Full My Saves list — the "See all" destination from trip home, mirroring
 // Group Space's full-list screen (all 6 categories, including empty ones,
 // with rename/hide/delete), just themed private instead of shared.
-export function MySavesScreen({ navigate, myIdeas, allCategories, addCustomCategory, renameCategory, deleteCategory, toggleCategoryHidden, userName, deleteMyIdea, updateMyIdea }) {
+export function MySavesScreen({ navigate, myIdeas, allCategories, addCustomCategory, renameCategory, deleteCategory, toggleCategoryHidden }) {
   const [addingSection, setAddingSection] = useState(false)
   const [sectionName, setSectionName]     = useState('')
   const [menuCat, setMenuCat]             = useState(null)
@@ -17,19 +16,6 @@ export function MySavesScreen({ navigate, myIdeas, allCategories, addCustomCateg
   const [hiddenOpen, setHiddenOpen]       = useState(false)
   const visibleCategories = allCategories.filter(c => !c.hidden)
   const hiddenCategories = allCategories.filter(c => c.hidden)
-  const me = { name: userName || 'You', color: COLORS.teal, initial: (userName || 'You').charAt(0).toUpperCase() }
-
-  // Sections collapse by default once more than 1-2 categories have items —
-  // a short list stays open, a long one doesn't dump everything on screen.
-  const [expandedIds, setExpandedIds] = useState(() => {
-    const withItems = visibleCategories.filter(cat => myIdeas.some(i => i.categoryIds.includes(cat.id)))
-    return new Set(withItems.length > 2 ? [] : withItems.map(c => c.id))
-  })
-  const toggleExpand = (id) => setExpandedIds(prev => {
-    const next = new Set(prev)
-    if (next.has(id)) next.delete(id); else next.add(id)
-    return next
-  })
 
   const handleAddSection = () => {
     if (!sectionName.trim()) return
@@ -73,7 +59,6 @@ export function MySavesScreen({ navigate, myIdeas, allCategories, addCustomCateg
           {visibleCategories.map((cat) => {
             const items = myIdeas.filter(item => item.categoryIds.includes(cat.id))
             const isRenaming = renamingId === cat.id
-            const isExpanded = expandedIds.has(cat.id)
             return (
               <div key={cat.id} style={{ borderBottom: `1px solid ${COLORS.borderLight}` }}>
                 <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -104,7 +89,7 @@ export function MySavesScreen({ navigate, myIdeas, allCategories, addCustomCateg
                     </div>
                   ) : (
                     <button
-                      onClick={() => toggleExpand(cat.id)}
+                      onClick={() => navigate('myIdeasCategory', { categoryId: cat.id, backTo: 'mySaves' })}
                       style={{
                         flex: 1, border: 'none', background: 'none', cursor: 'pointer',
                         display: 'flex', alignItems: 'center', gap: 14,
@@ -119,7 +104,7 @@ export function MySavesScreen({ navigate, myIdeas, allCategories, addCustomCateg
                           {items.length === 0 ? 'Nothing added yet' : `${items.length} ${items.length === 1 ? 'item' : 'items'}`}
                         </p>
                       </div>
-                      <span style={{ fontSize: 13, color: '#D6CCBF', flexShrink: 0 }}>{isExpanded ? '▾' : '▸'}</span>
+                      <span style={{ fontSize: 16, color: '#D6CCBF', flexShrink: 0 }}>›</span>
                     </button>
                   )}
 
@@ -138,46 +123,6 @@ export function MySavesScreen({ navigate, myIdeas, allCategories, addCustomCateg
                     </button>
                   )}
                 </div>
-
-                {/* Expanded content — items inline, no navigating away */}
-                {isExpanded && (
-                  <div style={{ padding: '0 14px 16px' }}>
-                    {items.length === 0 ? (
-                      <p style={{ fontSize: 13, color: COLORS.warmGrey, fontStyle: 'italic', padding: '4px 0 10px' }}>
-                        Nothing added yet.
-                      </p>
-                    ) : (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: SPACING.cardGap, marginBottom: 10 }}>
-                        {items.map(item => (
-                          <ItemCard
-                            key={item.id}
-                            item={item}
-                            categories={item.categoryIds.map(id => allCategories.find(c => c.id === id)).filter(Boolean)}
-                            contributor={me}
-                            source={item.platform}
-                            note={item.note}
-                            previewHeight={100}
-                            allCategories={allCategories}
-                            hideFooter
-                            onOpen={() => navigate('itemDetail', { itemId: item.id, categoryId: cat.id, backTo: 'mySaves' })}
-                            onDelete={() => deleteMyIdea(item.id)}
-                            onSave={(updates) => updateMyIdea(item.id, updates)}
-                          />
-                        ))}
-                      </div>
-                    )}
-                    <button
-                      onClick={() => navigate('saveSomething', { categoryId: cat.id, backTo: 'mySaves' })}
-                      style={{
-                        width: '100%', minHeight: 40, background: 'transparent',
-                        border: `1.5px dashed #D6CCBF`, borderRadius: 10, cursor: 'pointer',
-                        fontSize: 13, fontWeight: 600, color: COLORS.warmGrey,
-                      }}
-                    >
-                      + Save something to {cat.label}
-                    </button>
-                  </div>
-                )}
               </div>
             )
           })}

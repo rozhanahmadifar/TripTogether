@@ -55,7 +55,9 @@ export function CreateGroupTripScreen({ navigate, params = {}, startGroupTrip, u
     const n = nameInput.trim()
     if (!n) return
     const email = emailInput.trim()
-    const color = MEMBER_COLORS[members.length % MEMBER_COLORS.length]
+    // +1 because the creator (added separately, below) always occupies
+    // palette index 0 — offsetting here keeps every member's color unique.
+    const color = MEMBER_COLORS[(members.length + 1) % MEMBER_COLORS.length]
     // A counter (not just Date.now()) guarantees unique ids even when two
     // members are added in the same millisecond — colliding ids meant
     // removing one member could silently remove both.
@@ -268,7 +270,7 @@ export function CreateGroupTripScreen({ navigate, params = {}, startGroupTrip, u
                   boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
                 }}>
                   <div style={{
-                    width: 38, height: 38, borderRadius: '50%', background: '#D4724A',
+                    width: 38, height: 38, borderRadius: '50%', background: MEMBER_COLORS[0],
                     border: '2px solid white', boxShadow: `0 0 0 1px ${COLORS.border}`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: 14, fontWeight: 700, color: 'white', flexShrink: 0,

@@ -1,8 +1,8 @@
 import { useState } from 'react'
+import { MEMBER_COLORS } from '../data'
 import { TEXT, COLORS, SPACING, SHADOW_CARD } from '../styles'
 import { BackButton } from '../components/BackButton'
 import { ActionMenu, PencilIcon, TrashIcon, EyeOffIcon } from '../components/ActionMenu'
-import { ItemCard } from '../components/ItemCard'
 
 // Trip dates are stored as an ISO string (`startDate`) alongside the
 // human-readable label (`dates`) so we can compute a real countdown here.
@@ -23,7 +23,6 @@ function countdownLabel(days) {
 
 export function GroupSpaceScreen({
   navigate, currentTrip, groupItems, allCategories, addCustomCategory, renameCategory, deleteCategory, toggleCategoryHidden,
-  userName, toggleHeart, toggleStar, deleteGroupItem, updateGroupItem,
 }) {
   const tripMembers = currentTrip?.members || []
   const [addingSection, setAddingSection] = useState(false)
@@ -36,28 +35,9 @@ export function GroupSpaceScreen({
   const visibleCategories = allCategories.filter(c => !c.hidden)
   const hiddenCategories = allCategories.filter(c => c.hidden)
 
-  // Sections collapse by default once more than 1-2 categories have items —
-  // a short list stays open, a long one doesn't dump everything on screen.
-  const [expandedIds, setExpandedIds] = useState(() => {
-    const withItems = visibleCategories.filter(cat => groupItems.some(i => i.categoryIds.includes(cat.id)))
-    return new Set(withItems.length > 2 ? [] : withItems.map(c => c.id))
-  })
-  const toggleExpand = (id) => setExpandedIds(prev => {
-    const next = new Set(prev)
-    if (next.has(id)) next.delete(id); else next.add(id)
-    return next
-  })
-
   const getContributors = (categoryId) => {
     const items = groupItems.filter(i => i.categoryIds.includes(categoryId))
     return [...new Set(items.map(i => i.savedBy))]
-  }
-
-  const getMember = (name) => {
-    const found = tripMembers.find(m => m.name === name)
-    if (found) return found
-    if (name === userName) return { name, color: COLORS.terracotta, initial: name.charAt(0).toUpperCase() }
-    return { name, color: '#B5AA9C', initial: name.charAt(0).toUpperCase() }
   }
 
   const handleAddSection = () => {
@@ -146,7 +126,6 @@ export function GroupSpaceScreen({
             const contributors = getContributors(cat.id)
             const items = groupItems.filter(i => i.categoryIds.includes(cat.id))
             const isRenaming = renamingId === cat.id
-            const isExpanded = expandedIds.has(cat.id)
             return (
               <div key={cat.id} style={{ borderBottom: `1px solid ${COLORS.borderLight}` }}>
                 <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -177,7 +156,7 @@ export function GroupSpaceScreen({
                     </div>
                   ) : (
                     <button
-                      onClick={() => toggleExpand(cat.id)}
+                      onClick={() => navigate('groupCategory', { categoryId: cat.id, backTo: 'groupSpace' })}
                       style={{
                         flex: 1, border: 'none', background: 'none', cursor: 'pointer',
                         display: 'flex', alignItems: 'center', gap: 14,
@@ -200,7 +179,7 @@ export function GroupSpaceScreen({
                             return (
                               <div key={idx} style={{
                                 width: 26, height: 26, borderRadius: '50%',
-                                background: member?.color || COLORS.terracotta,
+                                background: member?.color || MEMBER_COLORS[0],
                                 border: '2px solid white',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                                 fontSize: 9, fontWeight: 700, color: 'white',
@@ -212,7 +191,7 @@ export function GroupSpaceScreen({
                           })}
                         </div>
                       )}
-                      <span style={{ fontSize: 13, color: '#D6CCBF', flexShrink: 0 }}>{isExpanded ? '▾' : '▸'}</span>
+                      <span style={{ fontSize: 16, color: '#D6CCBF', flexShrink: 0 }}>›</span>
                     </button>
                   )}
 
@@ -231,54 +210,6 @@ export function GroupSpaceScreen({
                     </button>
                   )}
                 </div>
-
-                {/* Expanded content — items inline, no navigating away */}
-                {isExpanded && (
-                  <div style={{ padding: '0 14px 16px' }}>
-                    {items.length === 0 ? (
-                      <p style={{ fontSize: 13, color: COLORS.warmGrey, fontStyle: 'italic', padding: '4px 0 10px' }}>
-                        Nothing added yet.
-                      </p>
-                    ) : (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: SPACING.cardGap, marginBottom: 10 }}>
-                        {items.map(item => {
-                          const saver = getMember(item.savedBy)
-                          return (
-                            <ItemCard
-                              key={item.id}
-                              item={item}
-                              categories={item.categoryIds.map(id => allCategories.find(c => c.id === id)).filter(Boolean)}
-                              contributor={saver}
-                              source={item.platform}
-                              note={item.note}
-                              hearts={item.hearts}
-                              hearted={item.hearted}
-                              starred={(item.starredBy || []).includes(userName)}
-                              starredBy={item.starredBy || []}
-                              onToggleStar={() => toggleStar(item.id)}
-                              previewHeight={110}
-                              allCategories={allCategories}
-                              onToggleHeart={() => toggleHeart(item.id)}
-                              isOwner={item.savedBy === userName}
-                              onDelete={() => deleteGroupItem(item.id)}
-                              onSave={(updates) => updateGroupItem(item.id, updates)}
-                            />
-                          )
-                        })}
-                      </div>
-                    )}
-                    <button
-                      onClick={() => navigate('saveSomething', { categoryId: cat.id, mode: 'group', backTo: 'groupSpace' })}
-                      style={{
-                        width: '100%', minHeight: 40, background: 'transparent',
-                        border: `1.5px dashed #D6CCBF`, borderRadius: 10, cursor: 'pointer',
-                        fontSize: 13, fontWeight: 600, color: COLORS.warmGrey,
-                      }}
-                    >
-                      + Add to {cat.label}
-                    </button>
-                  </div>
-                )}
               </div>
             )
           })}

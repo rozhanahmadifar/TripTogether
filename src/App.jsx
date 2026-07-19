@@ -176,7 +176,7 @@ export default function App() {
   const startGroupTrip = ({ name, destination, dates, startDate, crewMembers, returnTo, returnParams }) => {
     // The creator is added as an already-joined member up front — they never
     // have to add themselves to their own trip.
-    const me = { id: 'me', name: userName, color: '#D4724A', initial: userName.charAt(0).toUpperCase(), joined: true }
+    const me = { id: 'me', name: userName, color: MEMBER_COLORS[0], initial: userName.charAt(0).toUpperCase(), joined: true }
     const trip = { id: `t-${Date.now()}`, name, destination, dates, startDate: startDate || '', members: [me, ...crewMembers] }
     setTrips(p => [...p, trip])
     setCurrentTripId(trip.id)

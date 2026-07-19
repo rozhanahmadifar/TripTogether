@@ -361,14 +361,15 @@ export function ItemCard({ item, categories, contributor, source, note, hearts =
           </div>
         )}
 
-        {/* Bottom zone — heart and star only, grouped together on the left
-            like a familiar social-app action row (not spread to opposite
-            corners, which reads as unrelated/ambiguous for just two icons). */}
+        {/* Bottom zone — one fixed row, heart pinned left and the decided
+            checkbox pinned right (space-between, not both bunched to one
+            side), so the two actions sit at a consistent, predictable spot
+            every time regardless of how much text either one has. */}
         {!editing && !hideFooter && (
           <div style={{
             borderTop: `1px solid ${COLORS.borderLight}`,
-            padding: '4px 10px 4px 16px',
-            display: 'flex', alignItems: 'center', gap: 4,
+            padding: '6px 14px', minHeight: 48,
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           }}>
             <button
               onClick={handleHeart}
@@ -377,31 +378,42 @@ export function ItemCard({ item, categories, contributor, source, note, hearts =
                 display: 'flex', alignItems: 'center', gap: 6,
                 background: 'none', border: 'none',
                 cursor: onToggleHeart ? 'pointer' : 'default',
-                padding: '10px 8px', borderRadius: 8, minHeight: 40,
+                padding: '8px 4px', borderRadius: 8,
               }}
             >
-              <span className={pulsing ? 'heart-pulse' : ''} style={{ fontSize: 16 }}>{hearted ? '❤️' : '🤍'}</span>
+              <span className={pulsing ? 'heart-pulse' : ''} style={{ fontSize: 20, lineHeight: 1 }}>{hearted ? '❤️' : '🤍'}</span>
               <span style={{ fontSize: 13, fontWeight: 600, color: hearted ? COLORS.terracotta : COLORS.warmGrey }}>{hearts}</span>
             </button>
+
+            {/* Decided — a real checkbox toggle (empty outline vs. filled
+                tick), not just a swapped icon or label, so the state reads
+                at a glance the way a checkbox always does. */}
             <button
               onClick={onToggleStar}
               disabled={!onToggleStar}
               title={starred ? 'Unmark as decided' : 'Mark as decided'}
               style={{
-                display: 'flex', alignItems: 'center', gap: 6,
-                background: starred ? COLORS.tealTint : 'none', border: 'none',
+                display: 'flex', alignItems: 'center', gap: 8,
+                background: 'none', border: 'none',
                 cursor: onToggleStar ? 'pointer' : 'default',
-                padding: '10px 10px', borderRadius: 20, minHeight: 40,
+                padding: '8px 4px', borderRadius: 8,
               }}
             >
-              <span style={{ fontSize: 13, fontWeight: 700, color: starred ? COLORS.teal : COLORS.warmGrey }}>
-                {starred ? 'Decided ✓' : 'Mark as decided'}
+              <span style={{
+                width: 20, height: 20, borderRadius: 6, flexShrink: 0, lineHeight: 1,
+                border: `2px solid ${starred ? COLORS.teal : '#C9BFB2'}`,
+                background: starred ? COLORS.teal : 'transparent',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                {starred && (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="4 12 9 17 20 6" />
+                  </svg>
+                )}
               </span>
-              {starredBy.length > 0 && (
-                <span style={{ fontSize: 12, fontWeight: 600, color: starred ? COLORS.teal : COLORS.warmGrey }}>
-                  ({starredBy.length})
-                </span>
-              )}
+              <span style={{ fontSize: 13, fontWeight: 600, color: starred ? COLORS.teal : COLORS.warmGrey }}>
+                Decided{starredBy.length > 0 ? ` (${starredBy.length})` : ''}
+              </span>
             </button>
           </div>
         )}

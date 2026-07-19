@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { MEMBER_COLORS } from '../data'
 import { ItemCard } from '../components/ItemCard'
 import { GridTile } from '../components/GridTile'
 import { ViewToggle } from '../components/ViewToggle'
@@ -17,7 +18,7 @@ export function GroupCategoryScreen({ navigate, params = {}, currentTrip, groupI
   const getMember = (name) => {
     const found = tripMembers.find(m => m.name === name)
     if (found) return found
-    if (name === userName) return { name, color: COLORS.terracotta, initial: name.charAt(0).toUpperCase() }
+    if (name === userName) return { name, color: MEMBER_COLORS[0], initial: name.charAt(0).toUpperCase() }
     return { name, color: '#B5AA9C', initial: name.charAt(0).toUpperCase() }
   }
 
