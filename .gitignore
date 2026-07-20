@@ -25,5 +25,5 @@ screenshots
 *.sln
 *.sw?
 
-# Local Netlify folder
-.netlify
+# Local Cloudflare Wrangler folder
+.wrangler

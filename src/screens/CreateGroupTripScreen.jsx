@@ -1,17 +1,9 @@
 import { useState, useRef } from 'react'
-import { MEMBER_COLORS, truncateName } from '../data'
+import { MEMBER_COLORS, truncateName, isValidEmail } from '../data'
 import { DateRangePicker, fmtDate } from '../components/DateRangePicker'
 import { BackButton } from '../components/BackButton'
+import { XIcon } from '../components/ActionMenu'
 import { COLORS, SPACING } from '../styles'
-
-function XIcon({ size = 12, color = COLORS.warmGrey }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.6" strokeLinecap="round">
-      <line x1="4" y1="4" x2="20" y2="20" />
-      <line x1="20" y1="4" x2="4" y2="20" />
-    </svg>
-  )
-}
 
 function ProgressBar({ step }) {
   return (
@@ -53,8 +45,8 @@ export function CreateGroupTripScreen({ navigate, params = {}, startGroupTrip, u
 
   const addMember = () => {
     const n = nameInput.trim()
-    if (!n) return
     const email = emailInput.trim()
+    if (!n || !isValidEmail(email)) return
     // +1 because the creator (added separately, below) always occupies
     // palette index 0 — offsetting here keeps every member's color unique.
     const color = MEMBER_COLORS[(members.length + 1) % MEMBER_COLORS.length]
@@ -228,10 +220,13 @@ export function CreateGroupTripScreen({ navigate, params = {}, startGroupTrip, u
               </div>
             </div>
 
-            {/* Email field */}
+            {/* Email field — required, not just recommended, so every
+                member added always has somewhere to send an invite. */}
             <div style={{ marginBottom: 16 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                <p style={{ fontSize: 12, fontWeight: 700, color: COLORS.warmGrey, letterSpacing: 0.3 }}>Email</p>
+                <p style={{ fontSize: 12, fontWeight: 700, color: COLORS.warmGrey, letterSpacing: 0.3 }}>
+                  Email <span style={{ color: COLORS.danger }}>*</span>
+                </p>
               </div>
               <div style={fieldWrap(emailInput)}>
                 <input
@@ -247,13 +242,13 @@ export function CreateGroupTripScreen({ navigate, params = {}, startGroupTrip, u
 
             <button
               onClick={addMember}
-              disabled={!nameInput.trim()}
+              disabled={!nameInput.trim() || !isValidEmail(emailInput)}
               style={{
                 width: '100%', height: 52, borderRadius: 14, border: 'none',
-                background: nameInput.trim() ? COLORS.teal : COLORS.border,
-                color: nameInput.trim() ? 'white' : '#A79E93',
+                background: (nameInput.trim() && isValidEmail(emailInput)) ? COLORS.teal : COLORS.border,
+                color: (nameInput.trim() && isValidEmail(emailInput)) ? 'white' : '#A79E93',
                 fontSize: 15, fontWeight: 600,
-                cursor: nameInput.trim() ? 'pointer' : 'default',
+                cursor: (nameInput.trim() && isValidEmail(emailInput)) ? 'pointer' : 'default',
                 marginBottom: 20,
               }}
             >
@@ -331,18 +326,12 @@ export function CreateGroupTripScreen({ navigate, params = {}, startGroupTrip, u
                       <>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <p style={{ fontSize: 15, fontWeight: 600, color: COLORS.charcoal, letterSpacing: -0.2 }} title={m.name}>{truncateName(m.name)}</p>
-                          {m.email ? (
-                            <p style={{
-                              fontSize: 12, color: COLORS.warmGrey, fontWeight: 500, marginTop: 2,
-                              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                            }}>
-                              {m.email}
-                            </p>
-                          ) : (
-                            <p style={{ fontSize: 12, color: COLORS.warmGrey, fontWeight: 500, fontStyle: 'italic', marginTop: 2 }}>
-                              No email added
-                            </p>
-                          )}
+                          <p style={{
+                            fontSize: 12, color: COLORS.warmGrey, fontWeight: 500, marginTop: 2,
+                            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                          }}>
+                            {m.email}
+                          </p>
                         </div>
                         <button
                           onClick={() => requestRemoveMember(m.id)}
@@ -362,7 +351,7 @@ export function CreateGroupTripScreen({ navigate, params = {}, startGroupTrip, u
             </div>
 
             <p style={{ fontSize: 12, color: COLORS.warmGrey, lineHeight: 1.5, marginBottom: 20, fontWeight: 500 }}>
-              Members with an email address will receive an invite link to join your trip. Members without one can be added manually later.
+              Members will receive an invite link to join your trip at the email you provide.
             </p>
 
             <p style={{ fontSize: 12, color: COLORS.warmGrey, lineHeight: 1.5, marginBottom: 28, fontWeight: 500 }}>

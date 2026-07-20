@@ -18,8 +18,12 @@ export function MySavesScreen({ navigate, myIdeas, currentTrip, allCategories, a
   const [renameValue, setRenameValue]     = useState('')
   const [deletingCat, setDeletingCat]     = useState(null)
   const [hiddenOpen, setHiddenOpen]       = useState(false)
-  const visibleCategories = allCategories.filter(c => !c.hidden)
-  const hiddenCategories = allCategories.filter(c => c.hidden)
+  // A trip whose destination was already filled in at creation never gets
+  // a default Destination category — the trip header is the only place
+  // that fact lives.
+  const isDestinationSkipped = (c) => c.id === 'destination' && currentTrip?.destinationSetAtCreation
+  const visibleCategories = allCategories.filter(c => !c.hidden && !isDestinationSkipped(c))
+  const hiddenCategories = allCategories.filter(c => c.hidden && !isDestinationSkipped(c))
 
   const handleAddSection = () => {
     if (!sectionName.trim()) return

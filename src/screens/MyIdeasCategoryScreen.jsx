@@ -4,7 +4,6 @@ import { GridTile } from '../components/GridTile'
 import { ViewToggle } from '../components/ViewToggle'
 import { EmptyState } from '../components/EmptyState'
 import { BackButton } from '../components/BackButton'
-import { CategoryCover } from '../components/CategoryCover'
 import { COLORS, SPACING } from '../styles'
 
 export function MyIdeasCategoryScreen({ navigate, params = {}, myIdeas, currentTrip, allCategories, userName, deleteMyIdea, updateMyIdea }) {
@@ -34,8 +33,6 @@ export function MyIdeasCategoryScreen({ navigate, params = {}, myIdeas, currentT
       </div>
 
       <div className="screen-scroll" style={{ padding: `16px ${SPACING.screenX}px 32px` }}>
-        <CategoryCover category={cat} items={items} />
-
         {items.length === 0 ? (
           <EmptyState
             categoryId={cat.id}

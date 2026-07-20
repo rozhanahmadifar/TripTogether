@@ -90,6 +90,13 @@ export function isImagePhoto(photo) {
   return typeof photo === 'string' && photo.startsWith('data:image')
 }
 
+// A lightweight shape check (not full RFC 5322 validation) — just enough to
+// catch an obviously incomplete address before it's used to gate adding a
+// member, since email is now required rather than optional.
+export function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
+}
+
 export const timeAgo = (ts) => {
   const mins = Math.floor((Date.now() - ts) / 60000)
   if (mins < 1) return 'Just now'

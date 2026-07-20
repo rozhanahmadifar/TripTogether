@@ -27,7 +27,7 @@ export function buildTripContextBlock(currentTrip) {
 }
 
 export async function askGemini(history, tripContextBlock) {
-  const response = await fetch('/netlify/functions/gemini', {
+  const response = await fetch('/gemini', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -46,7 +46,7 @@ export async function askGemini(history, tripContextBlock) {
 
 // Only real, search-grounded links are ever surfaced — deduped by URL. When
 // grounding wasn't available for this answer (quota, billing, transient
-// failure — see the Netlify function's fallback), this is simply empty and
+// failure — see the gemini function's fallback), this is simply empty and
 // no source list renders, rather than fabricating one.
 function extractSources(candidate) {
   const chunks = candidate?.groundingMetadata?.groundingChunks || []

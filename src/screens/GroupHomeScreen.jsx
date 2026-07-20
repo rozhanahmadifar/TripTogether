@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { MEMBER_COLORS, truncateName } from '../data'
+import { MEMBER_COLORS, truncateName, isValidEmail } from '../data'
 import { DateRangePicker, fmtDate } from '../components/DateRangePicker'
 import { BackButton } from '../components/BackButton'
+import { XIcon } from '../components/ActionMenu'
 import { TEXT, COLORS, SPACING, SHADOW_CARD } from '../styles'
 
 function PencilIcon({ size = 13, color = COLORS.warmGrey }) {
@@ -78,7 +79,8 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
   const [editField, setEditField]       = useState(params.openDateEdit ? 'dates' : null)
   const [editValue, setEditValue]       = useState('')
   const [editDateRange, setEditDateRange] = useState({ start: null, end: null })
-  const [newMemberName, setNewMemberName] = useState('')
+  const [newMemberName, setNewMemberName]   = useState('')
+  const [newMemberEmail, setNewMemberEmail] = useState('')
 
   if (!currentTrip) {
     return (
@@ -96,7 +98,10 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
 
   const tripMembers = currentTrip.members || []
   const pinnedThread = (customThreads?.[currentTrip.id] || []).find(t => t.pinned)
-  const visibleCategories = allCategories.filter(c => !c.hidden)
+  // A trip whose destination was already filled in at creation never gets
+  // a default Destination category — the trip header is the only place
+  // that fact lives.
+  const visibleCategories = allCategories.filter(c => !c.hidden && !(c.id === 'destination' && currentTrip.destinationSetAtCreation))
 
   // Trip home is a compact preview, capped to the top 3 most-active
   // categories — otherwise a trip with content everywhere would make this
@@ -138,12 +143,14 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
 
   const addMemberToTrip = () => {
     const n = newMemberName.trim()
-    if (!n) return
+    const email = newMemberEmail.trim()
+    if (!n || !isValidEmail(email)) return
     const color = MEMBER_COLORS[tripMembers.length % MEMBER_COLORS.length]
     updateTrip(currentTrip.id, {
-      members: [...tripMembers, { id: `m-${Date.now()}`, name: n, color, initial: n.charAt(0).toUpperCase() }]
+      members: [...tripMembers, { id: `m-${Date.now()}`, name: n, email, color, initial: n.charAt(0).toUpperCase() }]
     })
     setNewMemberName('')
+    setNewMemberEmail('')
   }
 
   const removeMemberFromTrip = (memberId) => {
@@ -321,19 +328,49 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
                   </div>
                   <span style={{ flex: 1, color: 'white', fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }} title={m.name}>{truncateName(m.name)}</span>
                   {m.id !== 'me' && (
-                    <button onClick={() => removeMemberFromTrip(m.id)} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '50%', width: 26, height: 26, cursor: 'pointer', color: 'white', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>×</button>
+                    <button onClick={() => removeMemberFromTrip(m.id)} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '50%', width: 26, height: 26, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <XIcon size={11} color="white" />
+                    </button>
                   )}
                 </div>
               ))}
-              <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
                 <input
                   value={newMemberName}
                   onChange={e => setNewMemberName(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && addMemberToTrip()}
-                  placeholder="Add member…"
-                  style={{ flex: 1, height: 36, borderRadius: 8, border: 'none', background: 'rgba(255,255,255,0.2)', color: 'white', padding: '0 10px', fontSize: 13, fontFamily: 'inherit' }}
+                  placeholder="Name"
+                  style={{ height: 36, borderRadius: 8, border: 'none', background: 'rgba(255,255,255,0.2)', color: 'white', padding: '0 10px', fontSize: 13, fontFamily: 'inherit' }}
                 />
-                <button onClick={addMemberToTrip} disabled={!newMemberName.trim()} style={{ background: 'white', color: COLORS.teal, border: 'none', borderRadius: 8, padding: '0 14px', fontWeight: 700, fontSize: 13, cursor: newMemberName.trim() ? 'pointer' : 'default', flexShrink: 0 }}>Add</button>
+                <input
+                  type="email"
+                  value={newMemberEmail}
+                  onChange={e => setNewMemberEmail(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && addMemberToTrip()}
+                  placeholder="Email (required)"
+                  style={{ height: 36, borderRadius: 8, border: 'none', background: 'rgba(255,255,255,0.2)', color: 'white', padding: '0 10px', fontSize: 13, fontFamily: 'inherit' }}
+                />
+                <button
+                  onClick={addMemberToTrip}
+                  disabled={!newMemberName.trim() || !isValidEmail(newMemberEmail)}
+                  style={{
+                    height: 36, background: 'white', color: COLORS.teal, border: 'none', borderRadius: 8,
+                    fontWeight: 700, fontSize: 13,
+                    cursor: (newMemberName.trim() && isValidEmail(newMemberEmail)) ? 'pointer' : 'default',
+                    opacity: (newMemberName.trim() && isValidEmail(newMemberEmail)) ? 1 : 0.5,
+                  }}
+                >
+                  Add
+                </button>
+                <button
+                  onClick={cancelEdit}
+                  style={{
+                    height: 36, background: 'rgba(255,255,255,0.12)', border: `1.5px solid rgba(255,255,255,0.3)`,
+                    borderRadius: 8, color: 'white', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                  }}
+                >
+                  Done
+                </button>
               </div>
             </div>
           )}

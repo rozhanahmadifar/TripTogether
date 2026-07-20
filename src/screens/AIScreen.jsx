@@ -2,26 +2,70 @@ import { useState, useRef, useEffect } from 'react'
 import { TEXT, COLORS } from '../styles'
 import { askGemini, parseAIResponse, buildTripContextBlock } from '../gemini'
 
-// Each chip may only reference a fact (destination, dates, traveler count)
-// that's actually present in the trip's saved data — never a guessed month,
-// traveler type, or group composition. When a fact isn't set, that chip
-// falls back to a fully generic phrasing instead of inventing one.
-function buildSuggestionChips(currentTrip) {
-  const count = currentTrip?.members?.length
-  const destination = currentTrip?.destination
-  const dates = currentTrip?.dates
+function tripMonth(currentTrip) {
+  if (!currentTrip?.startDate) return null
+  const d = new Date(currentTrip.startDate)
+  return Number.isNaN(d.getTime()) ? null : d.toLocaleString('en-US', { month: 'long' })
+}
 
-  return [
-    destination
-      ? `What visa or entry requirements should we check for ${destination}?`
-      : 'What visa or entry requirements are worth checking before booking?',
-    count
-      ? `We're a group of ${count} — are there any group ticket discounts worth looking into?`
-      : 'Are there any group ticket discounts worth looking into?',
-    dates
-      ? `What typically needs booking in advance for a trip around ${dates}?`
-      : 'What typically needs booking in advance vs. can be decided closer to the trip?',
+// The item a chip should reference for a category: whichever candidate is
+// already decided, or else the most recently saved one — same "which one
+// wins" rule CategoryCover uses for a category's cover photo.
+function pickItem(items) {
+  if (items.length === 0) return null
+  return items.find(i => (i.starredBy || []).length > 0) || [...items].sort((a, b) => b.savedAt - a.savedAt)[0]
+}
+
+// Each chip may only reference a fact (destination, month/season, traveler
+// count, a specific saved/decided item) that's actually present in the
+// trip's data — never a guessed month, item, or group composition. The
+// pool is rebuilt on every render, so as the group adds more data (dates,
+// an accommodation, an activity) the newly-specific chips take priority
+// over the generic ones they replace, instead of the suggestions staying
+// frozen at whatever was known when the trip was created.
+function buildSuggestionChips(currentTrip, groupItems) {
+  const destination = currentTrip?.destination
+  const count = currentTrip?.members?.length
+  const month = tripMonth(currentTrip)
+  const accommodation = pickItem(groupItems.filter(i => i.categoryIds.includes('accommodation')))
+  const activity = pickItem(groupItems.filter(i => i.categoryIds.includes('activities')))
+
+  const pool = [
+    {
+      specific: !!destination,
+      text: destination
+        ? `What visa or entry requirements should we check for ${destination}?`
+        : `What visa or entry requirements are worth checking before booking?`,
+    },
+    {
+      specific: !!count,
+      text: count
+        ? `We're a group of ${count} — are there any group ticket discounts worth looking into?`
+        : `Are there any group ticket discounts worth looking into?`,
+    },
+    {
+      specific: !!month,
+      text: month
+        ? `Anything weather- or season-related we should plan around for a trip in ${month}?`
+        : `What typically needs booking in advance vs. can be decided closer to the trip?`,
+    },
+    {
+      specific: !!accommodation,
+      text: accommodation
+        ? `How do we usually get from ${accommodation.title} to the city center?`
+        : `What's the best way to get around once we land?`,
+    },
+    {
+      specific: !!activity,
+      text: activity
+        ? `What's the best way to handle booking or tickets for ${activity.title}?`
+        : `What should we keep in mind for booking activities or tickets in advance?`,
+    },
   ]
+
+  const specifics = pool.filter(p => p.specific)
+  const generics = pool.filter(p => !p.specific)
+  return [...specifics, ...generics].slice(0, 3).map(p => p.text)
 }
 
 const ERROR_TEXT = 'Sorry, I could not connect right now. Please try again in a moment.'
@@ -36,12 +80,12 @@ function TypingDots() {
   )
 }
 
-export function AIScreen({ currentTrip }) {
+export function AIScreen({ currentTrip, groupItems }) {
   const [messages, setMessages] = useState([])
   const [input, setInput]       = useState('')
   const [sending, setSending]   = useState(false)
   const bottomRef               = useRef(null)
-  const suggestionChips         = buildSuggestionChips(currentTrip)
+  const suggestionChips         = buildSuggestionChips(currentTrip, groupItems)
   const tripContextBlock        = buildTripContextBlock(currentTrip)
 
   const showEmptyState = messages.length === 0 && input === ''

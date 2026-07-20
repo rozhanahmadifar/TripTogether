@@ -6,24 +6,16 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
-export const handler = async (event) => {
-  if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 204, headers: CORS_HEADERS, body: '' }
-  }
+export async function onRequestOptions() {
+  return new Response(null, { status: 204, headers: CORS_HEADERS })
+}
 
-  if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      headers: CORS_HEADERS,
-      body: JSON.stringify({ error: 'Method not allowed' }),
-    }
-  }
-
+export async function onRequestPost(context) {
   try {
-    const apiKey = process.env.GEMINI_API_KEY
+    const apiKey = context.env.GEMINI_API_KEY
     if (!apiKey) throw new Error('GEMINI_API_KEY is not configured')
 
-    const { messages, systemPrompt } = JSON.parse(event.body || '{}')
+    const { messages, systemPrompt } = await context.request.json()
     if (!Array.isArray(messages) || messages.length === 0) {
       throw new Error('Request body must include a non-empty messages array')
     }
@@ -34,8 +26,8 @@ export const handler = async (event) => {
         parts: [{ text: m.text }],
       })),
       ...(systemPrompt ? { systemInstruction: { parts: [{ text: systemPrompt }] } } : {}),
-      // Extended "thinking" pushes response times past Netlify's function
-      // timeout often enough to matter, so it's disabled here.
+      // Extended "thinking" pushes response times past the platform's
+      // function timeout often enough to matter, so it's disabled here.
       generationConfig: { thinkingConfig: { thinkingBudget: 0 } },
     }
 
@@ -60,16 +52,14 @@ export const handler = async (event) => {
     const data = await response.json()
     if (!response.ok) throw new Error(data?.error?.message || 'Gemini API request failed')
 
-    return {
-      statusCode: 200,
+    return new Response(JSON.stringify(data), {
+      status: 200,
       headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    }
+    })
   } catch (err) {
-    return {
-      statusCode: 500,
+    return new Response(JSON.stringify({ error: err.message || 'Something went wrong' }), {
+      status: 500,
       headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ error: err.message || 'Something went wrong' }),
-    }
+    })
   }
 }

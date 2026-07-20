@@ -5,7 +5,6 @@ import { GridTile } from '../components/GridTile'
 import { ViewToggle } from '../components/ViewToggle'
 import { EmptyState } from '../components/EmptyState'
 import { BackButton } from '../components/BackButton'
-import { CategoryCover } from '../components/CategoryCover'
 import { COLORS, SPACING } from '../styles'
 
 export function GroupCategoryScreen({ navigate, params = {}, currentTrip, groupItems, addToGroup, toggleHeart, toggleStar, deleteGroupItem, updateGroupItem, userName, allCategories }) {
@@ -41,8 +40,6 @@ export function GroupCategoryScreen({ navigate, params = {}, currentTrip, groupI
       </div>
 
       <div className="screen-scroll" style={{ padding: `16px ${SPACING.screenX}px ${SPACING.scrollBottomPad}px` }}>
-        <CategoryCover category={cat} items={items} />
-
         {/* Contributors card — celebratory, not an audit */}
         <div style={{
           background: 'white', borderRadius: 14, padding: SPACING.cardPad, marginBottom: SPACING.sectionGap,

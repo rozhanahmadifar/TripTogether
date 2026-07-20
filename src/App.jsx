@@ -188,6 +188,14 @@ export default function App() {
   const setTripDestination = (tripId, destinationText) => {
     const trimmed = destinationText.trim()
     updateTrip(tripId, { destination: trimmed })
+
+    // A trip that had its destination filled in at creation never gets a
+    // default Destination category (see startGroupTrip) — the trip header
+    // is the only place that fact lives, so there's no candidate item to
+    // sync here.
+    const trip = trips.find(t => t.id === tripId)
+    if (trip?.destinationSetAtCreation) return
+
     const inThisTrip = (i) => i.tripId === tripId && i.categoryIds.includes('destination')
 
     if (!trimmed) {
@@ -235,22 +243,20 @@ export default function App() {
     // have to add themselves to their own trip.
     const me = { id: 'me', name: userName, color: MEMBER_COLORS[0], initial: userName.charAt(0).toUpperCase(), joined: true }
     const trimmedDestination = (destination || '').trim()
-    const trip = { id: `t-${Date.now()}`, name, destination: trimmedDestination, dates, startDate: startDate || '', members: [me, ...crewMembers] }
+    // A destination filled in at creation is already decided, not an open
+    // question — the trip header becomes the only place that fact lives,
+    // and the Destination category is skipped entirely rather than shown
+    // pre-decided (see visibleCategories in GroupSpaceScreen/GroupHomeScreen/
+    // MySavesScreen, which all hide it when this is true). The group can
+    // still add their own "Destination" section later via "Add a section",
+    // same as any other custom category.
+    const trip = {
+      id: `t-${Date.now()}`, name, destination: trimmedDestination, dates, startDate: startDate || '',
+      members: [me, ...crewMembers], destinationSetAtCreation: !!trimmedDestination,
+    }
     setTrips(p => [...p, trip])
     setCurrentTripId(trip.id)
     setAppMode('group')
-
-    // A destination filled in at creation is already decided, not an open
-    // question — the Destination category should reflect that immediately
-    // instead of starting as an empty list inviting new candidates.
-    if (trimmedDestination) {
-      setGroupItems(p => [...p, {
-        id: `g-${Date.now()}`, title: trimmedDestination, note: '', link: '', platform: '',
-        categoryIds: ['destination'], hasPhoto: false, photo: '',
-        savedBy: userName, savedAt: Date.now(), hearts: 0, hearted: false, starredBy: [userName],
-        tripId: trip.id,
-      }])
-    }
 
     // Every trip gets its own named discussion thread instead of a generic
     // "General" one, pinned so it can't be deleted.
@@ -273,6 +279,26 @@ export default function App() {
 
   const updateTrip = (tripId, updates) => {
     setTrips(p => p.map(t => t.id === tripId ? { ...t, ...updates } : t))
+  }
+
+  // Deleting a trip is permanent and takes everything scoped to it with it
+  // — group items, private saves, and its discussion — since none of that
+  // data means anything once the trip itself is gone.
+  const deleteTrip = (tripId) => {
+    setTrips(p => p.filter(t => t.id !== tripId))
+    setGroupItems(p => p.filter(i => i.tripId !== tripId))
+    setMyIdeas(p => p.filter(i => i.tripId !== tripId))
+    setCustomThreads(p => {
+      const { [tripId]: _removed, ...rest } = p
+      return rest
+    })
+    setDiscussMessages(p => {
+      const rest = {}
+      for (const key in p) {
+        if (!key.startsWith(`${tripId}-`)) rest[key] = p[key]
+      }
+      return rest
+    })
   }
 
   const addDiscussMessage = (tripId, threadId, message) => {
@@ -309,7 +335,7 @@ export default function App() {
     allCategories, addCustomCategory, renameCategory, deleteCategory, toggleCategoryHidden,
     saveToMyIdeas, addToGroup, toggleHeart, toggleStar,
     deleteMyIdea, deleteGroupItem, updateMyIdea, updateGroupItem,
-    startGroupTrip, openTrip, updateTrip, setTripDestination,
+    startGroupTrip, openTrip, updateTrip, setTripDestination, deleteTrip,
     openModal, closeModal,
     discussMessages, addDiscussMessage,
     customThreads, addDiscussThread,
