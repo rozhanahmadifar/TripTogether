@@ -32,10 +32,13 @@ function buildSuggestionChips(currentTrip, groupItems) {
 
   const pool = [
     {
+      // Nationality drives visa/entry rules, but the app never collects
+      // it, so this chip is upfront about needing it rather than implying
+      // destination alone is enough for a real answer.
       specific: !!destination,
       text: destination
-        ? `What visa or entry requirements should we check for ${destination}?`
-        : `What visa or entry requirements are worth checking before booking?`,
+        ? `What visa or entry requirements should we check for ${destination}? (Tell me your nationality so I can give a real answer)`
+        : `What visa or entry requirements should we check? (Tell me your nationality so I can give a real answer)`,
     },
     {
       specific: !!count,
