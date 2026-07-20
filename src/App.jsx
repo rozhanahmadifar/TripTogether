@@ -222,10 +222,23 @@ export default function App() {
     // The creator is added as an already-joined member up front — they never
     // have to add themselves to their own trip.
     const me = { id: 'me', name: userName, color: MEMBER_COLORS[0], initial: userName.charAt(0).toUpperCase(), joined: true }
-    const trip = { id: `t-${Date.now()}`, name, destination, dates, startDate: startDate || '', members: [me, ...crewMembers] }
+    const trimmedDestination = (destination || '').trim()
+    const trip = { id: `t-${Date.now()}`, name, destination: trimmedDestination, dates, startDate: startDate || '', members: [me, ...crewMembers] }
     setTrips(p => [...p, trip])
     setCurrentTripId(trip.id)
     setAppMode('group')
+
+    // A destination filled in at creation is already decided, not an open
+    // question — the Destination category should reflect that immediately
+    // instead of starting as an empty list inviting new candidates.
+    if (trimmedDestination) {
+      setGroupItems(p => [...p, {
+        id: `g-${Date.now()}`, title: trimmedDestination, note: '', link: '', platform: '',
+        categoryIds: ['destination'], hasPhoto: false, photo: '',
+        savedBy: userName, savedAt: Date.now(), hearts: 0, hearted: false, starredBy: [userName],
+      }])
+    }
+
     // Every trip gets its own named discussion thread instead of a generic
     // "General" one, pinned so it can't be deleted.
     addDiscussThread(trip.id, name || 'My Trip', { pinned: true, subtext: `This is ${name || 'your trip'}'s main discussion space.` })
