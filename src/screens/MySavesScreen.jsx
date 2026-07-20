@@ -6,7 +6,11 @@ import { ActionMenu, PencilIcon, TrashIcon, EyeOffIcon } from '../components/Act
 // Full My Saves list — the "See all" destination from trip home, mirroring
 // Group Space's full-list screen (all 6 categories, including empty ones,
 // with rename/hide/delete), just themed private instead of shared.
-export function MySavesScreen({ navigate, myIdeas, allCategories, addCustomCategory, renameCategory, deleteCategory, toggleCategoryHidden }) {
+export function MySavesScreen({ navigate, myIdeas, currentTrip, allCategories, addCustomCategory, renameCategory, deleteCategory, toggleCategoryHidden }) {
+  // "My Saves" inside a trip is that trip's own private stash, not the
+  // user's whole personal collection — items saved to a different trip (or
+  // saved before any trip existed) must never show up here.
+  const tripMyIdeas = myIdeas.filter(i => i.tripId === currentTrip?.id)
   const [addingSection, setAddingSection] = useState(false)
   const [sectionName, setSectionName]     = useState('')
   const [menuCat, setMenuCat]             = useState(null)
@@ -57,7 +61,7 @@ export function MySavesScreen({ navigate, myIdeas, allCategories, addCustomCateg
           boxShadow: SHADOW_CARD,
         }}>
           {visibleCategories.map((cat) => {
-            const items = myIdeas.filter(item => item.categoryIds.includes(cat.id))
+            const items = tripMyIdeas.filter(item => item.categoryIds.includes(cat.id))
             const isRenaming = renamingId === cat.id
             return (
               <div key={cat.id} style={{ borderBottom: `1px solid ${COLORS.borderLight}` }}>
@@ -89,7 +93,7 @@ export function MySavesScreen({ navigate, myIdeas, allCategories, addCustomCateg
                     </div>
                   ) : (
                     <button
-                      onClick={() => navigate('myIdeasCategory', { categoryId: cat.id, backTo: 'mySaves' })}
+                      onClick={() => navigate('myIdeasCategory', { categoryId: cat.id, backTo: 'mySaves', tripScoped: true })}
                       style={{
                         flex: 1, border: 'none', background: 'none', cursor: 'pointer',
                         display: 'flex', alignItems: 'center', gap: 14,

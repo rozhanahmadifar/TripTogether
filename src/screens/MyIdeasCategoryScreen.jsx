@@ -7,10 +7,14 @@ import { BackButton } from '../components/BackButton'
 import { CategoryCover } from '../components/CategoryCover'
 import { COLORS, SPACING } from '../styles'
 
-export function MyIdeasCategoryScreen({ navigate, params = {}, myIdeas, allCategories, userName, deleteMyIdea, updateMyIdea }) {
-  const { categoryId, backTo = 'individualHome' } = params
+export function MyIdeasCategoryScreen({ navigate, params = {}, myIdeas, currentTrip, allCategories, userName, deleteMyIdea, updateMyIdea }) {
+  const { categoryId, backTo = 'individualHome', tripScoped } = params
   const cat = allCategories.find(c => c.id === categoryId) || allCategories[0] || { id: '', icon: '✨', label: 'Ideas', color: '#1E5F5F' }
-  const items = myIdeas.filter(i => i.categoryIds.includes(cat.id))
+  // Reached from "My Saves" (a specific trip's own private stash) this only
+  // shows that trip's items; reached from the global "My Ideas" board it
+  // shows everything, regardless of which trip (or no trip) it was saved under.
+  const scopedIdeas = tripScoped ? myIdeas.filter(i => i.tripId === currentTrip?.id) : myIdeas
+  const items = scopedIdeas.filter(i => i.categoryIds.includes(cat.id))
   const me = { name: userName || 'You', color: COLORS.teal, initial: (userName || 'You').charAt(0).toUpperCase() }
   const [view, setView] = useState('list')
 
@@ -37,7 +41,7 @@ export function MyIdeasCategoryScreen({ navigate, params = {}, myIdeas, allCateg
             categoryId={cat.id}
             heading={`Your ${cat.label} board is empty for now.`}
             actionLabel="Save something"
-            onAction={() => navigate('saveSomething', { categoryId: cat.id, backTo: 'myIdeasCategory', returnParams: { categoryId: cat.id, backTo } })}
+            onAction={() => navigate('saveSomething', { categoryId: cat.id, backTo: 'myIdeasCategory', returnParams: { categoryId: cat.id, backTo, tripScoped } })}
           />
         ) : view === 'grid' ? (
           <div style={{ columnCount: 2, columnGap: 14 }}>
@@ -46,7 +50,7 @@ export function MyIdeasCategoryScreen({ navigate, params = {}, myIdeas, allCateg
                 key={item.id}
                 item={item}
                 category={cat}
-                onOpen={() => navigate('itemDetail', { itemId: item.id, categoryId: cat.id, backTo: 'myIdeasCategory', parentBackTo: backTo })}
+                onOpen={() => navigate('itemDetail', { itemId: item.id, categoryId: cat.id, backTo: 'myIdeasCategory', parentBackTo: backTo, tripScoped })}
               />
             ))}
           </div>
@@ -63,7 +67,7 @@ export function MyIdeasCategoryScreen({ navigate, params = {}, myIdeas, allCateg
                 previewHeight={100}
                 allCategories={allCategories}
                 hideFooter
-                onOpen={() => navigate('itemDetail', { itemId: item.id, categoryId: cat.id, backTo: 'myIdeasCategory', parentBackTo: backTo })}
+                onOpen={() => navigate('itemDetail', { itemId: item.id, categoryId: cat.id, backTo: 'myIdeasCategory', parentBackTo: backTo, tripScoped })}
                 onDelete={() => deleteMyIdea(item.id)}
                 onSave={(updates) => updateMyIdea(item.id, updates)}
               />
@@ -73,7 +77,7 @@ export function MyIdeasCategoryScreen({ navigate, params = {}, myIdeas, allCateg
 
         {items.length > 0 && (
           <button
-            onClick={() => navigate('saveSomething', { categoryId: cat.id, backTo: 'myIdeasCategory', returnParams: { categoryId: cat.id, backTo } })}
+            onClick={() => navigate('saveSomething', { categoryId: cat.id, backTo: 'myIdeasCategory', returnParams: { categoryId: cat.id, backTo, tripScoped } })}
             style={{
               marginTop: SPACING.cardGap, width: '100%', minHeight: SPACING.inputMinHeight,
               background: 'transparent', border: '1.5px dashed #D6CCBF',

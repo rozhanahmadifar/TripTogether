@@ -17,7 +17,7 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, currentTrip, 
   const cat  = allCategories.find(c => c.id === categoryId) || allCategories[0] || { id: '', icon: '✨', label: 'Ideas', color: COLORS.teal }
   const itemCategories = item ? item.categoryIds.map(id => allCategories.find(c => c.id === id)).filter(Boolean) : []
 
-  const handleBack = () => navigate(backTo, { categoryId, backTo: params.parentBackTo })
+  const handleBack = () => navigate(backTo, { categoryId, backTo: params.parentBackTo, tripScoped: params.tripScoped })
 
   const togglePicked = (id) => {
     setPickedCategories(prev => prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id])
@@ -25,7 +25,7 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, currentTrip, 
 
   const handleConfirmShare = () => {
     if (pickedCategories.length === 0) return
-    addToGroup({ title: item.title, note: item.note, link: item.link, platform: item.platform, categoryIds: pickedCategories, hasPhoto: item.hasPhoto, photo: item.photo })
+    addToGroup({ title: item.title, note: item.note, link: item.link, platform: item.platform, categoryIds: pickedCategories, hasPhoto: item.hasPhoto, photo: item.photo, tripId: currentTrip?.id })
     navigate('shareSuccess', { categoryIds: pickedCategories })
   }
 

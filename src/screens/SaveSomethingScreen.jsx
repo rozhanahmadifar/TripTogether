@@ -16,7 +16,7 @@ function MemberCircle({ m }) {
   )
 }
 
-export function SaveSomethingScreen({ navigate, params = {}, allCategories, saveToMyIdeas, addToGroup, addCustomCategory, hasGroup, trips, openTrip, openModal, closeModal }) {
+export function SaveSomethingScreen({ navigate, params = {}, allCategories, saveToMyIdeas, addToGroup, addCustomCategory, hasGroup, trips, currentTrip, openTrip, openModal, closeModal }) {
   const [titleValue, setTitleValue]   = useState('')
   const [linkValue, setLinkValue]     = useState('')
   const [noteValue, setNoteValue]     = useState('')
@@ -64,8 +64,13 @@ export function SaveSomethingScreen({ navigate, params = {}, allCategories, save
   }
 
   const doShare = (tripId) => {
+    // Resolved and passed explicitly rather than left for addToGroup to
+    // infer from the "current" trip — openTrip's state update hasn't taken
+    // effect yet at this point in the same tick, so relying on it here
+    // would tag the item to whatever trip was current before this switch.
+    const targetTripId = tripId || currentTrip?.id
     if (tripId) openTrip(tripId)
-    addToGroup({ title, note: noteValue.trim(), link: linkValue.trim(), platform: resolvedSource, categoryIds, hasPhoto: !!photo, photo })
+    addToGroup({ title, note: noteValue.trim(), link: linkValue.trim(), platform: resolvedSource, categoryIds, hasPhoto: !!photo, photo, tripId: targetTripId })
     navigate('shareSuccess', { categoryIds })
   }
 

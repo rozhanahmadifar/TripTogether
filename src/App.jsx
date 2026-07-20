@@ -123,15 +123,25 @@ export default function App() {
   // tagged into more than one category view (see MyIdeasCategoryScreen /
   // GroupCategoryScreen, which filter by `categoryIds.includes(cat.id)`).
   const saveToMyIdeas = ({ title, note, link, platform, categoryIds, hasPhoto, photo }) => {
-    const item = { id: `i-${Date.now()}`, title, note, link, platform, categoryIds, hasPhoto: !!hasPhoto, photo: photo || '', savedAt: Date.now() }
+    const item = {
+      id: `i-${Date.now()}`, title, note, link, platform, categoryIds, hasPhoto: !!hasPhoto, photo: photo || '', savedAt: Date.now(),
+      tripId: currentTrip?.id || null,
+    }
     setMyIdeas(p => [...p, item])
     return item
   }
 
-  const addToGroup = ({ title, note, link, platform, categoryIds, hasPhoto, photo }) => {
+  // tripId is accepted explicitly (rather than read from `currentTrip`
+  // internally) because the caller may be adding to a *different* trip than
+  // the currently active one (the "which trip is this for?" picker calls
+  // openTrip() first, and that state update hasn't landed yet by the time
+  // this runs in the same tick) — relying on `currentTrip` here would tag
+  // the item to the wrong trip in that case.
+  const addToGroup = ({ title, note, link, platform, categoryIds, hasPhoto, photo, tripId }) => {
     const item = {
       id: `g-${Date.now()}`, title, note, link, platform, categoryIds, hasPhoto: !!hasPhoto, photo: photo || '',
       savedBy: userName, savedAt: Date.now(), hearts: 0, hearted: false, starredBy: [],
+      tripId: tripId || currentTrip?.id || null,
     }
     setGroupItems(p => [...p, item])
     return item
@@ -161,7 +171,7 @@ export default function App() {
 
     setGroupItems(p => p.map(i => {
       if (i.id === itemId) return { ...i, starredBy: nextStarredBy }
-      if (isDestination && !already && i.categoryIds.includes('destination')) return { ...i, starredBy: [] }
+      if (isDestination && !already && i.tripId === item.tripId && i.categoryIds.includes('destination')) return { ...i, starredBy: [] }
       return i
     }))
 
@@ -178,17 +188,18 @@ export default function App() {
   const setTripDestination = (tripId, destinationText) => {
     const trimmed = destinationText.trim()
     updateTrip(tripId, { destination: trimmed })
+    const inThisTrip = (i) => i.tripId === tripId && i.categoryIds.includes('destination')
 
     if (!trimmed) {
-      setGroupItems(p => p.map(i => i.categoryIds.includes('destination') ? { ...i, starredBy: [] } : i))
+      setGroupItems(p => p.map(i => inThisTrip(i) ? { ...i, starredBy: [] } : i))
       return
     }
 
-    const match = groupItems.find(i => i.categoryIds.includes('destination') && i.title.trim().toLowerCase() === trimmed.toLowerCase())
+    const match = groupItems.find(i => inThisTrip(i) && i.title.trim().toLowerCase() === trimmed.toLowerCase())
 
     if (match) {
       setGroupItems(p => p.map(i => {
-        if (!i.categoryIds.includes('destination')) return i
+        if (!inThisTrip(i)) return i
         if (i.id === match.id) return { ...i, starredBy: (i.starredBy || []).includes(userName) ? i.starredBy : [...(i.starredBy || []), userName] }
         return { ...i, starredBy: [] }
       }))
@@ -197,8 +208,9 @@ export default function App() {
         id: `g-${Date.now()}`, title: trimmed, note: '', link: '', platform: '',
         categoryIds: ['destination'], hasPhoto: false, photo: '',
         savedBy: userName, savedAt: Date.now(), hearts: 0, hearted: false, starredBy: [userName],
+        tripId,
       }
-      setGroupItems(p => [...p.map(i => i.categoryIds.includes('destination') ? { ...i, starredBy: [] } : i), newItem])
+      setGroupItems(p => [...p.map(i => inThisTrip(i) ? { ...i, starredBy: [] } : i), newItem])
     }
   }
 
@@ -236,6 +248,7 @@ export default function App() {
         id: `g-${Date.now()}`, title: trimmedDestination, note: '', link: '', platform: '',
         categoryIds: ['destination'], hasPhoto: false, photo: '',
         savedBy: userName, savedAt: Date.now(), hearts: 0, hearted: false, starredBy: [userName],
+        tripId: trip.id,
       }])
     }
 
@@ -278,13 +291,20 @@ export default function App() {
     || (trips.length > 0 ? trips[trips.length - 1] : null)
   const hasGroup = trips.length > 0
 
+  // Group items only ever make sense within a specific trip, so every
+  // screen that consumes them (Group Space, a category screen, trip home's
+  // preview) sees just this trip's items, never another trip's — the state
+  // itself stays a single flat array (its own functions above still read
+  // the unfiltered `groupItems`), only what's handed down is scoped.
+  const groupItemsInTrip = currentTrip ? groupItems.filter(i => i.tripId === currentTrip.id) : []
+
   const showNav  = NAV_SCREENS.has(screen)
   const showPlus = PLUS_BTN_SCREENS.has(screen)
   const activeTab = getActiveTab(screen)
 
   const sharedProps = {
     navigate, params, userName, setUserName,
-    appMode, myIdeas, groupItems,
+    appMode, myIdeas, groupItems: groupItemsInTrip,
     trips, currentTrip, hasGroup,
     allCategories, addCustomCategory, renameCategory, deleteCategory, toggleCategoryHidden,
     saveToMyIdeas, addToGroup, toggleHeart, toggleStar,

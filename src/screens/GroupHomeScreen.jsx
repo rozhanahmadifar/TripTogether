@@ -108,7 +108,10 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
     .sort((a, b) => countIn(items, b.id) - countIn(items, a.id))
     .slice(0, 3)
   const groupCategoriesWithItems = topCategories(groupItems)
-  const savesCategoriesWithItems = topCategories(myIdeas)
+  // "My Saves" here is this trip's own private stash, not the user's whole
+  // personal collection — never another trip's (or pre-trip) private items.
+  const tripMyIdeas = myIdeas.filter(i => i.tripId === currentTrip.id)
+  const savesCategoriesWithItems = topCategories(tripMyIdeas)
 
   const startEdit = (field, value = '') => { setEditField(field); setEditValue(value) }
   const cancelEdit = () => { setEditField(null); setEditValue(''); setEditDateRange({ start: null, end: null }) }
@@ -431,16 +434,16 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
             </button>
           </div>
           <p style={{ fontSize: 12, color: COLORS.warmGrey, fontStyle: 'italic', marginBottom: 10 }}>
-            {myIdeas.length === 0 ? 'Nothing saved yet' : 'Private, only you can see these'}
+            {tripMyIdeas.length === 0 ? 'Nothing saved yet' : 'Private, only you can see these'}
           </p>
           <div>
             {savesCategoriesWithItems.map((cat, i) => (
               <SavesCategoryRow
                 key={cat.id}
                 cat={cat}
-                count={myIdeas.filter(i => i.categoryIds.includes(cat.id)).length}
+                count={tripMyIdeas.filter(i => i.categoryIds.includes(cat.id)).length}
                 isLast={i === savesCategoriesWithItems.length - 1}
-                onClick={() => navigate('myIdeasCategory', { categoryId: cat.id, backTo: 'groupHome' })}
+                onClick={() => navigate('myIdeasCategory', { categoryId: cat.id, backTo: 'groupHome', tripScoped: true })}
               />
             ))}
           </div>
