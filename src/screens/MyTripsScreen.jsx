@@ -123,13 +123,6 @@ export function MyTripsScreen({ navigate, trips, openTrip, deleteTrip }) {
                       ))}
                     </div>
                   )}
-
-                  <div style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 6,
-                    background: 'rgba(255,255,255,0.15)', borderRadius: 10, padding: '8px 16px',
-                  }}>
-                    <span style={{ fontSize: 12, color: 'white', fontWeight: 700 }}>Open trip</span>
-                  </div>
                 </div>
               </button>
             ))}
