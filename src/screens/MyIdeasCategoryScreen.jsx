@@ -38,7 +38,7 @@ export function MyIdeasCategoryScreen({ navigate, params = {}, myIdeas, currentT
             categoryId={cat.id}
             heading={`Your ${cat.label} board is empty for now.`}
             actionLabel="Save something"
-            onAction={() => navigate('saveSomething', { categoryId: cat.id, backTo: 'myIdeasCategory', returnParams: { categoryId: cat.id, backTo, tripScoped } })}
+            onAction={() => navigate('saveSomething', { categoryId: cat.id, mode: 'personal', backTo: 'myIdeasCategory', returnParams: { categoryId: cat.id, backTo, tripScoped } })}
           />
         ) : view === 'grid' ? (
           <div style={{ columnCount: 2, columnGap: 14 }}>
@@ -74,7 +74,7 @@ export function MyIdeasCategoryScreen({ navigate, params = {}, myIdeas, currentT
 
         {items.length > 0 && (
           <button
-            onClick={() => navigate('saveSomething', { categoryId: cat.id, backTo: 'myIdeasCategory', returnParams: { categoryId: cat.id, backTo, tripScoped } })}
+            onClick={() => navigate('saveSomething', { categoryId: cat.id, mode: 'personal', backTo: 'myIdeasCategory', returnParams: { categoryId: cat.id, backTo, tripScoped } })}
             style={{
               marginTop: SPACING.cardGap, width: '100%', minHeight: SPACING.inputMinHeight,
               background: 'transparent', border: '1.5px dashed #D6CCBF',

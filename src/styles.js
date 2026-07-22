@@ -16,6 +16,12 @@ export const COLORS = {
   success: '#3A7D5A',
   danger: '#D94040',
 
+  // Reserved for primary actions only (the one "tap this to move forward"
+  // button per screen) — teal is used everywhere as the structural/brand
+  // color (headers, gradients, cards), so reusing it for buttons makes
+  // them blend into the backgrounds instead of standing out from them.
+  action: '#D4724A',
+
   // Text
   charcoal: '#1A1A1A',
   warmGrey: '#5A5048',

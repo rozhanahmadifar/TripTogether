@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { CATEGORIES, MEMBER_COLORS } from './data'
 import { HouseIcon, SuitcaseIcon, ChatIcon, SparkleIcon } from './components/TabIcons'
 import { PlusIcon } from './components/ActionMenu'
+import { COLORS } from './styles'
 
 import { WelcomeScreen }         from './screens/WelcomeScreen'
 import { YourNameScreen }        from './screens/YourNameScreen'
@@ -19,6 +20,7 @@ import { AIScreen }              from './screens/AIScreen'
 import { MyTripsScreen }         from './screens/MyTripsScreen'
 import { DiscussScreen }         from './screens/DiscussScreen'
 import { DiscussThreadScreen }   from './screens/DiscussThreadScreen'
+import { TripSummaryScreen }     from './screens/TripSummaryScreen'
 
 const SCREEN_MAP = {
   welcome:         WelcomeScreen,
@@ -37,6 +39,7 @@ const SCREEN_MAP = {
   myTrips:         MyTripsScreen,
   discuss:         DiscussScreen,
   discussThread:   DiscussThreadScreen,
+  tripSummary:     TripSummaryScreen,
 }
 
 const MAIN_NAV = [
@@ -394,7 +397,7 @@ export default function App() {
               onClick={() => navigate('saveSomething', plusCtx.navParams)}
               style={{
                 width: 52, height: 52, borderRadius: '50%',
-                background: '#1E5F5F', color: 'white', border: 'none',
+                background: COLORS.action, color: 'white', border: 'none',
                 cursor: 'pointer',
                 boxShadow: '0 3px 10px rgba(0,0,0,0.22)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -402,7 +405,7 @@ export default function App() {
             >
               <PlusIcon size={24} />
             </button>
-            <span style={{ fontSize: 9, fontWeight: 700, color: '#1E5F5F', letterSpacing: 0.2 }}>
+            <span style={{ fontSize: 9, fontWeight: 700, color: COLORS.action, letterSpacing: 0.2 }}>
               {plusCtx.label}
             </span>
           </div>

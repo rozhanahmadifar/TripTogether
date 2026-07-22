@@ -35,14 +35,16 @@ export function GridTile({ item, category, onOpen }) {
   const isImage = isImagePhoto(item.photo)
   const hash = hashString(item.id || item.title || '')
   const tone = WARM_TONES[hash % WARM_TONES.length]
+  const decided = item.starredBy?.length > 0
 
   return (
     <button
       onClick={onOpen}
       style={{
-        display: 'block', width: '100%', border: 'none', cursor: 'pointer',
+        display: 'block', width: '100%', cursor: 'pointer',
         background: 'none', padding: 0, textAlign: 'left', fontFamily: 'inherit',
         borderRadius: 18, overflow: 'hidden', position: 'relative',
+        border: `2px solid ${decided ? COLORS.teal : 'transparent'}`,
         breakInside: 'avoid', marginBottom: 14, boxShadow: '0 2px 10px rgba(0,0,0,0.08)',
       }}
     >
@@ -68,34 +70,37 @@ export function GridTile({ item, category, onOpen }) {
         </div>
       )}
 
-      {item.starredBy?.length > 0 && (
+      {decided && (
         <span
           title={`Marked as decided by ${item.starredBy.join(', ')}`}
           style={{
             position: 'absolute', top: 8, left: 8,
-            width: 24, height: 24, borderRadius: '50%',
+            display: 'flex', alignItems: 'center', gap: 3,
             background: COLORS.teal, color: 'white',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 13, fontWeight: 800, boxShadow: '0 2px 6px rgba(0,0,0,0.18)',
+            fontSize: 10, fontWeight: 800, letterSpacing: 0.2,
+            borderRadius: 20, padding: '4px 8px',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.18)',
           }}
         >
-          ✓
+          ✓ Decided
         </span>
       )}
 
-      <div style={{
-        position: 'absolute', left: 0, right: 0, bottom: 0,
-        padding: '24px 10px 10px',
-        background: 'linear-gradient(to top, rgba(0,0,0,0.72), transparent)',
-      }}>
-        <p style={{
-          fontSize: 13, fontWeight: 700, color: 'white', lineHeight: 1.3,
-          overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
-          textShadow: '0 1px 3px rgba(0,0,0,0.35)',
+      {item.title && (
+        <div style={{
+          position: 'absolute', left: 0, right: 0, bottom: 0,
+          padding: '24px 10px 10px',
+          background: 'linear-gradient(to top, rgba(0,0,0,0.72), transparent)',
         }}>
-          {item.title}
-        </p>
-      </div>
+          <p style={{
+            fontSize: 13, fontWeight: 700, color: 'white', lineHeight: 1.3,
+            overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+            textShadow: '0 1px 3px rgba(0,0,0,0.35)',
+          }}>
+            {item.title}
+          </p>
+        </div>
+      )}
     </button>
   )
 }

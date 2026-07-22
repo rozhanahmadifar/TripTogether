@@ -1,5 +1,6 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { PLATFORMS, CATEGORY_HINTS, detectSourceFromLink, isImagePhoto } from '../data'
+import { fetchLinkPreview } from '../linkPreview'
 import { TEXT, COLORS, SPACING } from '../styles'
 import { BackButton } from '../components/BackButton'
 
@@ -28,9 +29,15 @@ export function SaveSomethingScreen({ navigate, params = {}, allCategories, save
   const [categoryIds, setCategoryIds] = useState(params.categoryId ? [params.categoryId] : [])
   const [addingCategory, setAddingCategory] = useState(false)
   const [newCategoryName, setNewCategoryName] = useState('')
+  const [previewStatus, setPreviewStatus] = useState('idle') // idle | loading | done
 
   const title = titleValue.trim()
-  const canSave = title && categoryIds.length > 0
+  // A link, photo, or note already identifies the item at a glance, so
+  // title only needs to be required when none of those exist either —
+  // otherwise it reintroduces the original "unidentifiable item" problem,
+  // and only a completely blank save attempt should be blocked.
+  const hasOtherContent = !!photo || linkValue.trim().length > 0 || noteValue.trim().length > 0
+  const canSave = (title.length > 0 || hasOtherContent) && categoryIds.length > 0
   const isGroupMode = params.mode === 'group'
   const resolvedSource = platform === 'Other' && customSource.trim() ? customSource.trim() : platform
 
@@ -42,6 +49,27 @@ export function SaveSomethingScreen({ navigate, params = {}, allCategories, save
     const detected = detectSourceFromLink(value)
     if (detected) setPlatform(detected)
   }
+
+  // Debounced so a preview isn't fetched on every keystroke — only once
+  // the user pauses. Never overwrites a photo the user already has
+  // (uploaded manually or from an earlier preview they kept), and never
+  // overwrites a title they've already typed themselves.
+  useEffect(() => {
+    const trimmed = linkValue.trim()
+    if (!trimmed) { setPreviewStatus('idle'); return }
+
+    setPreviewStatus('loading')
+    let cancelled = false
+    const timer = setTimeout(async () => {
+      const preview = await fetchLinkPreview(trimmed)
+      if (cancelled) return
+      if (preview?.image) setPhoto(prev => prev || preview.image)
+      if (preview?.title) setTitleValue(prev => prev || preview.title)
+      setPreviewStatus('done')
+    }, 600)
+
+    return () => { cancelled = true; clearTimeout(timer) }
+  }, [linkValue])
 
   const toggleCategory = (id) => {
     setCategoryIds(prev => prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id])
@@ -148,19 +176,24 @@ export function SaveSomethingScreen({ navigate, params = {}, allCategories, save
 
       <div className="screen-scroll" style={{ padding: `20px ${SPACING.screenX}px 40px` }}>
 
-        {/* Title — required, becomes the card's display name */}
+        {/* Title — first, so it's always available to fill in right away
+            and edit later; required only when there's nothing else (no
+            link, photo, or note) to identify the item by. Auto-fill from
+            a link preview (below) may overwrite this after the user has
+            already typed something — expected with this field order, not
+            a bug, since the preview only fills in what's still empty. */}
         <p style={{ ...TEXT.sectionHeading, marginBottom: 8 }}>
-          Title
+          Title {hasOtherContent && <span style={{ textTransform: 'none', fontWeight: 500, color: '#A79E93' }}>Optional</span>}
         </p>
         <input
           value={titleValue}
           onChange={e => setTitleValue(e.target.value)}
-          placeholder="Give it a name (e.g. Cliffs of Moher hike)"
+          placeholder={hasOtherContent ? "Give it a name (optional)" : "Give it a name (e.g. Cliffs of Moher hike)"}
           style={{
             width: '100%', minHeight: SPACING.inputMinHeight, borderRadius: 12,
             border: `1.5px solid ${titleValue ? COLORS.teal : COLORS.border}`, padding: '0 16px',
             fontSize: 15, fontWeight: 600, color: COLORS.charcoal, background: COLORS.bgMyIdeas,
-            fontFamily: 'inherit', marginBottom: 18, boxSizing: 'border-box',
+            fontFamily: 'inherit', marginBottom: 28, boxSizing: 'border-box',
           }}
         />
 
@@ -176,9 +209,15 @@ export function SaveSomethingScreen({ navigate, params = {}, allCategories, save
             width: '100%', minHeight: SPACING.inputMinHeight, borderRadius: 12,
             border: `1.5px solid ${COLORS.teal}`, padding: '0 16px',
             fontSize: 14, color: COLORS.charcoal, background: COLORS.bgMyIdeas,
-            fontFamily: 'inherit', marginBottom: 14, boxSizing: 'border-box',
+            fontFamily: 'inherit', boxSizing: 'border-box',
           }}
         />
+        {previewStatus === 'loading' && (
+          <p style={{ fontSize: 12, color: COLORS.warmGrey, fontStyle: 'italic', marginTop: 6 }}>
+            Fetching preview…
+          </p>
+        )}
+        <div style={{ marginBottom: previewStatus === 'loading' ? 8 : 14 }} />
 
         {/* Note — always visible under the link field */}
         <textarea
@@ -387,15 +426,20 @@ export function SaveSomethingScreen({ navigate, params = {}, allCategories, save
           )}
         </div>
 
-        {/* "Share with Group" only appears once a trip exists — starting a
-            trip is the home screen's job, not this one's. */}
-        {hasGroup && (
+        {/* Whichever action matches how the user got here is the primary
+            (solid) button and comes first; the other stays available but
+            secondary (outlined) — reached via Group Space, "Share with
+            Group" is expected and primary; reached via My Ideas/My Saves,
+            "Keep" is expected and primary. Neither ever fires without the
+            user picking it explicitly. "Share with Group" only appears at
+            all once a trip exists — starting one is the home screen's job. */}
+        {hasGroup && isGroupMode && (
           <button
             onClick={handleShare}
             disabled={!canSave}
             style={{
-              width: '100%', minHeight: SPACING.buttonMinHeight, borderRadius: 14, border: isGroupMode ? `2.5px solid ${COLORS.teal}` : 'none',
-              background: canSave ? COLORS.teal : COLORS.border,
+              width: '100%', minHeight: SPACING.buttonMinHeight, borderRadius: 14, border: 'none',
+              background: canSave ? COLORS.action : COLORS.border,
               color: canSave ? 'white' : '#A79E93',
               fontSize: 15, fontWeight: 600, cursor: canSave ? 'pointer' : 'default',
               marginBottom: 10, letterSpacing: -0.2,
@@ -408,17 +452,40 @@ export function SaveSomethingScreen({ navigate, params = {}, allCategories, save
         <button
           onClick={handleKeep}
           disabled={!canSave}
-          style={{
+          style={isGroupMode ? {
             width: '100%', minHeight: SPACING.buttonMinHeight, borderRadius: 14,
-            border: `2px solid ${canSave ? COLORS.teal : COLORS.border}`,
+            border: `2px solid ${canSave ? COLORS.action : COLORS.border}`,
             background: 'white',
-            color: canSave ? COLORS.teal : '#A79E93',
+            color: canSave ? COLORS.action : '#A79E93',
             fontSize: 15, fontWeight: 600, cursor: canSave ? 'pointer' : 'default',
             letterSpacing: -0.2,
+          } : {
+            width: '100%', minHeight: SPACING.buttonMinHeight, borderRadius: 14, border: 'none',
+            background: canSave ? COLORS.action : COLORS.border,
+            color: canSave ? 'white' : '#A79E93',
+            fontSize: 15, fontWeight: 600, cursor: canSave ? 'pointer' : 'default',
+            marginBottom: hasGroup ? 10 : 0, letterSpacing: -0.2,
           }}
         >
           Keep in My Ideas
         </button>
+
+        {hasGroup && !isGroupMode && (
+          <button
+            onClick={handleShare}
+            disabled={!canSave}
+            style={{
+              width: '100%', minHeight: SPACING.buttonMinHeight, borderRadius: 14,
+              border: `2px solid ${canSave ? COLORS.action : COLORS.border}`,
+              background: 'white',
+              color: canSave ? COLORS.action : '#A79E93',
+              fontSize: 15, fontWeight: 600, cursor: canSave ? 'pointer' : 'default',
+              letterSpacing: -0.2,
+            }}
+          >
+            Share with Group
+          </button>
+        )}
       </div>
     </div>
   )

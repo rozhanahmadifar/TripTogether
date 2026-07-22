@@ -107,7 +107,7 @@ export function DateRangePicker({ startDate, endDate, onChange, onDone }) {
           onClick={onDone}
           style={{
             marginTop: 14, width: '100%', height: 42, borderRadius: 10,
-            background: COLORS.teal, color: 'white', border: 'none',
+            background: COLORS.action, color: 'white', border: 'none',
             fontSize: 15, fontWeight: 600, cursor: 'pointer',
           }}
         >

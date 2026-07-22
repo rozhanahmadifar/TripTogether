@@ -275,7 +275,7 @@ export function AIScreen({ currentTrip, groupItems }) {
           onClick={() => sendMessage()}
           style={{
             width: 48, height: 48, borderRadius: '50%', border: 'none',
-            background: canSend ? COLORS.teal : COLORS.border,
+            background: canSend ? COLORS.action : COLORS.border,
             color: canSend ? 'white' : '#A79E93',
             fontSize: 20, cursor: canSend ? 'pointer' : 'default',
             flexShrink: 0,

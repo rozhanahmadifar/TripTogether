@@ -23,7 +23,7 @@ export function EmptyState({ categoryId, heading, subtext, actionLabel, onAction
           onClick={onAction}
           style={{
             minHeight: SPACING.buttonMinHeight, borderRadius: 12, border: 'none',
-            background: COLORS.terracotta, color: 'white',
+            background: COLORS.action, color: 'white',
             fontSize: 15, fontWeight: 600, cursor: 'pointer',
             padding: '0 26px',
           }}

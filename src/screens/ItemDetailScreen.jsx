@@ -41,7 +41,10 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, currentTrip, 
     setEditCategoryIds(prev => prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id])
   }
 
-  const canSaveEdit = editTitle.trim().length > 0 && editCategoryIds.length > 0
+  // A link, photo, or note already identifies the item at a glance, so
+  // title only needs to be required when none of those exist either.
+  const editHasOtherContent = !!item.photo || editLink.trim().length > 0 || editNote.trim().length > 0
+  const canSaveEdit = (editTitle.trim().length > 0 || editHasOtherContent) && editCategoryIds.length > 0
 
   const saveEdit = () => {
     if (!canSaveEdit) return
@@ -85,7 +88,9 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, currentTrip, 
 
         {editing ? (
           <div style={{ marginBottom: 24 }}>
-            <p style={{ fontSize: 11, fontWeight: 700, color: COLORS.warmGrey, letterSpacing: 0.6, textTransform: 'uppercase', marginBottom: 6 }}>Title</p>
+            <p style={{ fontSize: 11, fontWeight: 700, color: COLORS.warmGrey, letterSpacing: 0.6, textTransform: 'uppercase', marginBottom: 6 }}>
+              Title {editHasOtherContent && <span style={{ textTransform: 'none', fontWeight: 500, color: '#A79E93' }}>Optional</span>}
+            </p>
             <input
               value={editTitle}
               onChange={e => setEditTitle(e.target.value)}
@@ -138,7 +143,16 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, currentTrip, 
                       borderLeft: selected ? `3px solid ${COLORS.terracotta}` : '3px solid transparent',
                     }}
                   >
-                    <span style={{ fontSize: 18, width: 24 }}>{c.icon}</span>
+                    <span style={{
+                      width: 20, height: 20, borderRadius: 6, flexShrink: 0,
+                      border: `2px solid ${selected ? COLORS.terracotta : COLORS.border}`,
+                      background: selected ? COLORS.terracotta : 'white',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 12, color: 'white', fontWeight: 800,
+                    }}>
+                      {selected ? '✓' : ''}
+                    </span>
+                    <span style={{ fontSize: 18, width: 24, flexShrink: 0 }}>{c.icon}</span>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <span style={{ fontSize: 14, fontWeight: selected ? 700 : 500, display: 'block', color: selected ? COLORS.terracotta : COLORS.charcoal }}>
                         {c.label}
@@ -149,7 +163,6 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, currentTrip, 
                         </span>
                       )}
                     </div>
-                    {selected && <span style={{ color: COLORS.terracotta }}>✓</span>}
                   </button>
                 )
               })}
@@ -171,7 +184,7 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, currentTrip, 
                 disabled={!canSaveEdit}
                 style={{
                   flex: 1, minHeight: 48, borderRadius: 12, border: 'none',
-                  background: canSaveEdit ? COLORS.teal : COLORS.border,
+                  background: canSaveEdit ? COLORS.action : COLORS.border,
                   color: canSaveEdit ? 'white' : '#A79E93',
                   fontSize: 14, fontWeight: 600, cursor: canSaveEdit ? 'pointer' : 'default', fontFamily: 'inherit',
                 }}
@@ -220,13 +233,15 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, currentTrip, 
               </div>
             ) : null}
 
-            {/* Title */}
-            <p style={{
-              fontSize: 18, fontWeight: 700, color: COLORS.charcoal, lineHeight: 1.45,
-              letterSpacing: -0.3, marginBottom: 8,
-            }}>
-              {item.title}
-            </p>
+            {/* Title — may be blank when a photo was saved without one */}
+            {item.title && (
+              <p style={{
+                fontSize: 18, fontWeight: 700, color: COLORS.charcoal, lineHeight: 1.45,
+                letterSpacing: -0.3, marginBottom: 8,
+              }}>
+                {item.title}
+              </p>
+            )}
 
             {item.note && (
               <p style={{ ...TEXT.body, color: COLORS.warmGrey, marginBottom: 12, lineHeight: 1.55 }}>
@@ -272,7 +287,7 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, currentTrip, 
                 onClick={() => setShowPicker(true)}
                 style={{
                   width: '100%', height: 52, borderRadius: 14, border: 'none',
-                  background: COLORS.teal, color: 'white',
+                  background: COLORS.action, color: 'white',
                   fontSize: 15, fontWeight: 600, cursor: 'pointer',
                   letterSpacing: -0.2, marginBottom: 12,
                 }}
@@ -306,7 +321,16 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, currentTrip, 
                           borderLeft: selected ? `3px solid ${COLORS.terracotta}` : '3px solid transparent',
                         }}
                       >
-                        <span style={{ fontSize: 18, width: 24 }}>{c.icon}</span>
+                        <span style={{
+                          width: 20, height: 20, borderRadius: 6, flexShrink: 0,
+                          border: `2px solid ${selected ? COLORS.terracotta : COLORS.border}`,
+                          background: selected ? COLORS.terracotta : 'white',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: 12, color: 'white', fontWeight: 800,
+                        }}>
+                          {selected ? '✓' : ''}
+                        </span>
+                        <span style={{ fontSize: 18, width: 24, flexShrink: 0 }}>{c.icon}</span>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <span style={{
                             fontSize: 14, fontWeight: selected ? 700 : 500, display: 'block',
@@ -320,7 +344,6 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, currentTrip, 
                             </span>
                           )}
                         </div>
-                        {selected && <span style={{ color: COLORS.terracotta }}>✓</span>}
                       </button>
                     )
                   })}
@@ -330,7 +353,7 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, currentTrip, 
                   disabled={pickedCategories.length === 0}
                   style={{
                     width: '100%', height: 52, borderRadius: 14, border: 'none',
-                    background: pickedCategories.length > 0 ? COLORS.teal : COLORS.border,
+                    background: pickedCategories.length > 0 ? COLORS.action : COLORS.border,
                     color: pickedCategories.length > 0 ? 'white' : '#A79E93',
                     fontSize: 15, fontWeight: 600,
                     cursor: pickedCategories.length > 0 ? 'pointer' : 'default',

@@ -83,11 +83,12 @@ export function detectSourceFromLink(url) {
   return ''
 }
 
-// item.photo is either a real image data URL (from FileReader) or, for
-// videos, just the filename as a placeholder — this tells them apart so we
-// never try to render a video filename as an <img> src.
+// item.photo is either a real image (a data URL from FileReader, or a
+// remote https:// URL from an auto-fetched link preview) or, for videos,
+// just the filename as a placeholder — this tells them apart so we never
+// try to render a video filename as an <img> src.
 export function isImagePhoto(photo) {
-  return typeof photo === 'string' && photo.startsWith('data:image')
+  return typeof photo === 'string' && (photo.startsWith('data:image') || photo.startsWith('http://') || photo.startsWith('https://'))
 }
 
 // A lightweight shape check (not full RFC 5322 validation) — just enough to

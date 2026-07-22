@@ -191,7 +191,7 @@ export function CreateGroupTripScreen({ navigate, params = {}, startGroupTrip, u
               onClick={() => setStep(2)}
               style={{
                 width: '100%', height: 52, borderRadius: 14, border: 'none',
-                background: COLORS.teal, color: 'white',
+                background: COLORS.action, color: 'white',
                 fontSize: 15, fontWeight: 600, cursor: 'pointer',
                 letterSpacing: -0.2,
               }}
@@ -245,7 +245,7 @@ export function CreateGroupTripScreen({ navigate, params = {}, startGroupTrip, u
               disabled={!nameInput.trim() || !isValidEmail(emailInput)}
               style={{
                 width: '100%', height: 52, borderRadius: 14, border: 'none',
-                background: (nameInput.trim() && isValidEmail(emailInput)) ? COLORS.teal : COLORS.border,
+                background: (nameInput.trim() && isValidEmail(emailInput)) ? COLORS.action : COLORS.border,
                 color: (nameInput.trim() && isValidEmail(emailInput)) ? 'white' : '#A79E93',
                 fontSize: 15, fontWeight: 600,
                 cursor: (nameInput.trim() && isValidEmail(emailInput)) ? 'pointer' : 'default',
@@ -362,7 +362,7 @@ export function CreateGroupTripScreen({ navigate, params = {}, startGroupTrip, u
               onClick={handleStart}
               style={{
                 width: '100%', height: 52, borderRadius: 14, border: 'none',
-                background: COLORS.teal,
+                background: COLORS.action,
                 color: 'white',
                 fontSize: 15, fontWeight: 600,
                 cursor: 'pointer',

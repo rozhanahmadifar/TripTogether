@@ -37,7 +37,10 @@ function EditForm({ item, categories, allCategories, onCancel, onSave }) {
   const [source, setSource]   = useState(item.platform || '')
   const [categoryIds, setCategoryIds] = useState((categories || []).map(c => c.id))
 
-  const canSave = title.trim().length > 0 && categoryIds.length > 0
+  // A link, photo, or note already identifies the item at a glance, so
+  // title only needs to be required when none of those exist either.
+  const hasOtherContent = !!item.photo || link.trim().length > 0 || note.trim().length > 0
+  const canSave = (title.trim().length > 0 || hasOtherContent) && categoryIds.length > 0
 
   const toggleCategory = (id) => {
     setCategoryIds(prev => prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id])
@@ -53,7 +56,7 @@ function EditForm({ item, categories, allCategories, onCancel, onSave }) {
       <input
         value={title}
         onChange={e => setTitle(e.target.value)}
-        placeholder="Title"
+        placeholder={hasOtherContent ? 'Title (optional)' : 'Title'}
         style={{
           width: '100%', minHeight: 40, borderRadius: 10,
           border: `1.5px solid ${COLORS.teal}`, padding: '0 12px',
@@ -124,7 +127,7 @@ function EditForm({ item, categories, allCategories, onCancel, onSave }) {
           disabled={!canSave}
           style={{
             flex: 1, minHeight: 44, borderRadius: 10, border: 'none',
-            background: canSave ? COLORS.teal : COLORS.border,
+            background: canSave ? COLORS.action : COLORS.border,
             color: canSave ? 'white' : '#A79E93',
             fontSize: 14, fontWeight: 600, cursor: canSave ? 'pointer' : 'default', fontFamily: 'inherit',
           }}
@@ -181,9 +184,10 @@ export function ItemCard({ item, categories, contributor, source, note, hearts =
       <div
         style={{
           position: 'relative',
-          background: COLORS.cardBg, borderRadius: 14,
+          background: starred ? COLORS.tealTint : COLORS.cardBg, borderRadius: 14,
+          border: `2px solid ${starred ? COLORS.teal : 'transparent'}`,
           boxShadow: SHADOW_CARD, overflow: 'hidden',
-          opacity: fading ? 0 : 1, transition: 'opacity 200ms ease',
+          opacity: fading ? 0 : 1, transition: 'opacity 200ms ease, background 150ms ease, border-color 150ms ease',
         }}
       >
         {editing ? (
@@ -233,13 +237,14 @@ export function ItemCard({ item, categories, contributor, source, note, hearts =
                   title={`Marked as decided by ${starredBy.join(', ')}`}
                   style={{
                     position: 'absolute', bottom: 10, right: 10,
-                    width: 26, height: 26, borderRadius: '50%',
+                    display: 'flex', alignItems: 'center', gap: 4,
                     background: COLORS.teal, color: 'white',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 14, fontWeight: 800, boxShadow: '0 2px 6px rgba(0,0,0,0.18)',
+                    fontSize: 11, fontWeight: 800, letterSpacing: 0.2,
+                    borderRadius: 20, padding: '5px 10px',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.18)',
                   }}
                 >
-                  ✓
+                  ✓ Decided
                 </span>
               )}
             </div>
@@ -266,9 +271,11 @@ export function ItemCard({ item, categories, contributor, source, note, hearts =
                 <span style={{ ...TEXT.timestamp, flexShrink: 0 }}>{timeAgo(item.savedAt)}</span>
               </div>
 
-              <p style={TEXT.cardTitle}>
-                {item.title}
-              </p>
+              {item.title && (
+                <p style={TEXT.cardTitle}>
+                  {item.title}
+                </p>
+              )}
 
               {note && (
                 <p style={{

@@ -40,7 +40,7 @@ export function MyTripsScreen({ navigate, trips, openTrip, deleteTrip }) {
             <button
               onClick={() => navigate('createTrip', { backTo: 'myTrips' })}
               style={{
-                minHeight: SPACING.buttonMinHeight, background: COLORS.teal, color: 'white', border: 'none',
+                minHeight: SPACING.buttonMinHeight, background: COLORS.action, color: 'white', border: 'none',
                 borderRadius: 12, padding: '0 28px',
                 fontSize: 15, fontWeight: 600, cursor: 'pointer',
               }}
@@ -70,14 +70,7 @@ export function MyTripsScreen({ navigate, trips, openTrip, deleteTrip }) {
                         {trip.name || 'Unnamed Trip'}
                       </p>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                      <div style={{
-                        height: 26, background: 'rgba(255,255,255,0.15)',
-                        borderRadius: 8, padding: '0 12px',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      }}>
-                        <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.9)', fontWeight: 700, lineHeight: 1 }}>Active</span>
-                      </div>
+                    <div style={{ flexShrink: 0 }}>
                       <button
                         onClick={(e) => {
                           e.stopPropagation()

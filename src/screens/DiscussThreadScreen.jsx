@@ -100,7 +100,7 @@ export function DiscussThreadScreen({ navigate, params = {}, currentTrip, userNa
           disabled={!canSend}
           style={{
             width: 36, height: 36, borderRadius: '50%', border: 'none',
-            background: COLORS.teal, color: 'white',
+            background: COLORS.action, color: 'white',
             fontSize: 15, cursor: canSend ? 'pointer' : 'default', opacity: canSend ? 1 : 0.6,
             flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}

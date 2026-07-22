@@ -88,7 +88,7 @@ export function ShareSuccessScreen({ navigate, params = {}, currentTrip, openTri
           onClick={goToGroupSpace}
           style={{
             width: '100%', height: 52, borderRadius: 14, border: 'none',
-            background: COLORS.teal, color: 'white',
+            background: COLORS.action, color: 'white',
             fontSize: 15, fontWeight: 600, cursor: 'pointer',
             letterSpacing: -0.2, marginBottom: 12,
           }}

@@ -313,7 +313,7 @@ export function IndividualHomeScreen({ navigate, userName, myIdeas, currentTrip,
               onClick={() => openTrip(currentTrip.id)}
               style={{
                 width: '100%', minHeight: SPACING.buttonMinHeight, borderRadius: 12, border: 'none',
-                background: COLORS.teal, color: 'white',
+                background: COLORS.action, color: 'white',
                 fontSize: 15, fontWeight: 600, cursor: 'pointer',
               }}
             >

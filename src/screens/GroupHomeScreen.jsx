@@ -113,6 +113,11 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
     .sort((a, b) => countIn(items, b.id) - countIn(items, a.id))
     .slice(0, 3)
   const groupCategoriesWithItems = topCategories(groupItems)
+  // Surfaced on trip home as a visible entry point into the decisions
+  // view — testing showed this otherwise goes unnoticed inside Group Space.
+  const decidedCategoriesCount = visibleCategories.filter(cat =>
+    groupItems.some(i => i.categoryIds.includes(cat.id) && (i.starredBy || []).length > 0)
+  ).length
   // "My Saves" here is this trip's own private stash, not the user's whole
   // personal collection — never another trip's (or pre-trip) private items.
   const tripMyIdeas = myIdeas.filter(i => i.tripId === currentTrip.id)
@@ -126,6 +131,7 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
     // Editing the destination here is the same fact as the Destination
     // category's decided item, not a separate value — this keeps both in sync.
     if (editField === 'destination') setTripDestination(currentTrip.id, editValue)
+    if (editField === 'budget') updateTrip(currentTrip.id, { budget: editValue.trim() })
     setEditField(null)
     setEditValue('')
   }
@@ -287,6 +293,31 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
             </button>
           )}
 
+          {/* Budget — a single simple number, no splitting or per-item cost tracking */}
+          {editField === 'budget' ? (
+            <div style={{ marginBottom: 18 }}>{inlineInput('Total budget…', confirmEdit)}</div>
+          ) : currentTrip.budget ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 18 }}>
+              <p style={{ fontSize: 13, fontWeight: 500, flex: 1, color: 'rgba(255,255,255,0.88)' }}>
+                💰 Budget: {currentTrip.budget}
+              </p>
+              {pencilBtn('budget', currentTrip.budget)}
+            </div>
+          ) : (
+            <button
+              onClick={() => editField === 'budget' ? cancelEdit() : startEdit('budget')}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6, marginBottom: 18,
+                background: 'none', border: 'none', cursor: 'pointer', padding: 0, width: '100%', textAlign: 'left',
+              }}
+            >
+              <PencilIcon size={12} color="rgba(255,255,255,0.65)" />
+              <span style={{ fontSize: 13, fontStyle: 'italic', color: 'rgba(255,255,255,0.65)', fontWeight: 500 }}>
+                Tap to add a budget
+              </span>
+            </button>
+          )}
+
           {/* Members — real people in a group photo */}
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
             <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', flex: 1 }}>
@@ -415,6 +446,55 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
             <span style={{ fontSize: 16, color: '#D6CCBF' }}>›</span>
           </button>
         )}
+
+        {/* Progress/decisions entry point — visible on trip home itself
+            rather than requiring "Group Space" then "See all", since
+            testing showed users didn't find it unaided otherwise. */}
+        {visibleCategories.length > 0 && (
+          <button
+            onClick={() => navigate('groupSpace', { initialView: 'decided' })}
+            style={{
+              width: '100%', display: 'flex', alignItems: 'center', gap: 12,
+              background: COLORS.cardBg, borderRadius: 14, boxShadow: SHADOW_CARD,
+              padding: 16, border: 'none', cursor: 'pointer', textAlign: 'left',
+              marginBottom: SPACING.cardGap, fontFamily: 'inherit',
+            }}
+          >
+            <span style={{ fontSize: 20 }}>✅</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontSize: 14, fontWeight: 700, color: COLORS.charcoal, letterSpacing: -0.2 }}>
+                {decidedCategoriesCount} of {visibleCategories.length} {visibleCategories.length === 1 ? 'category' : 'categories'} decided
+              </p>
+              <p style={{ fontSize: 12, color: COLORS.warmGrey, marginTop: 1 }}>
+                See the full plan
+              </p>
+            </div>
+            <span style={{ fontSize: 16, color: '#D6CCBF' }}>›</span>
+          </button>
+        )}
+
+        {/* Trip Summary — a clean read-only overview of the trip's key
+            facts, reachable straight from trip home. */}
+        <button
+          onClick={() => navigate('tripSummary')}
+          style={{
+            width: '100%', display: 'flex', alignItems: 'center', gap: 12,
+            background: COLORS.cardBg, borderRadius: 14, boxShadow: SHADOW_CARD,
+            padding: 16, border: 'none', cursor: 'pointer', textAlign: 'left',
+            marginBottom: SPACING.cardGap, fontFamily: 'inherit',
+          }}
+        >
+          <span style={{ fontSize: 20 }}>📋</span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontSize: 14, fontWeight: 700, color: COLORS.charcoal, letterSpacing: -0.2 }}>
+              Trip Summary
+            </p>
+            <p style={{ fontSize: 12, color: COLORS.warmGrey, marginTop: 1 }}>
+              Destination, accommodation, activities, transport & budget
+            </p>
+          </div>
+          <span style={{ fontSize: 16, color: '#D6CCBF' }}>›</span>
+        </button>
 
         {/* Group Space — open, collaborative. Shown first: this is the shared
             space testers expect to land on inside a group trip. */}

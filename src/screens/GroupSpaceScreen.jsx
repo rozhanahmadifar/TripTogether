@@ -3,6 +3,8 @@ import { MEMBER_COLORS } from '../data'
 import { TEXT, COLORS, SPACING, SHADOW_CARD } from '../styles'
 import { BackButton } from '../components/BackButton'
 import { ActionMenu, PencilIcon, TrashIcon, EyeOffIcon } from '../components/ActionMenu'
+import { ItemCard } from '../components/ItemCard'
+import { EmptyState } from '../components/EmptyState'
 
 // Trip dates are stored as an ISO string (`startDate`) alongside the
 // human-readable label (`dates`) so we can compute a real countdown here.
@@ -22,7 +24,8 @@ function countdownLabel(days) {
 }
 
 export function GroupSpaceScreen({
-  navigate, currentTrip, groupItems, allCategories, addCustomCategory, renameCategory, deleteCategory, toggleCategoryHidden,
+  navigate, params = {}, currentTrip, groupItems, allCategories, addCustomCategory, renameCategory, deleteCategory, toggleCategoryHidden,
+  toggleHeart, toggleStar, deleteGroupItem, updateGroupItem, userName,
 }) {
   const tripMembers = currentTrip?.members || []
   const [addingSection, setAddingSection] = useState(false)
@@ -32,6 +35,14 @@ export function GroupSpaceScreen({
   const [renameValue, setRenameValue]     = useState('')
   const [deletingCat, setDeletingCat]     = useState(null)
   const [hiddenOpen, setHiddenOpen]       = useState(false)
+  const [view, setView]                   = useState(params.initialView === 'decided' ? 'decided' : 'categories')
+
+  const getMember = (name) => {
+    const found = tripMembers.find(m => m.name === name)
+    if (found) return found
+    if (name === userName) return { name, color: MEMBER_COLORS[0], initial: name.charAt(0).toUpperCase() }
+    return { name, color: '#B5AA9C', initial: name.charAt(0).toUpperCase() }
+  }
   // A trip whose destination was already filled in at creation never gets
   // a default Destination category (the trip header is the only place that
   // fact lives) — it's omitted entirely, not just collapsed into "hidden".
@@ -49,6 +60,12 @@ export function GroupSpaceScreen({
   // stands" rather than a call-out of any one person.
   const categoriesWithItems = visibleCategories.filter(cat => groupItems.some(i => i.categoryIds.includes(cat.id))).length
   const categoryCompletionLabel = `${categoriesWithItems} of ${visibleCategories.length} ${visibleCategories.length === 1 ? 'category has' : 'categories have'} ideas`
+
+  // A filtered view of the same data, not a separate place items live —
+  // every decided item, whatever category it's tagged with, in one list.
+  const decidedItems = [...groupItems]
+    .filter(i => (i.starredBy || []).length > 0)
+    .sort((a, b) => b.savedAt - a.savedAt)
 
   const handleAddSection = () => {
     if (!sectionName.trim()) return
@@ -86,6 +103,68 @@ export function GroupSpaceScreen({
 
       <div className="screen-scroll" style={{ padding: `16px ${SPACING.screenX}px ${SPACING.scrollBottomPad}px` }}>
 
+        {/* Categories / Decided tabs — Decided is a filtered view of the
+            same items, not a separate place they live. */}
+        <div style={{
+          display: 'flex', background: COLORS.borderLight, borderRadius: 12,
+          padding: 3, marginBottom: SPACING.cardGap, gap: 3,
+        }}>
+          {[
+            { id: 'categories', label: 'Categories' },
+            { id: 'decided', label: `Decided${decidedItems.length ? ` (${decidedItems.length})` : ''}` },
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setView(tab.id)}
+              style={{
+                flex: 1, border: 'none', borderRadius: 9, padding: '9px 0',
+                background: view === tab.id ? 'white' : 'transparent',
+                boxShadow: view === tab.id ? '0 1px 4px rgba(0,0,0,0.1)' : 'none',
+                color: view === tab.id ? COLORS.teal : COLORS.warmGrey,
+                fontSize: 13, fontWeight: 700, cursor: 'pointer',
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {view === 'decided' ? (
+          decidedItems.length === 0 ? (
+            <EmptyState
+              heading="Nothing decided yet"
+              subtext="Mark an item as decided in any category and it'll show up here."
+            />
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: SPACING.cardGap }}>
+              {decidedItems.map(item => {
+                const saver = getMember(item.savedBy)
+                return (
+                  <ItemCard
+                    key={item.id}
+                    item={item}
+                    categories={item.categoryIds.map(id => allCategories.find(c => c.id === id)).filter(Boolean)}
+                    contributor={saver}
+                    source={item.platform}
+                    note={item.note}
+                    hearts={item.hearts}
+                    hearted={item.hearted}
+                    starred={(item.starredBy || []).includes(userName)}
+                    starredBy={item.starredBy || []}
+                    onToggleStar={() => toggleStar(item.id)}
+                    previewHeight={110}
+                    allCategories={allCategories}
+                    onToggleHeart={() => toggleHeart(item.id)}
+                    isOwner={item.savedBy === userName}
+                    onDelete={() => deleteGroupItem(item.id)}
+                    onSave={(updates) => updateGroupItem(item.id, updates)}
+                  />
+                )
+              })}
+            </div>
+          )
+        ) : (
+        <>
         {/* Trip status strip — countdown and category completion read as one
             motivating line about the trip's overall state, not a call-out
             of any one person. */}
@@ -133,7 +212,7 @@ export function GroupSpaceScreen({
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: SPACING.sectionGap }}>
           {visibleCategories.map(cat => {
             const items = groupItems.filter(i => i.categoryIds.includes(cat.id))
-            const decidedCount = items.filter(i => (i.starredBy || []).length > 0).length
+            const decided = items.filter(i => (i.starredBy || []).length > 0)
             return (
               <div key={cat.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ fontSize: 14, flexShrink: 0 }}>{cat.icon}</span>
@@ -141,23 +220,21 @@ export function GroupSpaceScreen({
                 <span style={{ flex: 1, height: 1 }} />
                 {items.length === 0 ? (
                   <span style={{ fontSize: 12, color: COLORS.warmGrey, fontStyle: 'italic' }}>Nothing added yet</span>
-                ) : (
-                  <>
-                    <span style={{ fontSize: 12, color: COLORS.warmGrey }}>
-                      {items.length} {items.length === 1 ? 'idea' : 'ideas'}
+                ) : decided.length > 0 ? (
+                  <span style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 4,
+                    background: COLORS.tealTint, color: COLORS.teal,
+                    fontSize: 12, fontWeight: 800, borderRadius: 20, padding: '3px 10px',
+                    maxWidth: '62%', minWidth: 0,
+                  }}>
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      ✓ Decided: {decided[0].title}{decided.length > 1 ? ` +${decided.length - 1} more` : ''}
                     </span>
-                    {decidedCount > 0 ? (
-                      <span style={{
-                        display: 'inline-flex', alignItems: 'center', gap: 4,
-                        background: COLORS.tealTint, color: COLORS.teal,
-                        fontSize: 12, fontWeight: 800, borderRadius: 20, padding: '3px 10px',
-                      }}>
-                        ✓ {decidedCount} decided
-                      </span>
-                    ) : (
-                      <span style={{ fontSize: 12, color: COLORS.warmGrey }}>0 decided</span>
-                    )}
-                  </>
+                  </span>
+                ) : (
+                  <span style={{ fontSize: 12, color: COLORS.warmGrey }}>
+                    {items.length} {items.length === 1 ? 'idea' : 'ideas'}
+                  </span>
                 )}
               </div>
             )
@@ -362,6 +439,8 @@ export function GroupSpaceScreen({
             </div>
           )}
         </div>
+        </>
+        )}
       </div>
 
       {deletingCat && (
