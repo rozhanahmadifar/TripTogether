@@ -90,11 +90,19 @@ function GroupCategoryRow({ cat, count, contributors, getMember, isLast, onClick
 }
 
 export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, groupItems, updateTrip, setTripDestination, customThreads, allCategories }) {
-  const [editField, setEditField]       = useState(params.openDateEdit ? 'dates' : null)
+  // 'name' and 'members' stay on the single-field pattern (each is its own
+  // kind of edit); destination/dates/budget moved to one combined panel
+  // (cardEditing) below, so the card isn't scattered with a pencil per field.
+  const [editField, setEditField]       = useState(null)
   const [editValue, setEditValue]       = useState('')
-  const [editDateRange, setEditDateRange] = useState({ start: null, end: null })
   const [newMemberName, setNewMemberName]   = useState('')
   const [newMemberEmail, setNewMemberEmail] = useState('')
+
+  const [cardEditing, setCardEditing]   = useState(!!params.openDateEdit)
+  const [ceDestination, setCeDestination] = useState(currentTrip?.destination || '')
+  const [ceBudget, setCeBudget]         = useState(currentTrip?.budget || '')
+  const [ceDatesOpen, setCeDatesOpen]   = useState(!!params.openDateEdit)
+  const [ceDateRange, setCeDateRange]   = useState({ start: null, end: null })
 
   if (!currentTrip) {
     return (
@@ -111,6 +119,7 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
   }
 
   const tripMembers = currentTrip.members || []
+  const hasAnyTripDetails = !!(currentTrip.destination || currentTrip.dates || currentTrip.budget)
   const pinnedThread = (customThreads?.[currentTrip.id] || []).find(t => t.pinned)
   // A trip whose destination was already filled in at creation never gets
   // a default Destination category — the trip header is the only place
@@ -139,27 +148,42 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
   const savesCategoriesWithItems = topCategories(tripMyIdeas)
 
   const startEdit = (field, value = '') => { setEditField(field); setEditValue(value) }
-  const cancelEdit = () => { setEditField(null); setEditValue(''); setEditDateRange({ start: null, end: null }) }
+  const cancelEdit = () => { setEditField(null); setEditValue('') }
 
   const confirmEdit = () => {
     if (editField === 'name' && editValue.trim()) updateTrip(currentTrip.id, { name: editValue.trim() })
-    // Editing the destination here is the same fact as the Destination
-    // category's decided item, not a separate value — this keeps both in sync.
-    if (editField === 'destination') setTripDestination(currentTrip.id, editValue)
-    if (editField === 'budget') updateTrip(currentTrip.id, { budget: editValue.trim() })
     setEditField(null)
     setEditValue('')
   }
 
-  const confirmDates = () => {
-    if (editDateRange.start) {
-      const label = editDateRange.end
-        ? `${fmtDate(editDateRange.start)} – ${fmtDate(editDateRange.end)}`
-        : fmtDate(editDateRange.start)
-      updateTrip(currentTrip.id, { dates: label, startDate: editDateRange.start.toISOString() })
+  // Destination, dates, and budget open together in one panel — separately
+  // they added up to three pencils scattered around the card for what's
+  // really one "trip details" edit. Re-prefilled from the trip each time
+  // it opens except dates, which (like the old single-field flow) always
+  // starts blank — the picker only stores a start date and a formatted
+  // label, not a reusable end date to restore.
+  const openCardEdit = () => {
+    setCeDestination(currentTrip.destination || '')
+    setCeBudget(currentTrip.budget || '')
+    setCeDateRange({ start: null, end: null })
+    setCeDatesOpen(false)
+    setCardEditing(true)
+  }
+  const cancelCardEdit = () => setCardEditing(false)
+  const saveCardEdit = () => {
+    // Same fact as the Destination category's decided item, not a separate
+    // value — this keeps both in sync.
+    setTripDestination(currentTrip.id, ceDestination)
+    const updates = {}
+    if (ceBudget.trim() !== (currentTrip.budget || '')) updates.budget = ceBudget.trim()
+    if (ceDateRange.start) {
+      updates.dates = ceDateRange.end
+        ? `${fmtDate(ceDateRange.start)} – ${fmtDate(ceDateRange.end)}`
+        : fmtDate(ceDateRange.start)
+      updates.startDate = ceDateRange.start.toISOString()
     }
-    setEditField(null)
-    setEditDateRange({ start: null, end: null })
+    if (Object.keys(updates).length > 0) updateTrip(currentTrip.id, updates)
+    setCardEditing(false)
   }
 
   const addMemberToTrip = () => {
@@ -252,112 +276,179 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
             </div>
           )}
 
-          {/* Destination — once set, this is the emotional anchor of trip
-              home: a real headline, not one line among several equally-
-              weighted fields. */}
-          {editField === 'destination' ? (
-            <div style={{ marginBottom: 10 }}>{inlineInput('Where are you going?', confirmEdit)}</div>
-          ) : currentTrip.destination ? (
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, marginBottom: 4 }}>
-              <p style={{ fontSize: 26, fontWeight: 800, flex: 1, color: 'white', letterSpacing: -0.6, lineHeight: 1.15 }}>
-                📍 {currentTrip.destination}
-              </p>
-              {pencilBtn('destination', currentTrip.destination)}
-            </div>
+          {!cardEditing ? (
+            <>
+              {/* Destination — once set, this is the emotional anchor of
+                  trip home: a real headline, not one line among several
+                  equally-weighted fields. One pencil now covers destination,
+                  dates, and budget together, so an empty trip shows a
+                  single combined prompt instead of three separate ones. */}
+              {currentTrip.destination ? (
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 6 }}>
+                  <p style={{ fontSize: 26, fontWeight: 800, flex: 1, color: 'white', letterSpacing: -0.6, lineHeight: 1.15 }}>
+                    📍 {currentTrip.destination}
+                  </p>
+                  <button
+                    onClick={openCardEdit}
+                    aria-label="Edit trip details"
+                    style={{
+                      background: 'none', border: 'none', cursor: 'pointer',
+                      padding: '4px', flexShrink: 0, lineHeight: 1, marginTop: 2,
+                      width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      opacity: 0.8,
+                    }}
+                  >
+                    <PencilIcon color="rgba(255,255,255,0.75)" />
+                  </button>
+                </div>
+              ) : hasAnyTripDetails ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                  <p style={{ fontSize: 13, fontStyle: 'italic', flex: 1, color: 'rgba(255,255,255,0.65)', fontWeight: 500 }}>
+                    Destination not set yet
+                  </p>
+                  <button
+                    onClick={openCardEdit}
+                    aria-label="Edit trip details"
+                    style={{
+                      background: 'none', border: 'none', cursor: 'pointer',
+                      padding: '4px', flexShrink: 0, lineHeight: 1,
+                      width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      opacity: 0.8,
+                    }}
+                  >
+                    <PencilIcon color="rgba(255,255,255,0.75)" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={openCardEdit}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10,
+                    background: 'none', border: 'none', cursor: 'pointer', padding: 0, width: '100%', textAlign: 'left',
+                  }}
+                >
+                  <PencilIcon size={12} color="rgba(255,255,255,0.65)" />
+                  <span style={{ fontSize: 13, fontStyle: 'italic', color: 'rgba(255,255,255,0.65)', fontWeight: 500 }}>
+                    Tap to add destination, dates & budget
+                  </span>
+                </button>
+              )}
+
+              {/* Countdown — a real, computed "X days until departure" pill,
+                  directly under the destination name. Turns milestone-green
+                  once departure is a week out or closer, imminent or already
+                  underway; otherwise a neutral glass pill. */}
+              {currentTrip.destination && currentTrip.startDate && (() => {
+                const days = daysUntil(currentTrip.startDate)
+                const imminent = days <= 7
+                return (
+                  <div style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    background: imminent ? COLORS.milestone : 'rgba(255,255,255,0.16)',
+                    borderRadius: 20, padding: '6px 12px', marginBottom: 14,
+                  }}>
+                    <span style={{ fontSize: 13 }}>🗓️</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: 'white' }}>
+                      {countdownLabel(days)}
+                    </span>
+                  </div>
+                )
+              })()}
+
+              {/* Dates and budget — plain display lines now; editing either
+                  one happens through the single pencil above. */}
+              {hasAnyTripDetails && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 20 }}>
+                  <p style={{ fontSize: 13, fontWeight: 500, color: currentTrip.dates ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.55)', fontStyle: currentTrip.dates ? 'normal' : 'italic' }}>
+                    📅 {currentTrip.dates || 'Dates not set yet'}
+                  </p>
+                  <p style={{ fontSize: 13, fontWeight: 500, color: currentTrip.budget ? 'rgba(255,255,255,0.88)' : 'rgba(255,255,255,0.55)', fontStyle: currentTrip.budget ? 'normal' : 'italic' }}>
+                    💰 {currentTrip.budget ? `Budget: ${currentTrip.budget}` : 'Budget not set yet'}
+                  </p>
+                </div>
+              )}
+            </>
           ) : (
-            <button
-              onClick={() => startEdit('destination', '')}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8,
-                background: 'none', border: 'none', cursor: 'pointer', padding: 0, width: '100%', textAlign: 'left',
-              }}
-            >
-              <PencilIcon size={12} color="rgba(255,255,255,0.65)" />
-              <span style={{ fontSize: 13, fontStyle: 'italic', color: 'rgba(255,255,255,0.65)', fontWeight: 500 }}>
-                Tap to add destination
-              </span>
-            </button>
-          )}
-
-          {/* Countdown — a real, computed "X days until departure" pill,
-              not just the raw date range, so a set trip reads as something
-              approaching rather than a data field. Turns milestone-green
-              once departure is a week out or closer, imminent or already
-              underway; otherwise a neutral glass pill. */}
-          {currentTrip.destination && currentTrip.startDate && (() => {
-            const days = daysUntil(currentTrip.startDate)
-            const imminent = days <= 7
-            return (
-              <div style={{
-                display: 'inline-flex', alignItems: 'center', gap: 6,
-                background: imminent ? COLORS.milestone : 'rgba(255,255,255,0.16)',
-                borderRadius: 20, padding: '6px 12px', marginBottom: 10,
-              }}>
-                <span style={{ fontSize: 13 }}>🗓️</span>
-                <span style={{ fontSize: 13, fontWeight: 700, color: 'white' }}>
-                  {countdownLabel(days)}
-                </span>
-              </div>
-            )
-          })()}
-
-          {/* Dates — the raw range stays available as a secondary line;
-              the countdown above carries the emotional weight now. */}
-          {currentTrip.dates ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 18 }}>
-              <p style={{ fontSize: 13, fontWeight: 500, flex: 1, color: 'rgba(255,255,255,0.75)' }}>
-                📅 {currentTrip.dates}
+            <div style={{ background: 'rgba(0,0,0,0.18)', borderRadius: 12, padding: 16, marginBottom: 20 }}>
+              <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.7)', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 6 }}>
+                Destination
               </p>
-              <button
-                onClick={() => editField === 'dates' ? cancelEdit() : startEdit('dates')}
+              <input
+                autoFocus
+                value={ceDestination}
+                onChange={e => setCeDestination(e.target.value)}
+                placeholder="Where are you going?"
                 style={{
-                  background: 'none', border: 'none', cursor: 'pointer',
-                  padding: '4px', flexShrink: 0, lineHeight: 1,
-                  width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  opacity: 0.8,
+                  width: '100%', height: 40, borderRadius: 10, border: 'none',
+                  background: 'rgba(255,255,255,0.2)', color: 'white', padding: '0 12px',
+                  fontSize: 14, fontWeight: 600, fontFamily: 'inherit', boxSizing: 'border-box', marginBottom: 14,
                 }}
-              >
-                <PencilIcon color="rgba(255,255,255,0.75)" />
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => editField === 'dates' ? cancelEdit() : startEdit('dates')}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 6, marginBottom: 18,
-                background: 'none', border: 'none', cursor: 'pointer', padding: 0, width: '100%', textAlign: 'left',
-              }}
-            >
-              <PencilIcon size={12} color="rgba(255,255,255,0.65)" />
-              <span style={{ fontSize: 13, fontStyle: 'italic', color: 'rgba(255,255,255,0.65)', fontWeight: 500 }}>
-                Tap to add dates
-              </span>
-            </button>
-          )}
+              />
 
-          {/* Budget — a single simple number, no splitting or per-item cost tracking */}
-          {editField === 'budget' ? (
-            <div style={{ marginBottom: 18 }}>{inlineInput('Total budget…', confirmEdit)}</div>
-          ) : currentTrip.budget ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 18 }}>
-              <p style={{ fontSize: 13, fontWeight: 500, flex: 1, color: 'rgba(255,255,255,0.88)' }}>
-                💰 Budget: {currentTrip.budget}
+              <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.7)', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 6 }}>
+                Dates
               </p>
-              {pencilBtn('budget', currentTrip.budget)}
+              {!ceDatesOpen ? (
+                <button
+                  onClick={() => setCeDatesOpen(true)}
+                  style={{
+                    width: '100%', height: 40, borderRadius: 10, border: 'none',
+                    background: 'rgba(255,255,255,0.2)', color: 'white', textAlign: 'left',
+                    padding: '0 12px', fontSize: 14, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer', marginBottom: 14,
+                  }}
+                >
+                  {ceDateRange.start
+                    ? (ceDateRange.end ? `${fmtDate(ceDateRange.start)} – ${fmtDate(ceDateRange.end)}` : fmtDate(ceDateRange.start))
+                    : (currentTrip.dates || 'Choose dates')}
+                </button>
+              ) : (
+                <div style={{ marginBottom: 14 }}>
+                  <DateRangePicker
+                    startDate={ceDateRange.start}
+                    endDate={ceDateRange.end}
+                    onChange={range => setCeDateRange(range)}
+                    onDone={() => setCeDatesOpen(false)}
+                  />
+                </div>
+              )}
+
+              <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.7)', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 6 }}>
+                Budget
+              </p>
+              <input
+                value={ceBudget}
+                onChange={e => setCeBudget(e.target.value)}
+                placeholder="Total budget…"
+                style={{
+                  width: '100%', height: 40, borderRadius: 10, border: 'none',
+                  background: 'rgba(255,255,255,0.2)', color: 'white', padding: '0 12px',
+                  fontSize: 14, fontWeight: 600, fontFamily: 'inherit', boxSizing: 'border-box', marginBottom: 16,
+                }}
+              />
+
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  onClick={cancelCardEdit}
+                  style={{
+                    flex: 1, height: 40, borderRadius: 10, border: `1.5px solid rgba(255,255,255,0.3)`,
+                    background: 'rgba(255,255,255,0.12)', color: 'white', fontSize: 13, fontWeight: 600,
+                    cursor: 'pointer', fontFamily: 'inherit',
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={saveCardEdit}
+                  style={{
+                    flex: 1, height: 40, borderRadius: 10, border: 'none',
+                    background: 'white', color: COLORS.teal, fontSize: 13, fontWeight: 700,
+                    cursor: 'pointer', fontFamily: 'inherit',
+                  }}
+                >
+                  Save changes
+                </button>
+              </div>
             </div>
-          ) : (
-            <button
-              onClick={() => editField === 'budget' ? cancelEdit() : startEdit('budget')}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 6, marginBottom: 18,
-                background: 'none', border: 'none', cursor: 'pointer', padding: 0, width: '100%', textAlign: 'left',
-              }}
-            >
-              <PencilIcon size={12} color="rgba(255,255,255,0.65)" />
-              <span style={{ fontSize: 13, fontStyle: 'italic', color: 'rgba(255,255,255,0.65)', fontWeight: 500 }}>
-                Tap to add a budget
-              </span>
-            </button>
           )}
 
           {/* Members — real people in a group photo */}
@@ -449,21 +540,6 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
           )}
         </div>
 
-        {/* Date picker — below card when editing dates */}
-        {editField === 'dates' && (
-          <div style={{ marginBottom: SPACING.sectionGap, marginTop: -SPACING.sectionGap + 8 }}>
-            <DateRangePicker
-              startDate={editDateRange.start}
-              endDate={editDateRange.end}
-              onChange={range => setEditDateRange(range)}
-              onDone={confirmDates}
-            />
-            <button onClick={cancelEdit} style={{ width: '100%', height: 40, marginTop: 8, borderRadius: 10, border: `1.5px solid ${COLORS.border}`, background: 'white', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: COLORS.warmGrey }}>
-              Cancel
-            </button>
-          </div>
-        )}
-
         {/* Direct link into this trip's discussion thread — so users don't
             have to guess which thread in the global Discuss tab is theirs. */}
         {pinnedThread && (
@@ -550,17 +626,20 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
           padding: 16, borderLeft: `3px solid ${COLORS.teal}`,
           marginBottom: SPACING.cardGap,
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 4 }}>
+          <button
+            onClick={() => navigate('groupSpace')}
+            style={{
+              width: '100%', display: 'flex', alignItems: 'center', gap: 14, marginBottom: 4,
+              background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left', fontFamily: 'inherit',
+            }}
+          >
             <span style={{ flex: 1, fontSize: 11, fontWeight: 700, color: COLORS.teal, letterSpacing: 1.5, textTransform: 'uppercase' }}>
               Group Space
             </span>
-            <button
-              onClick={() => navigate('groupSpace')}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: COLORS.teal, padding: 0 }}
-            >
+            <span style={{ fontSize: 13, fontWeight: 600, color: COLORS.teal }}>
               See all
-            </button>
-          </div>
+            </span>
+          </button>
           <p style={{ fontSize: 12, color: COLORS.warmGrey, fontStyle: 'italic', marginBottom: 10 }}>
             {groupItems.length === 0 ? 'Nothing saved yet' : 'Everyone in the group can see these'}
           </p>
@@ -586,17 +665,20 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
           background: COLORS.cardBg, borderRadius: 14, boxShadow: SHADOW_CARD,
           padding: 16, borderLeft: `3px solid ${COLORS.terracotta}`,
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
+          <button
+            onClick={() => navigate('mySaves')}
+            style={{
+              width: '100%', display: 'flex', alignItems: 'center', marginBottom: 4,
+              background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left', fontFamily: 'inherit',
+            }}
+          >
             <span style={{ flex: 1, fontSize: 11, fontWeight: 700, color: COLORS.teal, letterSpacing: 1.5, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}>
               🔒 My Saves
             </span>
-            <button
-              onClick={() => navigate('mySaves')}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: COLORS.teal, padding: 0 }}
-            >
+            <span style={{ fontSize: 13, fontWeight: 600, color: COLORS.teal }}>
               See all
-            </button>
-          </div>
+            </span>
+          </button>
           <p style={{ fontSize: 12, color: COLORS.warmGrey, fontStyle: 'italic', marginBottom: 10 }}>
             {tripMyIdeas.length === 0 ? 'Nothing saved yet' : 'Private, only you can see these'}
           </p>

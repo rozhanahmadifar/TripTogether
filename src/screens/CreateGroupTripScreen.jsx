@@ -31,6 +31,7 @@ export function CreateGroupTripScreen({ navigate, params = {}, startGroupTrip, u
   const [destination, setDestination] = useState('')
   const [dateRange, setDateRange]   = useState({ start: null, end: null })
   const [showCalendar, setShowCalendar] = useState(false)
+  const [budget, setBudget]         = useState('')
   const [members, setMembers]       = useState([])
   const [nameInput, setNameInput]   = useState('')
   const [emailInput, setEmailInput] = useState('')
@@ -72,6 +73,7 @@ export function CreateGroupTripScreen({ navigate, params = {}, startGroupTrip, u
       destination: destination.trim(),
       dates: dateLabel || '',
       startDate: dateRange.start ? dateRange.start.toISOString() : '',
+      budget: budget.trim(),
       crewMembers: members,
       returnTo: params.returnTo,
       returnParams: params.returnParams,
@@ -180,6 +182,23 @@ export function CreateGroupTripScreen({ navigate, params = {}, startGroupTrip, u
                     onDone={() => setShowCalendar(false)}
                   />
                 )}
+              </div>
+
+              {/* Budget — same optional, same-pattern field as destination and dates */}
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                  <p style={{ fontSize: 12, fontWeight: 700, color: COLORS.warmGrey, letterSpacing: 0.3 }}>Rough budget</p>
+                  <span style={{ fontSize: 11, color: COLORS.warmGrey, fontWeight: 500 }}>Optional</span>
+                </div>
+                <div style={fieldWrap(budget)}>
+                  <span style={{ paddingLeft: 14, fontSize: 16, flexShrink: 0 }}>💰</span>
+                  <input
+                    value={budget}
+                    onChange={e => setBudget(e.target.value)}
+                    placeholder="e.g. €800 per person"
+                    style={{ ...inputStyle(), paddingLeft: 8 }}
+                  />
+                </div>
               </div>
             </div>
 

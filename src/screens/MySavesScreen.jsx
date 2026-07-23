@@ -55,7 +55,7 @@ export function MySavesScreen({ navigate, myIdeas, currentTrip, allCategories, a
           </div>
         </div>
         <p style={{ ...TEXT.subtext, marginTop: 4 }}>
-          Only you can see these
+          Only you can see these — the private ideas from My Ideas tagged to this trip
         </p>
       </div>
 

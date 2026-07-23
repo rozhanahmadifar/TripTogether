@@ -3,7 +3,7 @@ import { PLATFORM_COLORS, CATEGORY_HINTS, timeAgo, truncateName, isImagePhoto, d
 import { TEXT, COLORS, SPACING } from '../styles'
 import { BackButton } from '../components/BackButton'
 
-export function ItemDetailScreen({ navigate, params = {}, myIdeas, currentTrip, addToGroup, updateMyIdea, allCategories }) {
+export function ItemDetailScreen({ navigate, params = {}, myIdeas, currentTrip, trips, addToGroup, updateMyIdea, allCategories }) {
   const [showPicker, setShowPicker]           = useState(false)
   const [pickedCategories, setPickedCategories] = useState([])
   const [editing, setEditing]         = useState(false)
@@ -11,11 +11,16 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, currentTrip, 
   const [editLink, setEditLink]       = useState('')
   const [editNote, setEditNote]       = useState('')
   const [editCategoryIds, setEditCategoryIds] = useState([])
+  const [showTripPicker, setShowTripPicker]   = useState(false)
 
   const { itemId, categoryId, backTo = 'myIdeasCategory' } = params
   const item = myIdeas.find(i => i.id === itemId)
   const cat  = allCategories.find(c => c.id === categoryId) || allCategories[0] || { id: '', icon: '✨', label: 'Ideas', color: COLORS.teal }
   const itemCategories = item ? item.categoryIds.map(id => allCategories.find(c => c.id === id)).filter(Boolean) : []
+  // Which trip (if any) this private idea is tagged to — set automatically
+  // at save time to whichever trip was open then, but changeable here so an
+  // idea saved before a trip existed (or under the wrong one) isn't stuck.
+  const taggedTrip = (trips || []).find(t => t.id === item?.tripId)
 
   const handleBack = () => navigate(backTo, { categoryId, backTo: params.parentBackTo, tripScoped: params.tripScoped })
 
@@ -279,6 +284,56 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, currentTrip, 
               <p style={{ fontSize: 14, color: COLORS.charcoal, lineHeight: 1.55, fontWeight: 500 }}>
                 Only you can see this. You can share it with your group whenever you're ready.
               </p>
+
+              {/* Which trip this idea belongs to — set automatically when
+                  saved, but changeable here, since an idea saved before a
+                  trip existed (or tagged to the wrong one) had no other way
+                  to move. */}
+              {trips && trips.length > 0 && (
+                <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${COLORS.border}` }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <p style={{ flex: 1, fontSize: 13, fontWeight: 600, color: COLORS.charcoal }}>
+                      🗺️ {taggedTrip ? `For ${taggedTrip.name}` : 'Not tagged to a trip yet'}
+                    </p>
+                    <button
+                      onClick={() => setShowTripPicker(o => !o)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: COLORS.teal, padding: 0 }}
+                    >
+                      {showTripPicker ? 'Close' : 'Change'}
+                    </button>
+                  </div>
+                  {showTripPicker && (
+                    <div style={{ marginTop: 10, borderRadius: 12, overflow: 'hidden', border: `1px solid ${COLORS.border}` }}>
+                      {trips.map((t) => (
+                        <button
+                          key={t.id}
+                          onClick={() => { updateMyIdea(item.id, { tripId: t.id }); setShowTripPicker(false) }}
+                          style={{
+                            width: '100%', border: 'none', cursor: 'pointer', textAlign: 'left',
+                            padding: '11px 14px', fontSize: 13, fontWeight: 600, fontFamily: 'inherit',
+                            background: item.tripId === t.id ? `${COLORS.terracotta}12` : 'white',
+                            color: item.tripId === t.id ? COLORS.terracotta : COLORS.charcoal,
+                            borderBottom: `1px solid ${COLORS.borderLight}`,
+                          }}
+                        >
+                          {item.tripId === t.id ? '✓ ' : ''}{t.name}
+                        </button>
+                      ))}
+                      <button
+                        onClick={() => { updateMyIdea(item.id, { tripId: null }); setShowTripPicker(false) }}
+                        style={{
+                          width: '100%', border: 'none', cursor: 'pointer', textAlign: 'left',
+                          padding: '11px 14px', fontSize: 13, fontWeight: 600, fontFamily: 'inherit',
+                          background: !item.tripId ? `${COLORS.terracotta}12` : 'white',
+                          color: !item.tripId ? COLORS.terracotta : COLORS.warmGrey,
+                        }}
+                      >
+                        {!item.tripId ? '✓ ' : ''}Not tagged to a trip
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Add to Group Space */}

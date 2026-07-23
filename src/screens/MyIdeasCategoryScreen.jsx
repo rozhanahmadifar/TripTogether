@@ -6,7 +6,7 @@ import { EmptyState } from '../components/EmptyState'
 import { BackButton } from '../components/BackButton'
 import { COLORS, SPACING } from '../styles'
 
-export function MyIdeasCategoryScreen({ navigate, params = {}, myIdeas, currentTrip, allCategories, userName, deleteMyIdea, updateMyIdea }) {
+export function MyIdeasCategoryScreen({ navigate, params = {}, myIdeas, currentTrip, trips, allCategories, userName, deleteMyIdea, updateMyIdea }) {
   const { categoryId, backTo = 'individualHome', tripScoped } = params
   const cat = allCategories.find(c => c.id === categoryId) || allCategories[0] || { id: '', icon: '✨', label: 'Ideas', color: '#1E5F5F' }
   // Reached from "My Saves" (a specific trip's own private stash) this only
@@ -14,6 +14,10 @@ export function MyIdeasCategoryScreen({ navigate, params = {}, myIdeas, currentT
   // shows everything, regardless of which trip (or no trip) it was saved under.
   const scopedIdeas = tripScoped ? myIdeas.filter(i => i.tripId === currentTrip?.id) : myIdeas
   const items = scopedIdeas.filter(i => i.categoryIds.includes(cat.id))
+  // Only shown from the global board — inside a trip-scoped My Saves, every
+  // item is already known to belong to this trip, so the tag would be
+  // redundant noise rather than useful information.
+  const tripNameFor = (item) => (trips || []).find(t => t.id === item.tripId)?.name || ''
   const me = { name: userName || 'You', color: COLORS.teal, initial: (userName || 'You').charAt(0).toUpperCase() }
   const [view, setView] = useState('list')
 
@@ -64,6 +68,7 @@ export function MyIdeasCategoryScreen({ navigate, params = {}, myIdeas, currentT
                 previewHeight={100}
                 allCategories={allCategories}
                 hideFooter
+                tripTag={tripScoped ? undefined : tripNameFor(item)}
                 onOpen={() => navigate('itemDetail', { itemId: item.id, categoryId: cat.id, backTo: 'myIdeasCategory', parentBackTo: backTo, tripScoped })}
                 onDelete={() => deleteMyIdea(item.id)}
                 onSave={(updates) => updateMyIdea(item.id, updates)}

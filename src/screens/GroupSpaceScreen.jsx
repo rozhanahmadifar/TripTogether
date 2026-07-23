@@ -148,24 +148,20 @@ export function GroupSpaceScreen({
           )
         ) : (
         <>
-        {/* Trip status strip — countdown and category completion read as one
-            motivating line about the trip's overall state, not a call-out
-            of any one person. */}
+        {/* Trip status strip — one combined line, not a standalone countdown
+            followed by a separate progress line. Trip home already owns the
+            prominent countdown moment; here it's just folded into the same
+            status line as everything else. */}
         {currentTrip?.startDate ? (
           <div style={{
             background: `linear-gradient(135deg, ${COLORS.teal} 0%, ${COLORS.tealLight} 100%)`,
             borderRadius: 14, padding: '14px 16px', marginBottom: SPACING.cardGap,
-            display: 'flex', alignItems: 'flex-start', gap: 10,
+            display: 'flex', alignItems: 'center', gap: 10,
           }}>
             <span style={{ fontSize: 18, lineHeight: 1.4 }}>🗓️</span>
-            <div>
-              <p style={{ fontSize: 14, fontWeight: 700, color: 'white' }}>
-                {countdownLabel(daysUntil(currentTrip.startDate))}
-              </p>
-              <p style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.85)', marginTop: 2 }}>
-                {categoryCompletionLabel}
-              </p>
-            </div>
+            <p style={{ fontSize: 13, fontWeight: 700, color: 'white', lineHeight: 1.4 }}>
+              {countdownLabel(daysUntil(currentTrip.startDate))} · {categoryCompletionLabel}
+            </p>
           </div>
         ) : (
           <button
@@ -173,19 +169,14 @@ export function GroupSpaceScreen({
             style={{
               width: '100%', background: COLORS.sand, border: `1.5px dashed ${COLORS.teal}`,
               borderRadius: 14, padding: '14px 16px', marginBottom: SPACING.cardGap,
-              display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', fontFamily: 'inherit',
+              display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontFamily: 'inherit',
               textAlign: 'left',
             }}
           >
             <span style={{ fontSize: 18, lineHeight: 1.4 }}>🗓️</span>
-            <div>
-              <p style={{ fontSize: 14, fontWeight: 700, color: COLORS.teal }}>
-                No dates yet — decide when you're going
-              </p>
-              <p style={{ fontSize: 12, fontWeight: 600, color: COLORS.warmGrey, marginTop: 2 }}>
-                {categoryCompletionLabel}
-              </p>
-            </div>
+            <p style={{ fontSize: 13, fontWeight: 700, color: COLORS.teal, lineHeight: 1.4 }}>
+              No dates yet — decide when you're going · {categoryCompletionLabel}
+            </p>
           </button>
         )}
 

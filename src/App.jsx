@@ -250,7 +250,7 @@ export default function App() {
     setGroupItems(p => p.map(i => i.id === itemId ? { ...i, ...updates } : i))
   }
 
-  const startGroupTrip = ({ name, destination, dates, startDate, crewMembers, returnTo, returnParams }) => {
+  const startGroupTrip = ({ name, destination, dates, startDate, budget, crewMembers, returnTo, returnParams }) => {
     // The creator is added as an already-joined member up front — they never
     // have to add themselves to their own trip.
     const me = { id: 'me', name: userName, color: MEMBER_COLORS[0], initial: userName.charAt(0).toUpperCase(), joined: true }
@@ -264,6 +264,7 @@ export default function App() {
     // same as any other custom category.
     const trip = {
       id: `t-${Date.now()}`, name, destination: trimmedDestination, dates, startDate: startDate || '',
+      budget: (budget || '').trim(),
       members: [me, ...crewMembers], destinationSetAtCreation: !!trimmedDestination,
     }
     setTrips(p => [...p, trip])
@@ -415,7 +416,17 @@ export default function App() {
             >
               <PlusIcon size={24} />
             </button>
-            <span style={{ fontSize: 9, fontWeight: 700, color: COLORS.action, letterSpacing: 0.2 }}>
+            {/* A floating label has no fixed background — whatever scrolls
+                underneath it (including the teal gradient cards) can end up
+                directly behind this text, which measured as low as 1.0:1
+                against teal. A small opaque pill keeps it readable
+                regardless of what's beneath, rather than relying on page
+                layout to keep them apart. */}
+            <span style={{
+              fontSize: 9, fontWeight: 700, color: COLORS.action, letterSpacing: 0.2,
+              background: 'white', padding: '3px 8px', borderRadius: 8,
+              boxShadow: '0 1px 4px rgba(0,0,0,0.15)',
+            }}>
               {plusCtx.label}
             </span>
           </div>

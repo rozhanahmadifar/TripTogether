@@ -141,7 +141,7 @@ function EditForm({ item, categories, allCategories, onCancel, onSave }) {
 
 // FIX 4 — consistent item card structure: coloured preview zone with source
 // badge, contributor + title + description, then a heart/comment footer.
-export function ItemCard({ item, categories, contributor, source, note, hearts = 0, hearted = false, onToggleHeart, onOpen, previewHeight = 100, isOwner = true, onDelete, onSave, allCategories = [], hideFooter = false, starred = false, starredBy = [], onToggleStar }) {
+export function ItemCard({ item, categories, contributor, source, note, hearts = 0, hearted = false, onToggleHeart, onOpen, previewHeight = 100, isOwner = true, onDelete, onSave, allCategories = [], hideFooter = false, starred = false, starredBy = [], onToggleStar, tripTag }) {
   const TopTag = onOpen ? 'button' : 'div'
   const primaryCategory = (categories && categories[0]) || { icon: '✨', color: COLORS.teal }
   const [pulsing, setPulsing] = useState(false)
@@ -274,6 +274,20 @@ export function ItemCard({ item, categories, contributor, source, note, hearts =
               <p style={TEXT.cardTitle}>
                 {displayTitle(item)}
               </p>
+
+              {/* Which trip (if any) this private idea is tagged to — only
+                  passed in from the global "My Ideas" list, where items can
+                  belong to different trips (or none) and that's otherwise
+                  invisible until you open the item. */}
+              {tripTag !== undefined && (
+                <span style={{
+                  display: 'inline-block', marginTop: 6,
+                  background: COLORS.sand, color: COLORS.warmGrey,
+                  fontSize: 11, fontWeight: 700, borderRadius: 8, padding: '3px 9px',
+                }}>
+                  🗺️ {tripTag ? `For ${tripTag}` : 'Not tagged to a trip'}
+                </span>
+              )}
 
               {note && (
                 <p style={{
