@@ -62,7 +62,10 @@ export const PLATFORM_COLORS = {
   Other:         '#8A7F74',
 }
 
-export const MEMBER_COLORS = ['#1E5F5F', '#D4724A', '#6BAE8A', '#5B8DBE', '#9B8AC4', '#E8B84A']
+// Darkened from their original, brighter values — as fills behind a white
+// avatar initial, most of these measured well below the 4.5:1 WCAG AA
+// minimum for text (as low as 1.84:1 for the yellow). These hold ~4.6-4.9:1.
+export const MEMBER_COLORS = ['#1E5F5F', '#AA5B3B', '#4B7A61', '#4D78A1', '#7C6E9D', '#8B6E2C']
 
 // Keeps long member names from breaking avatar/member-list layouts.
 export function truncateName(name, max = 20) {
@@ -91,6 +94,19 @@ export function isImagePhoto(photo) {
   return typeof photo === 'string' && (photo.startsWith('data:image') || photo.startsWith('http://') || photo.startsWith('https://'))
 }
 
+// The title stays genuinely optional — some people want to name what they
+// save, others don't. This just gives a title-less item something readable
+// to show wherever a title would normally go, instead of either blank
+// space or a raw URL.
+export function displayTitle(item) {
+  if (item.title) return item.title
+  if (item.platform) return `Saved from ${item.platform}`
+  if (item.link) return 'Saved link'
+  if (item.note) return 'Saved note'
+  if (item.photo) return isImagePhoto(item.photo) ? 'Saved photo' : 'Saved video'
+  return 'Saved item'
+}
+
 // A lightweight shape check (not full RFC 5322 validation) — just enough to
 // catch an obviously incomplete address before it's used to gate adding a
 // member, since email is now required rather than optional.
@@ -107,4 +123,22 @@ export const timeAgo = (ts) => {
   const days = Math.floor(hrs / 24)
   if (days < 7) return `${days}d ago`
   return `${Math.floor(days / 7)}w ago`
+}
+
+// Trip dates are stored as an ISO string (`startDate`) alongside the
+// human-readable label (`dates`) so a real countdown can be computed
+// wherever it's shown (trip home, Group Space), from one place.
+export function daysUntil(isoDate) {
+  const target = new Date(isoDate)
+  target.setHours(0, 0, 0, 0)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  return Math.round((target - today) / 86400000)
+}
+
+export function countdownLabel(days) {
+  if (days > 1) return `${days} days until departure`
+  if (days === 1) return '1 day until departure'
+  if (days === 0) return 'Departing today!'
+  return 'Trip underway'
 }

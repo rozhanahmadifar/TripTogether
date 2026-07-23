@@ -112,7 +112,7 @@ export function MySavesScreen({ navigate, myIdeas, currentTrip, allCategories, a
                           {items.length === 0 ? 'Nothing added yet' : `${items.length} ${items.length === 1 ? 'item' : 'items'}`}
                         </p>
                       </div>
-                      <span style={{ fontSize: 16, color: '#D6CCBF', flexShrink: 0 }}>›</span>
+                      <span style={{ fontSize: 16, color: COLORS.subtleIcon, flexShrink: 0 }}>›</span>
                     </button>
                   )}
 
@@ -124,7 +124,7 @@ export function MySavesScreen({ navigate, myIdeas, currentTrip, allCategories, a
                       }}
                       style={{
                         border: 'none', background: 'none', cursor: 'pointer',
-                        padding: '16px', fontSize: 15, color: '#D6CCBF', flexShrink: 0,
+                        padding: '16px', fontSize: 15, color: COLORS.subtleIcon, flexShrink: 0,
                       }}
                     >
                       ⋯
@@ -184,7 +184,7 @@ export function MySavesScreen({ navigate, myIdeas, currentTrip, allCategories, a
                   disabled={!sectionName.trim()}
                   style={{
                     background: sectionName.trim() ? COLORS.teal : COLORS.border,
-                    color: sectionName.trim() ? 'white' : '#A79E93',
+                    color: sectionName.trim() ? 'white' : COLORS.warmGrey,
                     border: 'none', borderRadius: 10, padding: '0 14px',
                     fontSize: 13, fontWeight: 700,
                     cursor: sectionName.trim() ? 'pointer' : 'default', flexShrink: 0,

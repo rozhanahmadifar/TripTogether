@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { PLATFORM_COLORS, CATEGORY_HINTS, timeAgo, truncateName, isImagePhoto } from '../data'
+import { PLATFORM_COLORS, CATEGORY_HINTS, timeAgo, truncateName, isImagePhoto, displayTitle } from '../data'
 import { TEXT, COLORS, SPACING } from '../styles'
 import { BackButton } from '../components/BackButton'
 
@@ -89,7 +89,7 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, currentTrip, 
         {editing ? (
           <div style={{ marginBottom: 24 }}>
             <p style={{ fontSize: 11, fontWeight: 700, color: COLORS.warmGrey, letterSpacing: 0.6, textTransform: 'uppercase', marginBottom: 6 }}>
-              Title {editHasOtherContent && <span style={{ textTransform: 'none', fontWeight: 500, color: '#A79E93' }}>Optional</span>}
+              Title {editHasOtherContent && <span style={{ textTransform: 'none', fontWeight: 500, color: COLORS.warmGrey }}>Optional</span>}
             </p>
             <input
               value={editTitle}
@@ -185,7 +185,7 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, currentTrip, 
                 style={{
                   flex: 1, minHeight: 48, borderRadius: 12, border: 'none',
                   background: canSaveEdit ? COLORS.action : COLORS.border,
-                  color: canSaveEdit ? 'white' : '#A79E93',
+                  color: canSaveEdit ? 'white' : COLORS.warmGrey,
                   fontSize: 14, fontWeight: 600, cursor: canSaveEdit ? 'pointer' : 'default', fontFamily: 'inherit',
                 }}
               >
@@ -233,15 +233,15 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, currentTrip, 
               </div>
             ) : null}
 
-            {/* Title — may be blank when a photo was saved without one */}
-            {item.title && (
-              <p style={{
-                fontSize: 18, fontWeight: 700, color: COLORS.charcoal, lineHeight: 1.45,
-                letterSpacing: -0.3, marginBottom: 8,
-              }}>
-                {item.title}
-              </p>
-            )}
+            {/* Title stays optional — when blank, this falls back to a
+                readable label (source name, or a generic "Saved link" /
+                "Saved item") rather than showing nothing or a raw URL. */}
+            <p style={{
+              fontSize: 18, fontWeight: 700, color: COLORS.charcoal, lineHeight: 1.45,
+              letterSpacing: -0.3, marginBottom: 8,
+            }}>
+              {displayTitle(item)}
+            </p>
 
             {item.note && (
               <p style={{ ...TEXT.body, color: COLORS.warmGrey, marginBottom: 12, lineHeight: 1.55 }}>
@@ -354,7 +354,7 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, currentTrip, 
                   style={{
                     width: '100%', height: 52, borderRadius: 14, border: 'none',
                     background: pickedCategories.length > 0 ? COLORS.action : COLORS.border,
-                    color: pickedCategories.length > 0 ? 'white' : '#A79E93',
+                    color: pickedCategories.length > 0 ? 'white' : COLORS.warmGrey,
                     fontSize: 15, fontWeight: 600,
                     cursor: pickedCategories.length > 0 ? 'pointer' : 'default',
                     letterSpacing: -0.2,

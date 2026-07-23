@@ -1,9 +1,23 @@
 import { useState } from 'react'
-import { MEMBER_COLORS, truncateName, isValidEmail } from '../data'
+import { MEMBER_COLORS, truncateName, isValidEmail, daysUntil, countdownLabel } from '../data'
 import { DateRangePicker, fmtDate } from '../components/DateRangePicker'
 import { BackButton } from '../components/BackButton'
 import { XIcon } from '../components/ActionMenu'
 import { TEXT, COLORS, SPACING, SHADOW_CARD } from '../styles'
+
+// Proportional rather than a fixed "out of 6" — the category list is
+// dynamic (custom categories, hidden ones), so this scales to whatever
+// count a given trip actually has. "Exactly one left" is called out on
+// its own so a near-complete trip (4 of 5, 5 of 6, ...) reads as "almost
+// ready" rather than landing in the same bucket as a plain 50/50 split.
+function progressMicrocopy(decided, total) {
+  if (total === 0) return ''
+  if (decided === 0) return 'Just getting started'
+  if (decided === total) return 'All set!'
+  if (total - decided === 1) return 'Almost ready to go'
+  if (decided / total >= 0.5) return 'Halfway there'
+  return 'Making progress'
+}
 
 function PencilIcon({ size = 13, color = COLORS.warmGrey }) {
   return (
@@ -118,6 +132,7 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
   const decidedCategoriesCount = visibleCategories.filter(cat =>
     groupItems.some(i => i.categoryIds.includes(cat.id) && (i.starredBy || []).length > 0)
   ).length
+  const allCategoriesDecided = visibleCategories.length > 0 && decidedCategoriesCount === visibleCategories.length
   // "My Saves" here is this trip's own private stash, not the user's whole
   // personal collection — never another trip's (or pre-trip) private items.
   const tripMyIdeas = myIdeas.filter(i => i.tripId === currentTrip.id)
@@ -215,9 +230,11 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
 
       <div className="screen-scroll" style={{ padding: `16px ${SPACING.screenX}px ${SPACING.scrollBottomPad}px` }}>
 
-        {/* Trip card — rich collaborative gradient, feels alive */}
+        {/* Trip card — rich collaborative gradient with a subtle dot
+            texture (same treatment as the "Plan a trip together" card),
+            feels alive rather than a flat color fill. */}
         <div style={{
-          background: `linear-gradient(135deg, ${COLORS.teal} 0%, ${COLORS.tealLight} 100%)`,
+          background: `radial-gradient(circle, rgba(255,255,255,0.14) 1px, transparent 1.4px) 0 0/16px 16px, linear-gradient(135deg, ${COLORS.teal} 0%, ${COLORS.tealLight} 100%)`,
           borderRadius: 18, padding: '20px',
           marginBottom: SPACING.sectionGap,
           boxShadow: `inset 0 1px 0 rgba(255,255,255,0.15), 0 8px 24px ${COLORS.teal}40`,
@@ -235,12 +252,14 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
             </div>
           )}
 
-          {/* Destination */}
+          {/* Destination — once set, this is the emotional anchor of trip
+              home: a real headline, not one line among several equally-
+              weighted fields. */}
           {editField === 'destination' ? (
             <div style={{ marginBottom: 10 }}>{inlineInput('Where are you going?', confirmEdit)}</div>
           ) : currentTrip.destination ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-              <p style={{ fontSize: 13, fontWeight: 500, flex: 1, color: 'rgba(255,255,255,0.88)' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, marginBottom: 4 }}>
+              <p style={{ fontSize: 26, fontWeight: 800, flex: 1, color: 'white', letterSpacing: -0.6, lineHeight: 1.15 }}>
                 📍 {currentTrip.destination}
               </p>
               {pencilBtn('destination', currentTrip.destination)}
@@ -260,10 +279,33 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
             </button>
           )}
 
-          {/* Dates */}
+          {/* Countdown — a real, computed "X days until departure" pill,
+              not just the raw date range, so a set trip reads as something
+              approaching rather than a data field. Turns milestone-green
+              once departure is a week out or closer, imminent or already
+              underway; otherwise a neutral glass pill. */}
+          {currentTrip.destination && currentTrip.startDate && (() => {
+            const days = daysUntil(currentTrip.startDate)
+            const imminent = days <= 7
+            return (
+              <div style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                background: imminent ? COLORS.milestone : 'rgba(255,255,255,0.16)',
+                borderRadius: 20, padding: '6px 12px', marginBottom: 10,
+              }}>
+                <span style={{ fontSize: 13 }}>🗓️</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: 'white' }}>
+                  {countdownLabel(days)}
+                </span>
+              </div>
+            )
+          })()}
+
+          {/* Dates — the raw range stays available as a secondary line;
+              the countdown above carries the emotional weight now. */}
           {currentTrip.dates ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 18 }}>
-              <p style={{ fontSize: 13, fontWeight: 500, flex: 1, color: 'rgba(255,255,255,0.88)' }}>
+              <p style={{ fontSize: 13, fontWeight: 500, flex: 1, color: 'rgba(255,255,255,0.75)' }}>
                 📅 {currentTrip.dates}
               </p>
               <button
@@ -443,33 +485,38 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
                 Jump into your trip's conversation
               </p>
             </div>
-            <span style={{ fontSize: 16, color: '#D6CCBF' }}>›</span>
+            <span style={{ fontSize: 16, color: COLORS.subtleIcon }}>›</span>
           </button>
         )}
 
         {/* Progress/decisions entry point — visible on trip home itself
             rather than requiring "Group Space" then "See all", since
-            testing showed users didn't find it unaided otherwise. */}
+            testing showed users didn't find it unaided otherwise. The
+            subtext line changes with how much of the trip is decided, and
+            a fully-decided trip — the biggest milestone there is — gets
+            the milestone-colored treatment instead of the plain card. */}
         {visibleCategories.length > 0 && (
           <button
             onClick={() => navigate('groupSpace', { initialView: 'decided' })}
             style={{
               width: '100%', display: 'flex', alignItems: 'center', gap: 12,
-              background: COLORS.cardBg, borderRadius: 14, boxShadow: SHADOW_CARD,
-              padding: 16, border: 'none', cursor: 'pointer', textAlign: 'left',
+              background: allCategoriesDecided ? COLORS.milestoneTint : COLORS.cardBg,
+              borderRadius: 14, boxShadow: SHADOW_CARD,
+              padding: 16, border: `1.5px solid ${allCategoriesDecided ? COLORS.milestone : 'transparent'}`,
+              cursor: 'pointer', textAlign: 'left',
               marginBottom: SPACING.cardGap, fontFamily: 'inherit',
             }}
           >
-            <span style={{ fontSize: 20 }}>✅</span>
+            <span style={{ fontSize: 20 }}>{allCategoriesDecided ? '🎉' : '✅'}</span>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontSize: 14, fontWeight: 700, color: COLORS.charcoal, letterSpacing: -0.2 }}>
+              <p style={{ fontSize: 14, fontWeight: 700, color: allCategoriesDecided ? COLORS.milestone : COLORS.charcoal, letterSpacing: -0.2 }}>
                 {decidedCategoriesCount} of {visibleCategories.length} {visibleCategories.length === 1 ? 'category' : 'categories'} decided
               </p>
-              <p style={{ fontSize: 12, color: COLORS.warmGrey, marginTop: 1 }}>
-                See the full plan
+              <p style={{ fontSize: 12, color: allCategoriesDecided ? COLORS.milestone : COLORS.warmGrey, fontWeight: allCategoriesDecided ? 700 : 400, marginTop: 1 }}>
+                {progressMicrocopy(decidedCategoriesCount, visibleCategories.length)}
               </p>
             </div>
-            <span style={{ fontSize: 16, color: '#D6CCBF' }}>›</span>
+            <span style={{ fontSize: 16, color: COLORS.subtleIcon }}>›</span>
           </button>
         )}
 
@@ -493,7 +540,7 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
               Destination, accommodation, activities, transport & budget
             </p>
           </div>
-          <span style={{ fontSize: 16, color: '#D6CCBF' }}>›</span>
+          <span style={{ fontSize: 16, color: COLORS.subtleIcon }}>›</span>
         </button>
 
         {/* Group Space — open, collaborative. Shown first: this is the shared

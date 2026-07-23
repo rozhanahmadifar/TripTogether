@@ -1,27 +1,10 @@
 import { useState } from 'react'
-import { MEMBER_COLORS } from '../data'
+import { MEMBER_COLORS, daysUntil, countdownLabel, displayTitle } from '../data'
 import { TEXT, COLORS, SPACING, SHADOW_CARD } from '../styles'
 import { BackButton } from '../components/BackButton'
 import { ActionMenu, PencilIcon, TrashIcon, EyeOffIcon } from '../components/ActionMenu'
 import { ItemCard } from '../components/ItemCard'
 import { EmptyState } from '../components/EmptyState'
-
-// Trip dates are stored as an ISO string (`startDate`) alongside the
-// human-readable label (`dates`) so we can compute a real countdown here.
-function daysUntil(isoDate) {
-  const target = new Date(isoDate)
-  target.setHours(0, 0, 0, 0)
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  return Math.round((target - today) / 86400000)
-}
-
-function countdownLabel(days) {
-  if (days > 1) return `${days} days until departure`
-  if (days === 1) return '1 day until departure'
-  if (days === 0) return 'Departing today!'
-  return 'Trip underway'
-}
 
 export function GroupSpaceScreen({
   navigate, params = {}, currentTrip, groupItems, allCategories, addCustomCategory, renameCategory, deleteCategory, toggleCategoryHidden,
@@ -41,7 +24,7 @@ export function GroupSpaceScreen({
     const found = tripMembers.find(m => m.name === name)
     if (found) return found
     if (name === userName) return { name, color: MEMBER_COLORS[0], initial: name.charAt(0).toUpperCase() }
-    return { name, color: '#B5AA9C', initial: name.charAt(0).toUpperCase() }
+    return { name, color: COLORS.subtleIcon, initial: name.charAt(0).toUpperCase() }
   }
   // A trip whose destination was already filled in at creation never gets
   // a default Destination category (the trip header is the only place that
@@ -120,7 +103,7 @@ export function GroupSpaceScreen({
                 flex: 1, border: 'none', borderRadius: 9, padding: '9px 0',
                 background: view === tab.id ? 'white' : 'transparent',
                 boxShadow: view === tab.id ? '0 1px 4px rgba(0,0,0,0.1)' : 'none',
-                color: view === tab.id ? COLORS.teal : COLORS.warmGrey,
+                color: view === tab.id ? (tab.id === 'decided' ? COLORS.milestone : COLORS.teal) : COLORS.warmGrey,
                 fontSize: 13, fontWeight: 700, cursor: 'pointer',
               }}
             >
@@ -206,41 +189,6 @@ export function GroupSpaceScreen({
           </button>
         )}
 
-        {/* Per-category progress — the decided count is the whole point of
-            this list, so it gets a teal badge that pops rather than
-            blending into the same gray text as everything else. */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: SPACING.sectionGap }}>
-          {visibleCategories.map(cat => {
-            const items = groupItems.filter(i => i.categoryIds.includes(cat.id))
-            const decided = items.filter(i => (i.starredBy || []).length > 0)
-            return (
-              <div key={cat.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 14, flexShrink: 0 }}>{cat.icon}</span>
-                <span style={{ fontSize: 13, fontWeight: 700, color: COLORS.charcoal, flexShrink: 0 }}>{cat.label}</span>
-                <span style={{ flex: 1, height: 1 }} />
-                {items.length === 0 ? (
-                  <span style={{ fontSize: 12, color: COLORS.warmGrey, fontStyle: 'italic' }}>Nothing added yet</span>
-                ) : decided.length > 0 ? (
-                  <span style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 4,
-                    background: COLORS.tealTint, color: COLORS.teal,
-                    fontSize: 12, fontWeight: 800, borderRadius: 20, padding: '3px 10px',
-                    maxWidth: '62%', minWidth: 0,
-                  }}>
-                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      ✓ Decided: {decided[0].title}{decided.length > 1 ? ` +${decided.length - 1} more` : ''}
-                    </span>
-                  </span>
-                ) : (
-                  <span style={{ fontSize: 12, color: COLORS.warmGrey }}>
-                    {items.length} {items.length === 1 ? 'idea' : 'ideas'}
-                  </span>
-                )}
-              </div>
-            )
-          })}
-        </div>
-
         <div style={{
           background: COLORS.cardBg, borderRadius: 16, overflow: 'hidden',
           boxShadow: SHADOW_CARD,
@@ -248,6 +196,7 @@ export function GroupSpaceScreen({
           {visibleCategories.map((cat) => {
             const contributors = getContributors(cat.id)
             const items = groupItems.filter(i => i.categoryIds.includes(cat.id))
+            const decided = items.filter(i => (i.starredBy || []).length > 0)
             const isRenaming = renamingId === cat.id
             return (
               <div key={cat.id} style={{ borderBottom: `1px solid ${COLORS.borderLight}` }}>
@@ -290,9 +239,20 @@ export function GroupSpaceScreen({
                         <p style={{ ...TEXT.categoryRowName, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {cat.label}
                         </p>
-                        <p style={{ ...TEXT.categoryRowSubtext, marginTop: 2 }}>
-                          {items.length === 0 ? 'Nothing added yet' : `${items.length} ${items.length === 1 ? 'item' : 'items'}`}
-                        </p>
+                        {items.length === 0 ? (
+                          <p style={{ ...TEXT.categoryRowSubtext, marginTop: 2 }}>Nothing added yet</p>
+                        ) : decided.length > 0 ? (
+                          <p style={{
+                            fontSize: 12, fontWeight: 700, color: COLORS.milestone, marginTop: 3,
+                            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                          }}>
+                            ✓ Decided: {displayTitle(decided[0])}{decided.length > 1 ? ` +${decided.length - 1} more` : ''}
+                          </p>
+                        ) : (
+                          <p style={{ ...TEXT.categoryRowSubtext, marginTop: 2 }}>
+                            {items.length} {items.length === 1 ? 'item' : 'items'}
+                          </p>
+                        )}
                       </div>
 
                       {contributors.length > 0 && (
@@ -314,7 +274,7 @@ export function GroupSpaceScreen({
                           })}
                         </div>
                       )}
-                      <span style={{ fontSize: 16, color: '#D6CCBF', flexShrink: 0 }}>›</span>
+                      <span style={{ fontSize: 16, color: COLORS.subtleIcon, flexShrink: 0 }}>›</span>
                     </button>
                   )}
 
@@ -326,7 +286,7 @@ export function GroupSpaceScreen({
                       }}
                       style={{
                         border: 'none', background: 'none', cursor: 'pointer',
-                        padding: '16px', fontSize: 15, color: '#D6CCBF', flexShrink: 0,
+                        padding: '16px', fontSize: 15, color: COLORS.subtleIcon, flexShrink: 0,
                       }}
                     >
                       ⋯
@@ -386,7 +346,7 @@ export function GroupSpaceScreen({
                   disabled={!sectionName.trim()}
                   style={{
                     background: sectionName.trim() ? COLORS.teal : COLORS.border,
-                    color: sectionName.trim() ? 'white' : '#A79E93',
+                    color: sectionName.trim() ? 'white' : COLORS.warmGrey,
                     border: 'none', borderRadius: 10, padding: '0 14px',
                     fontSize: 13, fontWeight: 700,
                     cursor: sectionName.trim() ? 'pointer' : 'default', flexShrink: 0,

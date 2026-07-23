@@ -77,7 +77,7 @@ export function MyIdeasCategoryScreen({ navigate, params = {}, myIdeas, currentT
             onClick={() => navigate('saveSomething', { categoryId: cat.id, mode: 'personal', backTo: 'myIdeasCategory', returnParams: { categoryId: cat.id, backTo, tripScoped } })}
             style={{
               marginTop: SPACING.cardGap, width: '100%', minHeight: SPACING.inputMinHeight,
-              background: 'transparent', border: '1.5px dashed #D6CCBF',
+              background: 'transparent', border: `1.5px dashed ${COLORS.subtleIcon}`,
               borderRadius: 12, cursor: 'pointer', fontSize: 14,
               fontWeight: 600, color: COLORS.warmGrey,
             }}

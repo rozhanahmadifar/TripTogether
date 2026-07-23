@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { TEXT, COLORS } from '../styles'
 import { askGemini, parseAIResponse, buildTripContextBlock } from '../gemini'
+import { displayTitle } from '../data'
 
 function tripMonth(currentTrip) {
   if (!currentTrip?.startDate) return null
@@ -55,13 +56,13 @@ function buildSuggestionChips(currentTrip, groupItems) {
     {
       specific: !!accommodation,
       text: accommodation
-        ? `How do we usually get from ${accommodation.title} to the city center?`
+        ? `How do we usually get from ${displayTitle(accommodation)} to the city center?`
         : `What's the best way to get around once we land?`,
     },
     {
       specific: !!activity,
       text: activity
-        ? `What's the best way to handle booking or tickets for ${activity.title}?`
+        ? `What's the best way to handle booking or tickets for ${displayTitle(activity)}?`
         : `What should we keep in mind for booking activities or tickets in advance?`,
     },
   ]
@@ -276,7 +277,7 @@ export function AIScreen({ currentTrip, groupItems }) {
           style={{
             width: 48, height: 48, borderRadius: '50%', border: 'none',
             background: canSend ? COLORS.action : COLORS.border,
-            color: canSend ? 'white' : '#A79E93',
+            color: canSend ? 'white' : COLORS.warmGrey,
             fontSize: 20, cursor: canSend ? 'pointer' : 'default',
             flexShrink: 0,
             display: 'flex', alignItems: 'center', justifyContent: 'center',

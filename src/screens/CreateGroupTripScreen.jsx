@@ -128,7 +128,7 @@ export function CreateGroupTripScreen({ navigate, params = {}, startGroupTrip, u
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                   <p style={{ fontSize: 12, fontWeight: 700, color: COLORS.warmGrey, letterSpacing: 0.3 }}>Where are you thinking</p>
-                  <span style={{ fontSize: 11, color: '#A79E93', fontWeight: 500 }}>Optional</span>
+                  <span style={{ fontSize: 11, color: COLORS.warmGrey, fontWeight: 500 }}>Optional</span>
                 </div>
                 <div style={fieldWrap(destination)}>
                   <span style={{ paddingLeft: 14, fontSize: 16, flexShrink: 0 }}>📍</span>
@@ -145,7 +145,7 @@ export function CreateGroupTripScreen({ navigate, params = {}, startGroupTrip, u
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                   <p style={{ fontSize: 12, fontWeight: 700, color: COLORS.warmGrey, letterSpacing: 0.3 }}>When are you going</p>
-                  <span style={{ fontSize: 11, color: '#A79E93', fontWeight: 500 }}>Optional</span>
+                  <span style={{ fontSize: 11, color: COLORS.warmGrey, fontWeight: 500 }}>Optional</span>
                 </div>
                 <button
                   onClick={() => setShowCalendar(c => !c)}
@@ -159,7 +159,7 @@ export function CreateGroupTripScreen({ navigate, params = {}, startGroupTrip, u
                   }}
                 >
                   <span style={{ fontSize: 18 }}>📅</span>
-                  <span style={{ fontSize: 15, color: dateRange.start ? COLORS.charcoal : '#A79E93', fontWeight: dateRange.start ? 600 : 400 }}>
+                  <span style={{ fontSize: 15, color: dateRange.start ? COLORS.charcoal : COLORS.warmGrey, fontWeight: dateRange.start ? 600 : 400 }}>
                     {dateLabel || 'Choose dates'}
                   </span>
                   {dateRange.start && (
@@ -246,7 +246,7 @@ export function CreateGroupTripScreen({ navigate, params = {}, startGroupTrip, u
               style={{
                 width: '100%', height: 52, borderRadius: 14, border: 'none',
                 background: (nameInput.trim() && isValidEmail(emailInput)) ? COLORS.action : COLORS.border,
-                color: (nameInput.trim() && isValidEmail(emailInput)) ? 'white' : '#A79E93',
+                color: (nameInput.trim() && isValidEmail(emailInput)) ? 'white' : COLORS.warmGrey,
                 fontSize: 15, fontWeight: 600,
                 cursor: (nameInput.trim() && isValidEmail(emailInput)) ? 'pointer' : 'default',
                 marginBottom: 20,

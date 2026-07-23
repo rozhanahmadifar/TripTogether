@@ -135,7 +135,7 @@ export function SaveSomethingScreen({ navigate, params = {}, allCategories, save
                       {trip.members.slice(0, 4).map(m => <MemberCircle key={m.id} m={m} />)}
                     </div>
                   )}
-                  <span style={{ fontSize: 16, color: '#D6CCBF' }}>›</span>
+                  <span style={{ fontSize: 16, color: COLORS.subtleIcon }}>›</span>
                 </button>
               ))}
             </div>
@@ -183,7 +183,7 @@ export function SaveSomethingScreen({ navigate, params = {}, allCategories, save
             already typed something — expected with this field order, not
             a bug, since the preview only fills in what's still empty. */}
         <p style={{ ...TEXT.sectionHeading, marginBottom: 8 }}>
-          Title {hasOtherContent && <span style={{ textTransform: 'none', fontWeight: 500, color: '#A79E93' }}>Optional</span>}
+          Title {hasOtherContent && <span style={{ textTransform: 'none', fontWeight: 500, color: COLORS.warmGrey }}>Optional</span>}
         </p>
         <input
           value={titleValue}
@@ -199,7 +199,7 @@ export function SaveSomethingScreen({ navigate, params = {}, allCategories, save
 
         {/* Link — optional */}
         <p style={{ ...TEXT.sectionHeading, marginBottom: 8 }}>
-          Link <span style={{ textTransform: 'none', fontWeight: 500, color: '#A79E93' }}>Optional</span>
+          Link <span style={{ textTransform: 'none', fontWeight: 500, color: COLORS.warmGrey }}>Optional</span>
         </p>
         <input
           value={linkValue}
@@ -404,7 +404,7 @@ export function SaveSomethingScreen({ navigate, params = {}, allCategories, save
                 disabled={!newCategoryName.trim()}
                 style={{
                   background: newCategoryName.trim() ? COLORS.teal : COLORS.border,
-                  color: newCategoryName.trim() ? 'white' : '#A79E93',
+                  color: newCategoryName.trim() ? 'white' : COLORS.warmGrey,
                   border: 'none', borderRadius: 10, padding: '0 14px',
                   fontSize: 13, fontWeight: 600,
                   cursor: newCategoryName.trim() ? 'pointer' : 'default',
@@ -440,7 +440,7 @@ export function SaveSomethingScreen({ navigate, params = {}, allCategories, save
             style={{
               width: '100%', minHeight: SPACING.buttonMinHeight, borderRadius: 14, border: 'none',
               background: canSave ? COLORS.action : COLORS.border,
-              color: canSave ? 'white' : '#A79E93',
+              color: canSave ? 'white' : COLORS.warmGrey,
               fontSize: 15, fontWeight: 600, cursor: canSave ? 'pointer' : 'default',
               marginBottom: 10, letterSpacing: -0.2,
             }}
@@ -456,13 +456,13 @@ export function SaveSomethingScreen({ navigate, params = {}, allCategories, save
             width: '100%', minHeight: SPACING.buttonMinHeight, borderRadius: 14,
             border: `2px solid ${canSave ? COLORS.action : COLORS.border}`,
             background: 'white',
-            color: canSave ? COLORS.action : '#A79E93',
+            color: canSave ? COLORS.action : COLORS.warmGrey,
             fontSize: 15, fontWeight: 600, cursor: canSave ? 'pointer' : 'default',
             letterSpacing: -0.2,
           } : {
             width: '100%', minHeight: SPACING.buttonMinHeight, borderRadius: 14, border: 'none',
             background: canSave ? COLORS.action : COLORS.border,
-            color: canSave ? 'white' : '#A79E93',
+            color: canSave ? 'white' : COLORS.warmGrey,
             fontSize: 15, fontWeight: 600, cursor: canSave ? 'pointer' : 'default',
             marginBottom: hasGroup ? 10 : 0, letterSpacing: -0.2,
           }}
@@ -478,7 +478,7 @@ export function SaveSomethingScreen({ navigate, params = {}, allCategories, save
               width: '100%', minHeight: SPACING.buttonMinHeight, borderRadius: 14,
               border: `2px solid ${canSave ? COLORS.action : COLORS.border}`,
               background: 'white',
-              color: canSave ? COLORS.action : '#A79E93',
+              color: canSave ? COLORS.action : COLORS.warmGrey,
               fontSize: 15, fontWeight: 600, cursor: canSave ? 'pointer' : 'default',
               letterSpacing: -0.2,
             }}

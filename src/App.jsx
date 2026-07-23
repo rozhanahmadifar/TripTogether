@@ -86,6 +86,13 @@ export default function App() {
   const [modal, setModal]                       = useState(null)
   const [discussMessages, setDiscussMessages]   = useState({})
   const [customThreads, setCustomThreads]       = useState({})
+  // One-time explainer for the decided toggle — dismissed explicitly via
+  // its "x", or implicitly the moment the user marks their first item as
+  // decided (at that point they've already discovered what it does).
+  // Session-only, same as every other piece of app state here — there's no
+  // persistence layer yet, so "never again" means for the rest of this
+  // session, not across a future page reload.
+  const [decidedTipDismissed, setDecidedTipDismissed] = useState(false)
 
   const navigate = (id, newParams = {}) => {
     setScreen(id)
@@ -171,6 +178,8 @@ export default function App() {
     const already = starredBy.includes(userName)
     const nextStarredBy = already ? starredBy.filter(n => n !== userName) : [...starredBy, userName]
     const isDestination = item.categoryIds.includes('destination')
+
+    if (!already) setDecidedTipDismissed(true)
 
     setGroupItems(p => p.map(i => {
       if (i.id === itemId) return { ...i, starredBy: nextStarredBy }
@@ -342,6 +351,7 @@ export default function App() {
     openModal, closeModal,
     discussMessages, addDiscussMessage,
     customThreads, addDiscussThread,
+    decidedTipDismissed, dismissDecidedTip: () => setDecidedTipDismissed(true),
   }
 
   const CurrentScreen = SCREEN_MAP[screen] || WelcomeScreen

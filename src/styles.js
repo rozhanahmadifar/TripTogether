@@ -12,15 +12,30 @@ export const COLORS = {
   tealLight: '#2D7A7A',
   tealTint: '#E4F0EF',
   sand: '#F0E8DC',
-  terracotta: '#D4724A',
-  success: '#3A7D5A',
+  // Darkened from the original #D4724A — at full brightness, white button
+  // text on this background measured 3.33:1, below the 4.5:1 WCAG AA
+  // minimum for normal text (the button label isn't large/bold enough to
+  // qualify for the lower 3:1 large-text threshold). This shade holds
+  // ~4.9:1 both as a button fill (white text) and as a foreground text
+  // color on the app's light backgrounds.
+  terracotta: '#AA5B3B',
   danger: '#D94040',
 
   // Reserved for primary actions only (the one "tap this to move forward"
   // button per screen) — teal is used everywhere as the structural/brand
   // color (headers, gradients, cards), so reusing it for buttons makes
   // them blend into the backgrounds instead of standing out from them.
-  action: '#D4724A',
+  action: '#AA5B3B',
+
+  // Reserved exclusively for progress/completion/milestone moments —
+  // a decided category, a fully-decided trip, a countdown crossing a
+  // meaningful threshold. Never used as plain decoration, so it always
+  // reads as "something meaningful just happened."
+  milestone: '#3A7D5A',
+  // A tint light enough to keep milestone-colored text at ~4.5:1 — a
+  // stronger tint (matching tealTint's mix ratio) dropped text contrast
+  // to ~4.2:1.
+  milestoneTint: '#F3F7F5',
 
   // Text
   charcoal: '#1A1A1A',
@@ -29,9 +44,14 @@ export const COLORS = {
   // Structure
   border: '#E5DDD4',
   borderLight: '#EFE8DE',
+  // For subtle-but-functional marks (chevrons, an unfilled checkbox
+  // outline) that need to clear the 3:1 non-text/UI-component contrast
+  // minimum — the previous ad hoc greys here (#D6CCBF, #C9BFB2) measured
+  // ~1.6-1.8:1 against white, barely visible.
+  subtleIcon: '#96897C',
 
   // legacy alias kept for components still referencing .coral
-  coral: '#D4724A',
+  coral: '#AA5B3B',
 }
 
 // Section 10 — typography scale, applied consistently everywhere

@@ -158,7 +158,7 @@ export function IndividualHomeScreen({ navigate, userName, myIdeas, currentTrip,
                           }}
                           style={{
                             border: 'none', background: 'none', cursor: 'pointer',
-                            padding: '15px 16px', fontSize: 15, color: '#D6CCBF', flexShrink: 0,
+                            padding: '15px 16px', fontSize: 15, color: COLORS.subtleIcon, flexShrink: 0,
                           }}
                         >
                           ⋯
@@ -214,7 +214,7 @@ export function IndividualHomeScreen({ navigate, userName, myIdeas, currentTrip,
                         disabled={!sectionName.trim()}
                         style={{
                           background: sectionName.trim() ? COLORS.teal : COLORS.border,
-                          color: sectionName.trim() ? 'white' : '#A79E93',
+                          color: sectionName.trim() ? 'white' : COLORS.warmGrey,
                           border: 'none', borderRadius: 10, padding: '0 14px',
                           fontSize: 13, fontWeight: 700, cursor: sectionName.trim() ? 'pointer' : 'default',
                           flexShrink: 0,

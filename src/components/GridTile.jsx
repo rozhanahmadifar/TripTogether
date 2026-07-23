@@ -1,5 +1,5 @@
 import { COLORS, CATEGORY_COLORS } from '../styles'
-import { isImagePhoto } from '../data'
+import { isImagePhoto, displayTitle } from '../data'
 
 const PLATFORM_ICONS = {
   TikTok: '🎵', Instagram: '📷', Google: '🔍', Airbnb: '🏠',
@@ -44,7 +44,7 @@ export function GridTile({ item, category, onOpen }) {
         display: 'block', width: '100%', cursor: 'pointer',
         background: 'none', padding: 0, textAlign: 'left', fontFamily: 'inherit',
         borderRadius: 18, overflow: 'hidden', position: 'relative',
-        border: `2px solid ${decided ? COLORS.teal : 'transparent'}`,
+        border: `2px solid ${decided ? COLORS.milestone : 'transparent'}`,
         breakInside: 'avoid', marginBottom: 14, boxShadow: '0 2px 10px rgba(0,0,0,0.08)',
       }}
     >
@@ -76,7 +76,7 @@ export function GridTile({ item, category, onOpen }) {
           style={{
             position: 'absolute', top: 8, left: 8,
             display: 'flex', alignItems: 'center', gap: 3,
-            background: COLORS.teal, color: 'white',
+            background: COLORS.milestone, color: 'white',
             fontSize: 10, fontWeight: 800, letterSpacing: 0.2,
             borderRadius: 20, padding: '4px 8px',
             boxShadow: '0 2px 6px rgba(0,0,0,0.18)',
@@ -86,21 +86,19 @@ export function GridTile({ item, category, onOpen }) {
         </span>
       )}
 
-      {item.title && (
-        <div style={{
-          position: 'absolute', left: 0, right: 0, bottom: 0,
-          padding: '24px 10px 10px',
-          background: 'linear-gradient(to top, rgba(0,0,0,0.72), transparent)',
+      <div style={{
+        position: 'absolute', left: 0, right: 0, bottom: 0,
+        padding: '24px 10px 10px',
+        background: 'linear-gradient(to top, rgba(0,0,0,0.72), transparent)',
+      }}>
+        <p style={{
+          fontSize: 13, fontWeight: 700, color: 'white', lineHeight: 1.3,
+          overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+          textShadow: '0 1px 3px rgba(0,0,0,0.35)',
         }}>
-          <p style={{
-            fontSize: 13, fontWeight: 700, color: 'white', lineHeight: 1.3,
-            overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
-            textShadow: '0 1px 3px rgba(0,0,0,0.35)',
-          }}>
-            {item.title}
-          </p>
-        </div>
-      )}
+          {displayTitle(item)}
+        </p>
+      </div>
     </button>
   )
 }

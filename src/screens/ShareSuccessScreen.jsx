@@ -28,10 +28,10 @@ export function ShareSuccessScreen({ navigate, params = {}, currentTrip, openTri
         {/* Success icon — gentle upward float */}
         <div className="check-float" style={{
           width: 84, height: 84, borderRadius: '50%',
-          background: COLORS.success,
+          background: COLORS.milestone,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: 40, marginBottom: 28, color: 'white',
-          boxShadow: `0 8px 28px ${COLORS.success}59`,
+          boxShadow: `0 8px 28px ${COLORS.milestone}59`,
         }}>
           ✓
         </div>

@@ -77,7 +77,7 @@ export function YourNameScreen({ navigate, setUserName }) {
         style={{
           marginTop: 24, width: '100%', height: 56, borderRadius: 16,
           background: name.trim() ? COLORS.action : COLORS.border,
-          color: name.trim() ? 'white' : '#A79E93',
+          color: name.trim() ? 'white' : COLORS.warmGrey,
           border: 'none', fontSize: 15, fontWeight: 600,
           cursor: name.trim() ? 'pointer' : 'default',
           letterSpacing: -0.2,

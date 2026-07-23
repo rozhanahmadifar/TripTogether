@@ -1,18 +1,29 @@
 import { COLORS, SPACING, TEXT, SHADOW_CARD } from '../styles'
+import { displayTitle } from '../data'
 import { BackButton } from '../components/BackButton'
 
 function decidedIn(groupItems, categoryId) {
   return groupItems.filter(i => i.categoryIds.includes(categoryId) && (i.starredBy || []).length > 0)
 }
 
-function SummarySection({ icon, label, children }) {
+// A decided section gets a warm milestone-tinted card instead of the same
+// plain white every section starts with, so filling in the summary reads
+// as visible progress rather than a static form that happens to have text
+// in it now.
+function SummarySection({ icon, label, decided, children }) {
   return (
     <div style={{
-      background: COLORS.cardBg, borderRadius: 16, boxShadow: SHADOW_CARD,
-      padding: SPACING.cardPad, marginBottom: SPACING.cardGap,
+      background: decided ? COLORS.milestoneTint : COLORS.cardBg, borderRadius: 16,
+      boxShadow: SHADOW_CARD, padding: SPACING.cardPad, marginBottom: SPACING.cardGap,
+      border: `1.5px solid ${decided ? COLORS.milestone : 'transparent'}`,
     }}>
-      <p style={{ ...TEXT.sectionHeading, color: COLORS.teal, marginBottom: 10 }}>
-        {icon} {label}
+      <p style={{
+        ...TEXT.sectionHeading, marginBottom: 10,
+        color: decided ? COLORS.milestone : COLORS.teal,
+        display: 'flex', alignItems: 'center', gap: 6,
+      }}>
+        <span style={{ flex: 1 }}>{icon} {label}</span>
+        {decided && <span style={{ fontSize: 13 }}>✓</span>}
       </p>
       {children}
     </div>
@@ -29,13 +40,13 @@ function NotDecided({ text = 'Not decided yet' }) {
 function DecidedList({ items }) {
   if (items.length === 0) return <NotDecided />
   if (items.length === 1) {
-    return <p style={{ fontSize: 15, fontWeight: 600, color: COLORS.charcoal }}>{items[0].title}</p>
+    return <p style={{ fontSize: 15, fontWeight: 600, color: COLORS.charcoal }}>{displayTitle(items[0])}</p>
   }
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
       {items.map(item => (
         <p key={item.id} style={{ fontSize: 15, fontWeight: 600, color: COLORS.charcoal }}>
-          • {item.title}
+          • {displayTitle(item)}
         </p>
       ))}
     </div>
@@ -76,7 +87,7 @@ export function TripSummaryScreen({ navigate, currentTrip, groupItems, allCatego
       </div>
 
       <div className="screen-scroll" style={{ padding: `16px ${SPACING.screenX}px ${SPACING.scrollBottomPad}px` }}>
-        <SummarySection icon="📍" label="Destination & Dates">
+        <SummarySection icon="📍" label="Destination & Dates" decided={!!(currentTrip.destination && currentTrip.dates)}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div>
               <p style={{ fontSize: 11, fontWeight: 700, color: COLORS.warmGrey, letterSpacing: 0.4, marginBottom: 2 }}>Destination</p>
@@ -93,13 +104,16 @@ export function TripSummaryScreen({ navigate, currentTrip, groupItems, allCatego
           </div>
         </SummarySection>
 
-        {summaryCategories.map(cat => (
-          <SummarySection key={cat.id} icon={cat.icon} label={cat.label}>
-            <DecidedList items={decidedIn(groupItems, cat.id)} />
-          </SummarySection>
-        ))}
+        {summaryCategories.map(cat => {
+          const items = decidedIn(groupItems, cat.id)
+          return (
+            <SummarySection key={cat.id} icon={cat.icon} label={cat.label} decided={items.length > 0}>
+              <DecidedList items={items} />
+            </SummarySection>
+          )
+        })}
 
-        <SummarySection icon="💰" label="Budget">
+        <SummarySection icon="💰" label="Budget" decided={!!currentTrip.budget}>
           {currentTrip.budget
             ? <p style={{ fontSize: 15, fontWeight: 600, color: COLORS.charcoal }}>{currentTrip.budget}</p>
             : <NotDecided text="Not set yet" />}

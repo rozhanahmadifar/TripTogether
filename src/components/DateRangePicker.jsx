@@ -59,7 +59,7 @@ export function DateRangePicker({ startDate, endDate, onChange, onDone }) {
         width: 32, height: 32, borderRadius: '50%', border: 'none',
         background: disabled ? 'transparent' : COLORS.sand,
         cursor: disabled ? 'default' : 'pointer',
-        fontSize: 16, color: disabled ? '#D6CCBF' : COLORS.charcoal,
+        fontSize: 16, color: disabled ? COLORS.subtleIcon : COLORS.charcoal,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}
     >{label}</button>

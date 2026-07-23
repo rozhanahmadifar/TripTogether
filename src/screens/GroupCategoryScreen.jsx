@@ -7,7 +7,7 @@ import { EmptyState } from '../components/EmptyState'
 import { BackButton } from '../components/BackButton'
 import { COLORS, SPACING } from '../styles'
 
-export function GroupCategoryScreen({ navigate, params = {}, currentTrip, groupItems, addToGroup, toggleHeart, toggleStar, deleteGroupItem, updateGroupItem, userName, allCategories }) {
+export function GroupCategoryScreen({ navigate, params = {}, currentTrip, groupItems, addToGroup, toggleHeart, toggleStar, deleteGroupItem, updateGroupItem, userName, allCategories, decidedTipDismissed, dismissDecidedTip }) {
   const { categoryId } = params
   const cat = allCategories.find(c => c.id === categoryId) || allCategories[0] || { id: '', icon: '✨', label: 'Ideas', color: '#1E5F5F' }
   const items = groupItems.filter(i => i.categoryIds.includes(cat.id))
@@ -19,7 +19,7 @@ export function GroupCategoryScreen({ navigate, params = {}, currentTrip, groupI
     const found = tripMembers.find(m => m.name === name)
     if (found) return found
     if (name === userName) return { name, color: MEMBER_COLORS[0], initial: name.charAt(0).toUpperCase() }
-    return { name, color: '#B5AA9C', initial: name.charAt(0).toUpperCase() }
+    return { name, color: COLORS.subtleIcon, initial: name.charAt(0).toUpperCase() }
   }
 
   const nonContributors = tripMembers.filter(m => !contributorNames.includes(m.name))
@@ -40,6 +40,33 @@ export function GroupCategoryScreen({ navigate, params = {}, currentTrip, groupI
       </div>
 
       <div className="screen-scroll" style={{ padding: `16px ${SPACING.screenX}px ${SPACING.scrollBottomPad}px` }}>
+        {/* One-time explainer for the decided toggle — separate from the
+            toggle itself so it never gets mistaken for part of any one
+            item's controls. Dismissed by its own "x", or automatically the
+            moment the user marks their first item as decided anywhere. */}
+        {items.length > 0 && !decidedTipDismissed && (
+          <div style={{
+            display: 'flex', alignItems: 'flex-start', gap: 10,
+            background: COLORS.tealTint, borderRadius: 12, padding: '12px 14px',
+            marginBottom: SPACING.cardGap,
+          }}>
+            <span style={{ fontSize: 16, lineHeight: 1.4 }}>💡</span>
+            <p style={{ flex: 1, fontSize: 13, color: COLORS.teal, fontWeight: 600, lineHeight: 1.4 }}>
+              Tip: tap the checkmark to mark this as your group's pick.
+            </p>
+            <button
+              onClick={dismissDecidedTip}
+              aria-label="Dismiss tip"
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                fontSize: 16, color: COLORS.teal, padding: 0, lineHeight: 1, flexShrink: 0,
+              }}
+            >
+              ×
+            </button>
+          </div>
+        )}
+
         {/* Contributors card — celebratory, not an audit */}
         <div style={{
           background: 'white', borderRadius: 14, padding: SPACING.cardPad, marginBottom: SPACING.sectionGap,
@@ -59,9 +86,9 @@ export function GroupCategoryScreen({ navigate, params = {}, currentTrip, groupI
                     <div style={{
                       width: 40, height: 40, borderRadius: '50%',
                       background: contributed ? m.color : 'transparent',
-                      border: contributed ? 'none' : '2px dashed #D6CCBF',
+                      border: contributed ? 'none' : `2px dashed ${COLORS.subtleIcon}`,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 14, fontWeight: 700, color: contributed ? 'white' : '#B5AA9C',
+                      fontSize: 14, fontWeight: 700, color: contributed ? 'white' : COLORS.subtleIcon,
                       boxShadow: contributed ? `0 0 0 3px ${m.color}40` : 'none',
                     }}>
                       {m.initial}

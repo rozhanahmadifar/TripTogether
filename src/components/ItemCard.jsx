@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { timeAgo, PLATFORMS, isImagePhoto } from '../data'
+import { timeAgo, PLATFORMS, isImagePhoto, displayTitle } from '../data'
 import { COLORS, SHADOW_CARD, TEXT } from '../styles'
 import { PencilIcon, TrashIcon } from './ActionMenu'
 
@@ -128,7 +128,7 @@ function EditForm({ item, categories, allCategories, onCancel, onSave }) {
           style={{
             flex: 1, minHeight: 44, borderRadius: 10, border: 'none',
             background: canSave ? COLORS.action : COLORS.border,
-            color: canSave ? 'white' : '#A79E93',
+            color: canSave ? 'white' : COLORS.warmGrey,
             fontSize: 14, fontWeight: 600, cursor: canSave ? 'pointer' : 'default', fontFamily: 'inherit',
           }}
         >
@@ -184,8 +184,8 @@ export function ItemCard({ item, categories, contributor, source, note, hearts =
       <div
         style={{
           position: 'relative',
-          background: starred ? COLORS.tealTint : COLORS.cardBg, borderRadius: 14,
-          border: `2px solid ${starred ? COLORS.teal : 'transparent'}`,
+          background: starred ? COLORS.milestoneTint : COLORS.cardBg, borderRadius: 14,
+          border: `2px solid ${starred ? COLORS.milestone : 'transparent'}`,
           boxShadow: SHADOW_CARD, overflow: 'hidden',
           opacity: fading ? 0 : 1, transition: 'opacity 200ms ease, background 150ms ease, border-color 150ms ease',
         }}
@@ -238,7 +238,7 @@ export function ItemCard({ item, categories, contributor, source, note, hearts =
                   style={{
                     position: 'absolute', bottom: 10, right: 10,
                     display: 'flex', alignItems: 'center', gap: 4,
-                    background: COLORS.teal, color: 'white',
+                    background: COLORS.milestone, color: 'white',
                     fontSize: 11, fontWeight: 800, letterSpacing: 0.2,
                     borderRadius: 20, padding: '5px 10px',
                     boxShadow: '0 2px 6px rgba(0,0,0,0.18)',
@@ -271,11 +271,9 @@ export function ItemCard({ item, categories, contributor, source, note, hearts =
                 <span style={{ ...TEXT.timestamp, flexShrink: 0 }}>{timeAgo(item.savedAt)}</span>
               </div>
 
-              {item.title && (
-                <p style={TEXT.cardTitle}>
-                  {item.title}
-                </p>
-              )}
+              <p style={TEXT.cardTitle}>
+                {displayTitle(item)}
+              </p>
 
               {note && (
                 <p style={{
@@ -314,7 +312,7 @@ export function ItemCard({ item, categories, contributor, source, note, hearts =
               )}
 
               {starredBy.length > 0 && (
-                <p style={{ fontSize: 12, color: COLORS.teal, fontWeight: 600, marginTop: 8 }}>
+                <p style={{ fontSize: 12, color: COLORS.milestone, fontWeight: 600, marginTop: 8 }}>
                   ✓ Marked as decided by {starredBy.join(', ')}
                 </p>
               )}
@@ -408,8 +406,8 @@ export function ItemCard({ item, categories, contributor, source, note, hearts =
             >
               <span style={{
                 width: 20, height: 20, borderRadius: 6, flexShrink: 0, lineHeight: 1,
-                border: `2px solid ${starred ? COLORS.teal : '#C9BFB2'}`,
-                background: starred ? COLORS.teal : 'transparent',
+                border: `2px solid ${starred ? COLORS.milestone : COLORS.subtleIcon}`,
+                background: starred ? COLORS.milestone : 'transparent',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
                 {starred && (
@@ -418,7 +416,7 @@ export function ItemCard({ item, categories, contributor, source, note, hearts =
                   </svg>
                 )}
               </span>
-              <span style={{ fontSize: 13, fontWeight: 600, color: starred ? COLORS.teal : COLORS.warmGrey }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: starred ? COLORS.milestone : COLORS.warmGrey }}>
                 Decided{starredBy.length > 0 ? ` (${starredBy.length})` : ''}
               </span>
             </button>
