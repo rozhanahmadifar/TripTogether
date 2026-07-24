@@ -51,7 +51,16 @@ export function DateRangePicker({ startDate, endDate, onChange, onDone }) {
     else setViewMonth(m => m + 1)
   }
 
-  const navBtn = (label, handler, disabled = false) => (
+  // An SVG chevron centers exactly inside the circle by its own width/height;
+  // the Unicode ‹/› glyphs it replaced carry font-specific side bearings that
+  // throw off centering, sitting visibly left- or right-of-center instead.
+  const ChevronIcon = ({ direction, color }) => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+      <path d={direction === 'left' ? 'M15 18l-6-6 6-6' : 'M9 6l6 6-6 6'} />
+    </svg>
+  )
+
+  const navBtn = (direction, handler, disabled = false) => (
     <button
       onClick={handler}
       disabled={disabled}
@@ -59,10 +68,11 @@ export function DateRangePicker({ startDate, endDate, onChange, onDone }) {
         width: 32, height: 32, borderRadius: '50%', border: 'none',
         background: disabled ? 'transparent' : COLORS.sand,
         cursor: disabled ? 'default' : 'pointer',
-        fontSize: 16, color: disabled ? COLORS.subtleIcon : COLORS.charcoal,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}
-    >{label}</button>
+    >
+      <ChevronIcon direction={direction} color={disabled ? COLORS.subtleIcon : COLORS.charcoal} />
+    </button>
   )
 
   return (
@@ -71,9 +81,9 @@ export function DateRangePicker({ startDate, endDate, onChange, onDone }) {
       borderRadius: 16, padding: '16px', marginTop: 8,
     }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-        {navBtn('‹', prevMonth, isCurrentMonth)}
+        {navBtn('left', prevMonth, isCurrentMonth)}
         <span style={{ fontSize: 14, fontWeight: 700, color: COLORS.charcoal }}>{monthName}</span>
-        {navBtn('›', nextMonth)}
+        {navBtn('right', nextMonth)}
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', textAlign: 'center', marginBottom: 10 }}>

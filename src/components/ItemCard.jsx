@@ -462,22 +462,6 @@ export function ItemCard({ item, categories, contributor, source, note, hearts =
             padding: '6px 14px', minHeight: 48,
             display: 'flex', alignItems: 'center', gap: 4,
           }}>
-            <button
-              onClick={handleHeart}
-              disabled={!onToggleHeart}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 6,
-                background: 'none', border: 'none',
-                cursor: onToggleHeart ? 'pointer' : 'default',
-                padding: '8px 4px', borderRadius: 8,
-              }}
-            >
-              <span className={pulsing ? 'heart-pulse' : ''} style={{ fontSize: 20, lineHeight: 1 }}>{hearted ? '❤️' : '🤍'}</span>
-              <span style={{ fontSize: 13, fontWeight: 600, color: hearted ? COLORS.terracotta : COLORS.warmGrey }}>{hearts}</span>
-            </button>
-
-            <div style={{ width: 1, height: 22, background: COLORS.borderLight, margin: '0 4px', flexShrink: 0 }} />
-
             {/* Decided — a real checkbox toggle (empty outline vs. filled
                 tick), not just a swapped icon or label, so the state reads
                 at a glance the way a checkbox always does. */}
@@ -507,6 +491,22 @@ export function ItemCard({ item, categories, contributor, source, note, hearts =
               <span style={{ fontSize: 13, fontWeight: 600, color: starred ? COLORS.milestone : COLORS.warmGrey }}>
                 Decided{starredBy.length > 0 ? ` (${starredBy.length})` : ''}
               </span>
+            </button>
+
+            <div style={{ width: 1, height: 22, background: COLORS.borderLight, margin: '0 4px', flexShrink: 0 }} />
+
+            <button
+              onClick={handleHeart}
+              disabled={!onToggleHeart}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                background: 'none', border: 'none',
+                cursor: onToggleHeart ? 'pointer' : 'default',
+                padding: '8px 4px', borderRadius: 8,
+              }}
+            >
+              <span className={pulsing ? 'heart-pulse' : ''} style={{ fontSize: 20, lineHeight: 1 }}>{hearted ? '❤️' : '🤍'}</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: hearted ? COLORS.terracotta : COLORS.warmGrey }}>{hearts}</span>
             </button>
           </div>
         )}
