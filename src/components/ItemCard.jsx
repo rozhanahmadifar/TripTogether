@@ -158,6 +158,11 @@ export function ItemCard({ item, categories, contributor, source, note, hearts =
   }
 
   const closeMenu = () => setMenuAnchor(null)
+  // Whole-card treatment reflects the group's decision (anyone marked it),
+  // not just whether the current viewer personally did — otherwise the
+  // badge and "Decided (n)" label would say one thing while the card
+  // itself looked untouched for everyone except whoever clicked it.
+  const isDecided = starredBy.length > 0
 
   const handleConfirmDelete = () => {
     setConfirming(false)
@@ -184,8 +189,8 @@ export function ItemCard({ item, categories, contributor, source, note, hearts =
       <div
         style={{
           position: 'relative',
-          background: starred ? COLORS.milestoneTint : COLORS.cardBg, borderRadius: 14,
-          border: `2px solid ${starred ? COLORS.milestone : 'transparent'}`,
+          background: isDecided ? COLORS.milestoneTint : COLORS.cardBg, borderRadius: 14,
+          border: `2px solid ${isDecided ? COLORS.milestone : 'transparent'}`,
           boxShadow: SHADOW_CARD, overflow: 'hidden',
           opacity: fading ? 0 : 1, transition: 'opacity 200ms ease, background 150ms ease, border-color 150ms ease',
         }}
@@ -209,10 +214,9 @@ export function ItemCard({ item, categories, contributor, source, note, hearts =
           >
             {/* Top zone — a real photo earns full-bleed visual space; a
                 video gets a compact labeled strip; an item with neither
-                skips this zone entirely rather than spending the same
-                height on a flat color block with one big emoji in it —
-                its category shows instead as a small badge inline below,
-                where the rest of the card's actual content already is. */}
+                still gets its own header (a right-sized emoji-on-colour
+                block, not the old oversized one) rather than no header
+                at all — every card gets a real visual anchor up top. */}
             {isImagePhoto(item.photo) ? (
               <div style={{ height: previewHeight, position: 'relative', overflow: 'hidden' }}>
                 <img src={item.photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -255,24 +259,49 @@ export function ItemCard({ item, categories, contributor, source, note, hearts =
                   </span>
                 )}
               </div>
-            ) : null}
+            ) : (
+              <div style={{
+                height: 72, position: 'relative', overflow: 'hidden',
+                background: `${primaryCategory.color}30`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <span style={{ fontSize: 30, lineHeight: 1 }}>{primaryCategory.icon}</span>
+                {source && (
+                  <span style={{
+                    position: 'absolute', top: 10, left: 10,
+                    background: 'white', color: COLORS.charcoal,
+                    fontSize: 10, fontWeight: 700, letterSpacing: 0.2,
+                    borderRadius: 20, padding: '4px 10px',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.14)',
+                  }}>
+                    {source}
+                  </span>
+                )}
+                {starredBy.length > 0 && (
+                  <span
+                    title={`Marked as decided by ${starredBy.join(', ')}`}
+                    style={{
+                      position: 'absolute', bottom: 10, right: 10,
+                      display: 'flex', alignItems: 'center', gap: 4,
+                      background: COLORS.milestone, color: 'white',
+                      fontSize: 11, fontWeight: 800, letterSpacing: 0.2,
+                      borderRadius: 20, padding: '5px 10px',
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.18)',
+                    }}
+                  >
+                    ✓ Decided
+                  </span>
+                )}
+              </div>
+            )}
 
-            {/* Middle zone — when there's no photo header, the top row sits
-                directly under the card's top edge, in the same space the
-                absolutely-positioned "⋯" button occupies; the extra right
-                padding here keeps the timestamp from running underneath it. */}
-            <div style={{ padding: 16, paddingBottom: 12, paddingRight: isImagePhoto(item.photo) ? 16 : 44 }}>
+            {/* Middle zone — every branch above now ends in a header of
+                its own, so the "⋯" button (absolutely positioned over the
+                card's top-right corner) always overlays that header, never
+                this row — no extra clearance needed here. */}
+            <div style={{ padding: 16, paddingBottom: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, gap: 8 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-                  {!item.photo && (
-                    <div style={{
-                      width: 26, height: 26, borderRadius: '50%', background: `${primaryCategory.color}30`,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 13, flexShrink: 0,
-                    }}>
-                      {primaryCategory.icon}
-                    </div>
-                  )}
                   {contributor && (
                     <div style={{
                       width: 24, height: 24, borderRadius: '50%', background: contributor.color,
@@ -294,24 +323,6 @@ export function ItemCard({ item, categories, contributor, source, note, hearts =
               <p style={TEXT.cardTitle}>
                 {displayTitle(item)}
               </p>
-
-              {/* No-photo items lost their corner "Decided" badge along
-                  with the decorative header block — this is the one place
-                  that status still needs to show without a photo to sit
-                  on. Photo items keep the overlay version above instead. */}
-              {!isImagePhoto(item.photo) && starredBy.length > 0 && (
-                <span
-                  title={`Marked as decided by ${starredBy.join(', ')}`}
-                  style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 6,
-                    background: COLORS.milestone, color: 'white',
-                    fontSize: 11, fontWeight: 800, letterSpacing: 0.2,
-                    borderRadius: 20, padding: '4px 9px',
-                  }}
-                >
-                  ✓ Decided
-                </span>
-              )}
 
               {/* Sharing copies, it never moves — the item stays in My Ideas
                   too, so this is the only way to tell, from that private

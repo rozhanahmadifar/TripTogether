@@ -346,7 +346,7 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
                 placeholder="Name your trip"
                 style={{
                   width: '100%', height: 40, borderRadius: 10, border: 'none',
-                  background: 'rgba(255,255,255,0.2)', color: 'white', padding: '0 12px',
+                  background: 'white', color: COLORS.charcoal, padding: '0 12px',
                   fontSize: 14, fontWeight: 600, fontFamily: 'inherit', boxSizing: 'border-box', marginBottom: 14,
                 }}
               />
@@ -360,7 +360,7 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
                 placeholder="Where are you going?"
                 style={{
                   width: '100%', height: 40, borderRadius: 10, border: 'none',
-                  background: 'rgba(255,255,255,0.2)', color: 'white', padding: '0 12px',
+                  background: 'white', color: COLORS.charcoal, padding: '0 12px',
                   fontSize: 14, fontWeight: 600, fontFamily: 'inherit', boxSizing: 'border-box', marginBottom: 14,
                 }}
               />
@@ -373,7 +373,7 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
                   onClick={() => setCeDatesOpen(true)}
                   style={{
                     width: '100%', height: 40, borderRadius: 10, border: 'none',
-                    background: 'rgba(255,255,255,0.2)', color: 'white', textAlign: 'left',
+                    background: 'white', color: COLORS.charcoal, textAlign: 'left',
                     padding: '0 12px', fontSize: 14, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer', marginBottom: 14,
                   }}
                 >
@@ -401,7 +401,7 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
                 placeholder="Total budget…"
                 style={{
                   width: '100%', height: 40, borderRadius: 10, border: 'none',
-                  background: 'rgba(255,255,255,0.2)', color: 'white', padding: '0 12px',
+                  background: 'white', color: COLORS.charcoal, padding: '0 12px',
                   fontSize: 14, fontWeight: 600, fontFamily: 'inherit', boxSizing: 'border-box', marginBottom: 16,
                 }}
               />
@@ -429,7 +429,7 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
                     onChange={e => setNewMemberName(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && addMemberToTrip()}
                     placeholder="Name"
-                    style={{ height: 36, borderRadius: 8, border: 'none', background: 'rgba(255,255,255,0.2)', color: 'white', padding: '0 10px', fontSize: 13, fontFamily: 'inherit' }}
+                    style={{ height: 36, borderRadius: 8, border: 'none', background: 'white', color: COLORS.charcoal, padding: '0 10px', fontSize: 13, fontFamily: 'inherit' }}
                   />
                   <input
                     type="email"
@@ -437,7 +437,7 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
                     onChange={e => setNewMemberEmail(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && addMemberToTrip()}
                     placeholder="Email (required)"
-                    style={{ height: 36, borderRadius: 8, border: 'none', background: 'rgba(255,255,255,0.2)', color: 'white', padding: '0 10px', fontSize: 13, fontFamily: 'inherit' }}
+                    style={{ height: 36, borderRadius: 8, border: 'none', background: 'white', color: COLORS.charcoal, padding: '0 10px', fontSize: 13, fontFamily: 'inherit' }}
                   />
                   <button
                     onClick={addMemberToTrip}
