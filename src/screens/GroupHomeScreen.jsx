@@ -28,7 +28,7 @@ function PencilIcon({ size = 13, color = COLORS.warmGrey }) {
   )
 }
 
-function SavesCategoryRow({ cat, count, isLast, onClick }) {
+function IdeasCategoryRow({ cat, count, isLast, onClick }) {
   return (
     <button
       onClick={onClick}
@@ -90,15 +90,14 @@ function GroupCategoryRow({ cat, count, contributors, getMember, isLast, onClick
 }
 
 export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, groupItems, updateTrip, setTripDestination, customThreads, allCategories }) {
-  // 'name' and 'members' stay on the single-field pattern (each is its own
-  // kind of edit); destination/dates/budget moved to one combined panel
-  // (cardEditing) below, so the card isn't scattered with a pencil per field.
-  const [editField, setEditField]       = useState(null)
-  const [editValue, setEditValue]       = useState('')
+  // Everything about the card — name, destination, dates, budget, and
+  // members — now opens from the single edit icon at the top of the card
+  // instead of a pencil scattered next to each field.
   const [newMemberName, setNewMemberName]   = useState('')
   const [newMemberEmail, setNewMemberEmail] = useState('')
 
   const [cardEditing, setCardEditing]   = useState(!!params.openDateEdit)
+  const [ceName, setCeName]             = useState(currentTrip?.name || '')
   const [ceDestination, setCeDestination] = useState(currentTrip?.destination || '')
   const [ceBudget, setCeBudget]         = useState(currentTrip?.budget || '')
   const [ceDatesOpen, setCeDatesOpen]   = useState(!!params.openDateEdit)
@@ -142,27 +141,18 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
     groupItems.some(i => i.categoryIds.includes(cat.id) && (i.starredBy || []).length > 0)
   ).length
   const allCategoriesDecided = visibleCategories.length > 0 && decidedCategoriesCount === visibleCategories.length
-  // "My Saves" here is this trip's own private stash, not the user's whole
-  // personal collection — never another trip's (or pre-trip) private items.
-  const tripMyIdeas = myIdeas.filter(i => i.tripId === currentTrip.id)
-  const savesCategoriesWithItems = topCategories(tripMyIdeas)
+  // My Ideas is the same flat, unfiltered list shown everywhere — never a
+  // trip-scoped subset, even here inside a trip.
+  const ideasCategoriesWithItems = topCategories(myIdeas)
 
-  const startEdit = (field, value = '') => { setEditField(field); setEditValue(value) }
-  const cancelEdit = () => { setEditField(null); setEditValue('') }
-
-  const confirmEdit = () => {
-    if (editField === 'name' && editValue.trim()) updateTrip(currentTrip.id, { name: editValue.trim() })
-    setEditField(null)
-    setEditValue('')
-  }
-
-  // Destination, dates, and budget open together in one panel — separately
-  // they added up to three pencils scattered around the card for what's
-  // really one "trip details" edit. Re-prefilled from the trip each time
-  // it opens except dates, which (like the old single-field flow) always
-  // starts blank — the picker only stores a start date and a formatted
-  // label, not a reusable end date to restore.
+  // Name, destination, dates, and budget open together in one panel —
+  // separately they added up to a pencil per field scattered around the
+  // card for what's really one "edit trip details" action. Re-prefilled
+  // from the trip each time it opens except dates, which always starts
+  // blank — the picker only stores a start date and a formatted label,
+  // not a reusable end date to restore.
   const openCardEdit = () => {
+    setCeName(currentTrip.name || '')
     setCeDestination(currentTrip.destination || '')
     setCeBudget(currentTrip.budget || '')
     setCeDateRange({ start: null, end: null })
@@ -175,6 +165,7 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
     // value — this keeps both in sync.
     setTripDestination(currentTrip.id, ceDestination)
     const updates = {}
+    if (ceName.trim() && ceName.trim() !== currentTrip.name) updates.name = ceName.trim()
     if (ceBudget.trim() !== (currentTrip.budget || '')) updates.budget = ceBudget.trim()
     if (ceDateRange.start) {
       updates.dates = ceDateRange.end
@@ -209,39 +200,6 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
 
   const getMember = (name) => tripMembers.find(m => m.name === name)
 
-  const pencilBtn = (field, value) => (
-    <button
-      onClick={() => editField === field ? cancelEdit() : startEdit(field, value)}
-      style={{
-        background: 'none', border: 'none', cursor: 'pointer',
-        padding: '4px', flexShrink: 0, lineHeight: 1,
-        width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center',
-        opacity: 0.8,
-      }}
-    >
-      <PencilIcon color="rgba(255,255,255,0.75)" />
-    </button>
-  )
-
-  const inlineInput = (placeholder, onConfirm) => (
-    <div style={{ display: 'flex', gap: 8 }}>
-      <input
-        autoFocus
-        value={editValue}
-        onChange={e => setEditValue(e.target.value)}
-        onKeyDown={e => { if (e.key === 'Enter') onConfirm(); if (e.key === 'Escape') cancelEdit() }}
-        placeholder={placeholder}
-        style={{
-          flex: 1, height: 40, borderRadius: 10, border: 'none',
-          background: 'rgba(255,255,255,0.2)', color: 'white', padding: '0 12px',
-          fontSize: 14, fontWeight: 600, fontFamily: 'inherit',
-        }}
-      />
-      <button onClick={onConfirm} style={{ background: 'white', color: COLORS.teal, border: 'none', borderRadius: 10, padding: '0 12px', fontWeight: 700, cursor: 'pointer', fontSize: 13, flexShrink: 0 }}>Done</button>
-      <button onClick={cancelEdit} style={{ background: 'rgba(255,255,255,0.18)', border: 'none', borderRadius: 10, padding: '0 10px', color: 'white', cursor: 'pointer', fontSize: 16, flexShrink: 0 }}>✕</button>
-    </div>
-  )
-
   return (
     <div className="screen" style={{ background: COLORS.bgGroupSpace }}>
       {/* Header with back button */}
@@ -259,66 +217,46 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
             feels alive rather than a flat color fill. */}
         <div style={{
           background: `radial-gradient(circle, rgba(255,255,255,0.14) 1px, transparent 1.4px) 0 0/16px 16px, linear-gradient(135deg, ${COLORS.teal} 0%, ${COLORS.tealLight} 100%)`,
-          borderRadius: 18, padding: '20px',
+          borderRadius: 18, padding: '24px 22px',
           marginBottom: SPACING.sectionGap,
           boxShadow: `inset 0 1px 0 rgba(255,255,255,0.15), 0 8px 24px ${COLORS.teal}40`,
         }}>
-          {/* Trip name */}
-          {editField === 'name' ? (
-            <div style={{ marginBottom: 12 }}>{inlineInput('Trip name…', confirmEdit)}</div>
-          ) : (
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, marginBottom: 10 }}>
-              <div style={{ flex: 1 }}>
-                <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.6)', fontWeight: 700, letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 4 }}>Current trip</p>
-                <h2 style={{ fontSize: 22, fontWeight: 800, color: 'white', letterSpacing: -0.5, lineHeight: 1.1 }}>{currentTrip.name}</h2>
-              </div>
-              {pencilBtn('name', currentTrip.name)}
-            </div>
-          )}
-
           {!cardEditing ? (
             <>
-              {/* Destination — once set, this is the emotional anchor of
-                  trip home: a real headline, not one line among several
-                  equally-weighted fields. One pencil now covers destination,
-                  dates, and budget together, so an empty trip shows a
-                  single combined prompt instead of three separate ones. */}
+              {/* Trip name — the primary heading of the card: largest and
+                  boldest text here, with the edit icon for the whole card
+                  next to it. Destination is a supporting detail below it,
+                  not the other way around. */}
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, marginBottom: 8 }}>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.6)', fontWeight: 700, letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 4 }}>Current trip</p>
+                  <h2 style={{ fontSize: 27, fontWeight: 800, color: 'white', letterSpacing: -0.6, lineHeight: 1.1 }}>{currentTrip.name}</h2>
+                </div>
+                <button
+                  onClick={openCardEdit}
+                  aria-label="Edit trip details"
+                  style={{
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    padding: '4px', flexShrink: 0, lineHeight: 1, marginTop: 2,
+                    width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    opacity: 0.8,
+                  }}
+                >
+                  <PencilIcon color="rgba(255,255,255,0.75)" />
+                </button>
+              </div>
+
+              {/* Destination — a supporting detail under the trip name, not
+                  a second headline: noticeably smaller than the name above
+                  it. */}
               {currentTrip.destination ? (
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 6 }}>
-                  <p style={{ fontSize: 26, fontWeight: 800, flex: 1, color: 'white', letterSpacing: -0.6, lineHeight: 1.15 }}>
-                    📍 {currentTrip.destination}
-                  </p>
-                  <button
-                    onClick={openCardEdit}
-                    aria-label="Edit trip details"
-                    style={{
-                      background: 'none', border: 'none', cursor: 'pointer',
-                      padding: '4px', flexShrink: 0, lineHeight: 1, marginTop: 2,
-                      width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      opacity: 0.8,
-                    }}
-                  >
-                    <PencilIcon color="rgba(255,255,255,0.75)" />
-                  </button>
-                </div>
+                <p style={{ fontSize: 17, fontWeight: 700, color: 'rgba(255,255,255,0.92)', letterSpacing: -0.2, lineHeight: 1.3, marginBottom: 8 }}>
+                  📍 {currentTrip.destination}
+                </p>
               ) : hasAnyTripDetails ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                  <p style={{ fontSize: 13, fontStyle: 'italic', flex: 1, color: 'rgba(255,255,255,0.65)', fontWeight: 500 }}>
-                    Destination not set yet
-                  </p>
-                  <button
-                    onClick={openCardEdit}
-                    aria-label="Edit trip details"
-                    style={{
-                      background: 'none', border: 'none', cursor: 'pointer',
-                      padding: '4px', flexShrink: 0, lineHeight: 1,
-                      width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      opacity: 0.8,
-                    }}
-                  >
-                    <PencilIcon color="rgba(255,255,255,0.75)" />
-                  </button>
-                </div>
+                <p style={{ fontSize: 13, fontStyle: 'italic', color: 'rgba(255,255,255,0.65)', fontWeight: 500, marginBottom: 8 }}>
+                  Destination not set yet
+                </p>
               ) : (
                 <button
                   onClick={openCardEdit}
@@ -355,26 +293,63 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
                 )
               })()}
 
-              {/* Dates and budget — plain display lines now; editing either
-                  one happens through the single pencil above. */}
+              {/* Dates and budget — smaller still than the destination line,
+                  a clear step down in the hierarchy, but solid white (not a
+                  muted/transparent tone) once actually set so they stay
+                  readable against the teal background; only the "not set
+                  yet" placeholder state stays dimmed and italic. */}
               {hasAnyTripDetails && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 20 }}>
-                  <p style={{ fontSize: 13, fontWeight: 500, color: currentTrip.dates ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.55)', fontStyle: currentTrip.dates ? 'normal' : 'italic' }}>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: currentTrip.dates ? 'white' : 'rgba(255,255,255,0.55)', fontStyle: currentTrip.dates ? 'normal' : 'italic' }}>
                     📅 {currentTrip.dates || 'Dates not set yet'}
                   </p>
-                  <p style={{ fontSize: 13, fontWeight: 500, color: currentTrip.budget ? 'rgba(255,255,255,0.88)' : 'rgba(255,255,255,0.55)', fontStyle: currentTrip.budget ? 'normal' : 'italic' }}>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: currentTrip.budget ? 'white' : 'rgba(255,255,255,0.55)', fontStyle: currentTrip.budget ? 'normal' : 'italic' }}>
                     💰 {currentTrip.budget ? `Budget: ${currentTrip.budget}` : 'Budget not set yet'}
                   </p>
                 </div>
               )}
+
+              {/* Members — real people in a group photo, at the bottom of
+                  the card; editing them also happens through the single
+                  pencil above rather than a pencil of their own. */}
+              <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                {tripMembers.map(m => (
+                  <div key={m.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
+                    <div style={{
+                      width: 36, height: 36, borderRadius: '50%',
+                      background: m.color,
+                      border: '2px solid white',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 13, fontWeight: 700, color: 'white',
+                    }}>
+                      {m.initial}
+                    </div>
+                    <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.8)', fontWeight: 600 }} title={m.name}>{truncateName(m.name)}</span>
+                  </div>
+                ))}
+              </div>
             </>
           ) : (
-            <div style={{ background: 'rgba(0,0,0,0.18)', borderRadius: 12, padding: 16, marginBottom: 20 }}>
+            <div style={{ background: 'rgba(0,0,0,0.18)', borderRadius: 12, padding: 16 }}>
+              <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.7)', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 6 }}>
+                Trip name
+              </p>
+              <input
+                autoFocus
+                value={ceName}
+                onChange={e => setCeName(e.target.value)}
+                placeholder="Name your trip"
+                style={{
+                  width: '100%', height: 40, borderRadius: 10, border: 'none',
+                  background: 'rgba(255,255,255,0.2)', color: 'white', padding: '0 12px',
+                  fontSize: 14, fontWeight: 600, fontFamily: 'inherit', boxSizing: 'border-box', marginBottom: 14,
+                }}
+              />
+
               <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.7)', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 6 }}>
                 Destination
               </p>
               <input
-                autoFocus
                 value={ceDestination}
                 onChange={e => setCeDestination(e.target.value)}
                 placeholder="Where are you going?"
@@ -426,6 +401,54 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
                 }}
               />
 
+              <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.7)', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 8 }}>
+                Members
+              </p>
+              <div style={{ marginBottom: 14 }}>
+                {tripMembers.map(m => (
+                  <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                    <div style={{ width: 28, height: 28, borderRadius: '50%', background: m.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: 'white', flexShrink: 0 }}>
+                      {m.initial}
+                    </div>
+                    <span style={{ flex: 1, color: 'white', fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }} title={m.name}>{truncateName(m.name)}</span>
+                    {m.id !== 'me' && (
+                      <button onClick={() => removeMemberFromTrip(m.id)} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '50%', width: 26, height: 26, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <XIcon size={11} color="white" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
+                  <input
+                    value={newMemberName}
+                    onChange={e => setNewMemberName(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && addMemberToTrip()}
+                    placeholder="Name"
+                    style={{ height: 36, borderRadius: 8, border: 'none', background: 'rgba(255,255,255,0.2)', color: 'white', padding: '0 10px', fontSize: 13, fontFamily: 'inherit' }}
+                  />
+                  <input
+                    type="email"
+                    value={newMemberEmail}
+                    onChange={e => setNewMemberEmail(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && addMemberToTrip()}
+                    placeholder="Email (required)"
+                    style={{ height: 36, borderRadius: 8, border: 'none', background: 'rgba(255,255,255,0.2)', color: 'white', padding: '0 10px', fontSize: 13, fontFamily: 'inherit' }}
+                  />
+                  <button
+                    onClick={addMemberToTrip}
+                    disabled={!newMemberName.trim() || !isValidEmail(newMemberEmail)}
+                    style={{
+                      height: 36, background: 'white', color: COLORS.teal, border: 'none', borderRadius: 8,
+                      fontWeight: 700, fontSize: 13,
+                      cursor: (newMemberName.trim() && isValidEmail(newMemberEmail)) ? 'pointer' : 'default',
+                      opacity: (newMemberName.trim() && isValidEmail(newMemberEmail)) ? 1 : 0.5,
+                    }}
+                  >
+                    Add member
+                  </button>
+                </div>
+              </div>
+
               <div style={{ display: 'flex', gap: 8 }}>
                 <button
                   onClick={cancelCardEdit}
@@ -446,94 +469,6 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
                   }}
                 >
                   Save changes
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Members — real people in a group photo */}
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
-            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', flex: 1 }}>
-              {tripMembers.map(m => (
-                <div key={m.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
-                  <div style={{
-                    width: 36, height: 36, borderRadius: '50%',
-                    background: m.color,
-                    border: '2px solid white',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 13, fontWeight: 700, color: 'white',
-                  }}>
-                    {m.initial}
-                  </div>
-                  <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.8)', fontWeight: 600 }} title={m.name}>{truncateName(m.name)}</span>
-                </div>
-              ))}
-            </div>
-            <button
-              onClick={() => setEditField(editField === 'members' ? null : 'members')}
-              style={{
-                background: 'none', border: 'none', cursor: 'pointer',
-                padding: '4px', flexShrink: 0, lineHeight: 1,
-                width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                opacity: 0.8,
-              }}
-            >
-              <PencilIcon color="rgba(255,255,255,0.75)" />
-            </button>
-          </div>
-
-          {/* Members edit panel */}
-          {editField === 'members' && (
-            <div style={{ marginTop: 14, background: 'rgba(0,0,0,0.18)', borderRadius: 12, padding: 14 }}>
-              {tripMembers.map(m => (
-                <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-                  <div style={{ width: 28, height: 28, borderRadius: '50%', background: m.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: 'white', flexShrink: 0 }}>
-                    {m.initial}
-                  </div>
-                  <span style={{ flex: 1, color: 'white', fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }} title={m.name}>{truncateName(m.name)}</span>
-                  {m.id !== 'me' && (
-                    <button onClick={() => removeMemberFromTrip(m.id)} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '50%', width: 26, height: 26, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <XIcon size={11} color="white" />
-                    </button>
-                  )}
-                </div>
-              ))}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
-                <input
-                  value={newMemberName}
-                  onChange={e => setNewMemberName(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && addMemberToTrip()}
-                  placeholder="Name"
-                  style={{ height: 36, borderRadius: 8, border: 'none', background: 'rgba(255,255,255,0.2)', color: 'white', padding: '0 10px', fontSize: 13, fontFamily: 'inherit' }}
-                />
-                <input
-                  type="email"
-                  value={newMemberEmail}
-                  onChange={e => setNewMemberEmail(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && addMemberToTrip()}
-                  placeholder="Email (required)"
-                  style={{ height: 36, borderRadius: 8, border: 'none', background: 'rgba(255,255,255,0.2)', color: 'white', padding: '0 10px', fontSize: 13, fontFamily: 'inherit' }}
-                />
-                <button
-                  onClick={addMemberToTrip}
-                  disabled={!newMemberName.trim() || !isValidEmail(newMemberEmail)}
-                  style={{
-                    height: 36, background: 'white', color: COLORS.teal, border: 'none', borderRadius: 8,
-                    fontWeight: 700, fontSize: 13,
-                    cursor: (newMemberName.trim() && isValidEmail(newMemberEmail)) ? 'pointer' : 'default',
-                    opacity: (newMemberName.trim() && isValidEmail(newMemberEmail)) ? 1 : 0.5,
-                  }}
-                >
-                  Add
-                </button>
-                <button
-                  onClick={cancelEdit}
-                  style={{
-                    height: 36, background: 'rgba(255,255,255,0.12)', border: `1.5px solid rgba(255,255,255,0.3)`,
-                    borderRadius: 8, color: 'white', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
-                  }}
-                >
-                  Done
                 </button>
               </div>
             </div>
@@ -658,38 +593,39 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
           </div>
         </div>
 
-        {/* My Saves — still your private space, even inside a group trip.
-            Orange border + lock icon + explicit "Private" label keep it
-            visually distinct so it's never mistaken for shared content. */}
+        {/* My Ideas — the same private space as the home page's My Ideas,
+            not a separate trip-scoped stash. Orange border + lock icon +
+            explicit "Private" label keep it visually distinct so it's
+            never mistaken for shared content. */}
         <div style={{
           background: COLORS.cardBg, borderRadius: 14, boxShadow: SHADOW_CARD,
           padding: 16, borderLeft: `3px solid ${COLORS.terracotta}`,
         }}>
           <button
-            onClick={() => navigate('mySaves')}
+            onClick={() => navigate('myIdeasFull')}
             style={{
               width: '100%', display: 'flex', alignItems: 'center', marginBottom: 4,
               background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left', fontFamily: 'inherit',
             }}
           >
             <span style={{ flex: 1, fontSize: 11, fontWeight: 700, color: COLORS.teal, letterSpacing: 1.5, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}>
-              🔒 My Saves
+              🔒 My Ideas
             </span>
             <span style={{ fontSize: 13, fontWeight: 600, color: COLORS.teal }}>
               See all
             </span>
           </button>
           <p style={{ fontSize: 12, color: COLORS.warmGrey, fontStyle: 'italic', marginBottom: 10 }}>
-            {tripMyIdeas.length === 0 ? 'Nothing saved yet' : 'Private, only you can see these'}
+            {myIdeas.length === 0 ? 'Nothing saved yet' : 'Private, only you can see these'}
           </p>
           <div>
-            {savesCategoriesWithItems.map((cat, i) => (
-              <SavesCategoryRow
+            {ideasCategoriesWithItems.map((cat, i) => (
+              <IdeasCategoryRow
                 key={cat.id}
                 cat={cat}
-                count={tripMyIdeas.filter(i => i.categoryIds.includes(cat.id)).length}
-                isLast={i === savesCategoriesWithItems.length - 1}
-                onClick={() => navigate('myIdeasCategory', { categoryId: cat.id, backTo: 'groupHome', tripScoped: true })}
+                count={myIdeas.filter(i => i.categoryIds.includes(cat.id)).length}
+                isLast={i === ideasCategoriesWithItems.length - 1}
+                onClick={() => navigate('myIdeasCategory', { categoryId: cat.id, backTo: 'groupHome', insideTrip: true })}
               />
             ))}
           </div>

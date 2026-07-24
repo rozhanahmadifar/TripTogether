@@ -11,26 +11,36 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, currentTrip, 
   const [editLink, setEditLink]       = useState('')
   const [editNote, setEditNote]       = useState('')
   const [editCategoryIds, setEditCategoryIds] = useState([])
-  const [showTripPicker, setShowTripPicker]   = useState(false)
 
-  const { itemId, categoryId, backTo = 'myIdeasCategory' } = params
+  const { itemId, categoryId, backTo = 'myIdeasCategory', insideTrip } = params
   const item = myIdeas.find(i => i.id === itemId)
   const cat  = allCategories.find(c => c.id === categoryId) || allCategories[0] || { id: '', icon: '✨', label: 'Ideas', color: COLORS.teal }
   const itemCategories = item ? item.categoryIds.map(id => allCategories.find(c => c.id === id)).filter(Boolean) : []
-  // Which trip (if any) this private idea is tagged to — set automatically
-  // at save time to whichever trip was open then, but changeable here so an
-  // idea saved before a trip existed (or under the wrong one) isn't stuck.
-  const taggedTrip = (trips || []).find(t => t.id === item?.tripId)
+  // "Share with Group" only makes sense — and only ever renders — when this
+  // screen was reached from inside a trip (see MyIdeasCategoryScreen, which
+  // forwards `insideTrip` only when its own entry point was a trip screen).
+  // That's what `currentTrip` is guaranteed to be accurate for: reaching any
+  // trip screen requires openTrip()/startGroupTrip() to have already set it,
+  // so there's no ambiguity about which trip an idea gets copied into.
+  const canShareWithGroup = !!(insideTrip && currentTrip)
+  // An item can only ever be shared to one trip at a time — sharing again
+  // elsewhere simply moves which trip it's tagged as shared to, rather than
+  // tracking a list. Resolved from `trips` (not just `currentTrip`) so the
+  // "Shared with X" badge below still reads correctly even when this screen
+  // is viewed from outside any trip context.
+  const sharedTrip = (trips || []).find(t => t.id === item?.sharedTripId)
+  const alreadySharedWithCurrentTrip = canShareWithGroup && item?.sharedTripId === currentTrip.id
 
-  const handleBack = () => navigate(backTo, { categoryId, backTo: params.parentBackTo, tripScoped: params.tripScoped })
+  const handleBack = () => navigate(backTo, { categoryId, backTo: params.parentBackTo, insideTrip })
 
   const togglePicked = (id) => {
     setPickedCategories(prev => prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id])
   }
 
   const handleConfirmShare = () => {
-    if (pickedCategories.length === 0) return
-    addToGroup({ title: item.title, note: item.note, link: item.link, platform: item.platform, categoryIds: pickedCategories, hasPhoto: item.hasPhoto, photo: item.photo, tripId: currentTrip?.id })
+    if (pickedCategories.length === 0 || !canShareWithGroup || alreadySharedWithCurrentTrip) return
+    addToGroup({ title: item.title, note: item.note, link: item.link, platform: item.platform, categoryIds: pickedCategories, hasPhoto: item.hasPhoto, photo: item.photo, tripId: currentTrip.id })
+    updateMyIdea(item.id, { sharedTripId: currentTrip.id })
     navigate('shareSuccess', { categoryIds: pickedCategories })
   }
 
@@ -285,59 +295,36 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, currentTrip, 
                 Only you can see this. You can share it with your group whenever you're ready.
               </p>
 
-              {/* Which trip this idea belongs to — set automatically when
-                  saved, but changeable here, since an idea saved before a
-                  trip existed (or tagged to the wrong one) had no other way
-                  to move. */}
-              {trips && trips.length > 0 && (
+              {/* Sharing copies, it never moves — the item stays here in My
+                  Ideas and also appears in that trip's Group Space, so this
+                  badge is the only way to tell, from the private copy, that
+                  it's already out there. */}
+              {sharedTrip && (
                 <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${COLORS.border}` }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <p style={{ flex: 1, fontSize: 13, fontWeight: 600, color: COLORS.charcoal }}>
-                      🗺️ {taggedTrip ? `For ${taggedTrip.name}` : 'Not tagged to a trip yet'}
-                    </p>
-                    <button
-                      onClick={() => setShowTripPicker(o => !o)}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: COLORS.teal, padding: 0 }}
-                    >
-                      {showTripPicker ? 'Close' : 'Change'}
-                    </button>
-                  </div>
-                  {showTripPicker && (
-                    <div style={{ marginTop: 10, borderRadius: 12, overflow: 'hidden', border: `1px solid ${COLORS.border}` }}>
-                      {trips.map((t) => (
-                        <button
-                          key={t.id}
-                          onClick={() => { updateMyIdea(item.id, { tripId: t.id }); setShowTripPicker(false) }}
-                          style={{
-                            width: '100%', border: 'none', cursor: 'pointer', textAlign: 'left',
-                            padding: '11px 14px', fontSize: 13, fontWeight: 600, fontFamily: 'inherit',
-                            background: item.tripId === t.id ? `${COLORS.terracotta}12` : 'white',
-                            color: item.tripId === t.id ? COLORS.terracotta : COLORS.charcoal,
-                            borderBottom: `1px solid ${COLORS.borderLight}`,
-                          }}
-                        >
-                          {item.tripId === t.id ? '✓ ' : ''}{t.name}
-                        </button>
-                      ))}
-                      <button
-                        onClick={() => { updateMyIdea(item.id, { tripId: null }); setShowTripPicker(false) }}
-                        style={{
-                          width: '100%', border: 'none', cursor: 'pointer', textAlign: 'left',
-                          padding: '11px 14px', fontSize: 13, fontWeight: 600, fontFamily: 'inherit',
-                          background: !item.tripId ? `${COLORS.terracotta}12` : 'white',
-                          color: !item.tripId ? COLORS.terracotta : COLORS.warmGrey,
-                        }}
-                      >
-                        {!item.tripId ? '✓ ' : ''}Not tagged to a trip
-                      </button>
-                    </div>
-                  )}
+                  <span style={{ fontSize: 13, fontWeight: 700, color: COLORS.teal }}>
+                    🔗 Shared with {sharedTrip.name}
+                  </span>
                 </div>
               )}
             </div>
 
-            {/* Add to Group Space */}
-            {!showPicker ? (
+            {/* Share with Group — only ever shown when viewed from inside a
+                trip, and always copies into that specific trip's Group
+                Space (see canShareWithGroup above). Once already shared to
+                *this* trip, the active button is replaced with a plain
+                status line so the same idea can't be copied into that
+                trip's Group Space twice. */}
+            {canShareWithGroup && (alreadySharedWithCurrentTrip ? (
+              <div style={{
+                width: '100%', minHeight: 52, borderRadius: 14,
+                background: COLORS.tealTint, color: COLORS.teal,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 15, fontWeight: 700, letterSpacing: -0.2,
+                marginBottom: 12, padding: '10px 16px', textAlign: 'center',
+              }}>
+                ✓ Already shared with {currentTrip.name}
+              </div>
+            ) : !showPicker ? (
               <button
                 onClick={() => setShowPicker(true)}
                 style={{
@@ -347,7 +334,7 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, currentTrip, 
                   letterSpacing: -0.2, marginBottom: 12,
                 }}
               >
-                Add to Group Space
+                Share with Group
               </button>
             ) : (
               <div style={{ marginBottom: 12 }}>
@@ -418,7 +405,7 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, currentTrip, 
                   Confirm
                 </button>
               </div>
-            )}
+            ))}
 
             <button
               onClick={handleBack}
@@ -427,10 +414,10 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, currentTrip, 
                 cursor: 'pointer', fontSize: 14, color: COLORS.warmGrey, fontWeight: 500,
               }}
             >
-              Keep private for now
+              {canShareWithGroup ? 'Keep private for now' : 'Back'}
             </button>
 
-            {currentTrip && currentTrip.members && currentTrip.members.length > 0 && (
+            {canShareWithGroup && currentTrip.members && currentTrip.members.length > 0 && (
               <div style={{ marginTop: 28, borderTop: `1px solid ${COLORS.border}`, paddingTop: 20 }}>
                 <p style={{ fontSize: 12, color: COLORS.warmGrey, marginBottom: 14, fontWeight: 500 }}>
                   Your group · {currentTrip.name}

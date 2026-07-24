@@ -31,7 +31,7 @@ function hashString(s) {
 // (driving the masonry effect via CSS columns on the parent), no-photo tiles
 // get a cycled warm tone at a fixed aspect ratio instead. The title overlays
 // the bottom of every tile behind a soft gradient rather than sitting below it.
-export function GridTile({ item, category, onOpen }) {
+export function GridTile({ item, category, onOpen, decidable = false }) {
   const isImage = isImagePhoto(item.photo)
   const hash = hashString(item.id || item.title || '')
   const tone = WARM_TONES[hash % WARM_TONES.length]
@@ -70,7 +70,7 @@ export function GridTile({ item, category, onOpen }) {
         </div>
       )}
 
-      {decided && (
+      {decided ? (
         <span
           title={`Marked as decided by ${item.starredBy.join(', ')}`}
           style={{
@@ -84,6 +84,22 @@ export function GridTile({ item, category, onOpen }) {
         >
           ✓ Decided
         </span>
+      ) : decidable && (
+        // Tapping this whole tile marks the item as decided (there's no
+        // separate detail view for group items to hold a real checkbox) —
+        // without some visible sign of that, tapping a tile just to look at
+        // it silently decides it, with nothing to explain why. This makes
+        // the same tap-anywhere behavior visible instead of invisible.
+        <span
+          title="Tap to mark as decided"
+          style={{
+            position: 'absolute', top: 8, left: 8,
+            width: 22, height: 22, borderRadius: '50%',
+            border: '2px solid rgba(255,255,255,0.9)',
+            background: 'rgba(0,0,0,0.18)',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.18)',
+          }}
+        />
       )}
 
       <div style={{

@@ -38,11 +38,15 @@ export function GroupSpaceScreen({
     return [...new Set(items.map(i => i.savedBy))]
   }
 
-  // Collective, not individual — a count of categories with content, never
-  // who did or didn't add it, so this reads as "here's where the trip
-  // stands" rather than a call-out of any one person.
-  const categoriesWithItems = visibleCategories.filter(cat => groupItems.some(i => i.categoryIds.includes(cat.id))).length
-  const categoryCompletionLabel = `${categoriesWithItems} of ${visibleCategories.length} ${visibleCategories.length === 1 ? 'category has' : 'categories have'} ideas`
+  // Collective, not individual — a count of categories with a decided pick,
+  // never who did or didn't add it, so this reads as "here's where the trip
+  // stands" rather than a call-out of any one person. Same metric, same
+  // wording as trip home's progress card — one consistent number shown
+  // everywhere rather than two different-looking ones.
+  const decidedCategoriesCount = visibleCategories.filter(cat =>
+    groupItems.some(i => i.categoryIds.includes(cat.id) && (i.starredBy || []).length > 0)
+  ).length
+  const categoryCompletionLabel = `${decidedCategoriesCount} of ${visibleCategories.length} ${visibleCategories.length === 1 ? 'category' : 'categories'} decided`
 
   // A filtered view of the same data, not a separate place items live —
   // every decided item, whatever category it's tagged with, in one list.

@@ -14,7 +14,7 @@ import { ShareSuccessScreen }    from './screens/ShareSuccessScreen'
 import { CreateGroupTripScreen } from './screens/CreateGroupTripScreen'
 import { GroupHomeScreen }       from './screens/GroupHomeScreen'
 import { GroupSpaceScreen }      from './screens/GroupSpaceScreen'
-import { MySavesScreen }         from './screens/MySavesScreen'
+import { MyIdeasScreen }         from './screens/MyIdeasScreen'
 import { GroupCategoryScreen }   from './screens/GroupCategoryScreen'
 import { AIScreen }              from './screens/AIScreen'
 import { MyTripsScreen }         from './screens/MyTripsScreen'
@@ -33,7 +33,7 @@ const SCREEN_MAP = {
   createTrip:      CreateGroupTripScreen,
   groupHome:       GroupHomeScreen,
   groupSpace:      GroupSpaceScreen,
-  mySaves:         MySavesScreen,
+  myIdeasFull:     MyIdeasScreen,
   groupCategory:   GroupCategoryScreen,
   ai:              AIScreen,
   myTrips:         MyTripsScreen,
@@ -50,17 +50,17 @@ const MAIN_NAV = [
 ]
 
 // Screens that show the bottom tab bar
-const NAV_SCREENS = new Set(['individualHome', 'myTrips', 'ai', 'groupHome', 'groupSpace', 'mySaves', 'discuss'])
+const NAV_SCREENS = new Set(['individualHome', 'myTrips', 'ai', 'groupHome', 'groupSpace', 'myIdeasFull', 'discuss'])
 
 // Screens that show the floating + button (ai excluded; groupCategory added).
 // It's the only add action on each of these screens — no duplicate "+ Add"
 // text links alongside it.
-const PLUS_BTN_SCREENS = new Set(['individualHome', 'myTrips', 'groupHome', 'groupSpace', 'groupCategory', 'mySaves'])
+const PLUS_BTN_SCREENS = new Set(['individualHome', 'myTrips', 'groupHome', 'groupSpace', 'groupCategory', 'myIdeasFull'])
 
 const getActiveTab = (s) => {
   if (s === 'ai') return 'ai'
   if (s === 'discuss' || s === 'discussThread') return 'discuss'
-  if (s === 'myTrips' || s === 'groupHome' || s === 'groupSpace' || s === 'mySaves') return 'trips'
+  if (s === 'myTrips' || s === 'groupHome' || s === 'groupSpace' || s === 'myIdeasFull') return 'trips'
   return 'home'
 }
 
@@ -132,10 +132,13 @@ export default function App() {
   // Items are stored flat with a `categoryIds` array so a single item can be
   // tagged into more than one category view (see MyIdeasCategoryScreen /
   // GroupCategoryScreen, which filter by `categoryIds.includes(cat.id)`).
+  // My Ideas is one flat, trip-independent list — it's never scoped or
+  // tagged to any particular trip; "Share with Group" (from item detail,
+  // only shown inside a trip) is the one thing that copies an idea into a
+  // specific trip's Group Space.
   const saveToMyIdeas = ({ title, note, link, platform, categoryIds, hasPhoto, photo }) => {
     const item = {
       id: `i-${Date.now()}`, title, note, link, platform, categoryIds, hasPhoto: !!hasPhoto, photo: photo || '', savedAt: Date.now(),
-      tripId: currentTrip?.id || null,
     }
     setMyIdeas(p => [...p, item])
     return item
@@ -258,8 +261,8 @@ export default function App() {
     // A destination filled in at creation is already decided, not an open
     // question — the trip header becomes the only place that fact lives,
     // and the Destination category is skipped entirely rather than shown
-    // pre-decided (see visibleCategories in GroupSpaceScreen/GroupHomeScreen/
-    // MySavesScreen, which all hide it when this is true). The group can
+    // pre-decided (see visibleCategories in GroupSpaceScreen/GroupHomeScreen,
+    // which both hide it when this is true). The group can
     // still add their own "Destination" section later via "Add a section",
     // same as any other custom category.
     const trip = {
@@ -295,12 +298,12 @@ export default function App() {
   }
 
   // Deleting a trip is permanent and takes everything scoped to it with it
-  // — group items, private saves, and its discussion — since none of that
-  // data means anything once the trip itself is gone.
+  // — group items and its discussion — since none of that data means
+  // anything once the trip itself is gone. My Ideas is never scoped to a
+  // trip, so it's untouched here.
   const deleteTrip = (tripId) => {
     setTrips(p => p.filter(t => t.id !== tripId))
     setGroupItems(p => p.filter(i => i.tripId !== tripId))
-    setMyIdeas(p => p.filter(i => i.tripId !== tripId))
     setCustomThreads(p => {
       const { [tripId]: _removed, ...rest } = p
       return rest

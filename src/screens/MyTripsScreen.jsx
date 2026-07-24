@@ -162,7 +162,7 @@ export function MyTripsScreen({ navigate, trips, openTrip, deleteTrip }) {
               Delete "{deletingTrip.name || 'Unnamed Trip'}"?
             </p>
             <p style={{ fontSize: 13, color: COLORS.warmGrey, marginBottom: 18, lineHeight: 1.4 }}>
-              This permanently deletes the trip along with everything saved to it — group items, private saves, and the discussion. This can't be undone.
+              This permanently deletes the trip along with everything saved to it — group items and the discussion. This can't be undone. Your private My Ideas are never affected.
             </p>
             <div style={{ display: 'flex', gap: 10 }}>
               <button

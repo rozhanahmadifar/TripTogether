@@ -141,7 +141,7 @@ function EditForm({ item, categories, allCategories, onCancel, onSave }) {
 
 // FIX 4 — consistent item card structure: coloured preview zone with source
 // badge, contributor + title + description, then a heart/comment footer.
-export function ItemCard({ item, categories, contributor, source, note, hearts = 0, hearted = false, onToggleHeart, onOpen, previewHeight = 100, isOwner = true, onDelete, onSave, allCategories = [], hideFooter = false, starred = false, starredBy = [], onToggleStar, tripTag }) {
+export function ItemCard({ item, categories, contributor, source, note, hearts = 0, hearted = false, onToggleHeart, onOpen, previewHeight = 100, isOwner = true, onDelete, onSave, allCategories = [], hideFooter = false, starred = false, starredBy = [], onToggleStar, decidedTip = false, onDismissDecidedTip, sharedWithTripName }) {
   const TopTag = onOpen ? 'button' : 'div'
   const primaryCategory = (categories && categories[0]) || { icon: '✨', color: COLORS.teal }
   const [pulsing, setPulsing] = useState(false)
@@ -275,17 +275,17 @@ export function ItemCard({ item, categories, contributor, source, note, hearts =
                 {displayTitle(item)}
               </p>
 
-              {/* Which trip (if any) this private idea is tagged to — only
-                  passed in from the global "My Ideas" list, where items can
-                  belong to different trips (or none) and that's otherwise
-                  invisible until you open the item. */}
-              {tripTag !== undefined && (
+              {/* Sharing copies, it never moves — the item stays in My Ideas
+                  too, so this is the only way to tell, from that private
+                  copy, that it's also sitting in a trip's Group Space. Only
+                  ever one trip at a time, so a single badge is enough. */}
+              {sharedWithTripName && (
                 <span style={{
                   display: 'inline-block', marginTop: 6,
-                  background: COLORS.sand, color: COLORS.warmGrey,
+                  background: COLORS.tealTint, color: COLORS.teal,
                   fontSize: 11, fontWeight: 700, borderRadius: 8, padding: '3px 9px',
                 }}>
-                  🗺️ {tripTag ? `For ${tripTag}` : 'Not tagged to a trip'}
+                  🔗 Shared with {sharedWithTripName}
                 </span>
               )}
 
@@ -377,6 +377,38 @@ export function ItemCard({ item, categories, contributor, source, note, hearts =
                 </div>
               </>
             )}
+          </div>
+        )}
+
+        {/* One-time explainer for the decided toggle — anchored directly
+            above the actual checkbox it's explaining (only ever shown on
+            one card, the first, via the `decidedTip` prop) rather than a
+            generic banner floating disconnected at the top of the screen.
+            Dismissed by its own "x", or automatically the moment the user
+            marks their first item as decided anywhere. */}
+        {decidedTip && !editing && !hideFooter && onToggleStar && (
+          <div style={{ margin: '12px 14px 14px' }}>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              background: COLORS.tealTint, borderRadius: 10, padding: '10px 12px',
+            }}>
+              <span style={{ fontSize: 14, lineHeight: 1, flexShrink: 0 }}>💡</span>
+              <p style={{ flex: 1, fontSize: 12, color: COLORS.teal, fontWeight: 600, lineHeight: 1.4, margin: 0 }}>
+                Tip: tap the checkmark below to mark this as your group's pick.
+              </p>
+              <button
+                onClick={onDismissDecidedTip}
+                aria-label="Dismiss tip"
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  fontSize: 16, lineHeight: 1, color: COLORS.teal, flexShrink: 0,
+                  width: 20, height: 20, padding: 0,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}
+              >
+                ×
+              </button>
+            </div>
           </div>
         )}
 

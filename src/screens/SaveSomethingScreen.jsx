@@ -429,10 +429,10 @@ export function SaveSomethingScreen({ navigate, params = {}, allCategories, save
         {/* Whichever action matches how the user got here is the primary
             (solid) button and comes first; the other stays available but
             secondary (outlined) — reached via Group Space, "Share with
-            Group" is expected and primary; reached via My Ideas/My Saves,
-            "Keep" is expected and primary. Neither ever fires without the
-            user picking it explicitly. "Share with Group" only appears at
-            all once a trip exists — starting one is the home screen's job. */}
+            Group" is expected and primary; reached via My Ideas, "Keep" is
+            expected and primary. Neither ever fires without the user
+            picking it explicitly. "Share with Group" only appears at all
+            once a trip exists — starting one is the home screen's job. */}
         {hasGroup && isGroupMode && (
           <button
             onClick={handleShare}

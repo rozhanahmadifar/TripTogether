@@ -40,33 +40,6 @@ export function GroupCategoryScreen({ navigate, params = {}, currentTrip, groupI
       </div>
 
       <div className="screen-scroll" style={{ padding: `16px ${SPACING.screenX}px ${SPACING.scrollBottomPad}px` }}>
-        {/* One-time explainer for the decided toggle — separate from the
-            toggle itself so it never gets mistaken for part of any one
-            item's controls. Dismissed by its own "x", or automatically the
-            moment the user marks their first item as decided anywhere. */}
-        {items.length > 0 && !decidedTipDismissed && (
-          <div style={{
-            display: 'flex', alignItems: 'flex-start', gap: 10,
-            background: COLORS.tealTint, borderRadius: 12, padding: '12px 14px',
-            marginBottom: SPACING.cardGap,
-          }}>
-            <span style={{ fontSize: 16, lineHeight: 1.4 }}>💡</span>
-            <p style={{ flex: 1, fontSize: 13, color: COLORS.teal, fontWeight: 600, lineHeight: 1.4 }}>
-              Tip: tap the checkmark to mark this as your group's pick.
-            </p>
-            <button
-              onClick={dismissDecidedTip}
-              aria-label="Dismiss tip"
-              style={{
-                background: 'none', border: 'none', cursor: 'pointer',
-                fontSize: 16, color: COLORS.teal, padding: 0, lineHeight: 1, flexShrink: 0,
-              }}
-            >
-              ×
-            </button>
-          </div>
-        )}
-
         {/* Contributors card — celebratory, not an audit */}
         <div style={{
           background: 'white', borderRadius: 14, padding: SPACING.cardPad, marginBottom: SPACING.sectionGap,
@@ -140,12 +113,13 @@ export function GroupCategoryScreen({ navigate, params = {}, currentTrip, groupI
                 item={item}
                 category={cat}
                 onOpen={() => toggleStar(item.id)}
+                decidable
               />
             ))}
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: SPACING.cardGap }}>
-            {items.map(item => {
+            {items.map((item, i) => {
               const saver = getMember(item.savedBy)
               return (
                 <ItemCard
@@ -166,6 +140,8 @@ export function GroupCategoryScreen({ navigate, params = {}, currentTrip, groupI
                   isOwner={item.savedBy === userName}
                   onDelete={() => deleteGroupItem(item.id)}
                   onSave={(updates) => updateGroupItem(item.id, updates)}
+                  decidedTip={i === 0 && !decidedTipDismissed}
+                  onDismissDecidedTip={dismissDecidedTip}
                 />
               )
             })}

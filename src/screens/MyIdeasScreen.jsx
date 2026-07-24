@@ -3,14 +3,14 @@ import { TEXT, COLORS, SPACING, SHADOW_CARD } from '../styles'
 import { BackButton } from '../components/BackButton'
 import { ActionMenu, PencilIcon, TrashIcon, EyeOffIcon } from '../components/ActionMenu'
 
-// Full My Saves list — the "See all" destination from trip home, mirroring
-// Group Space's full-list screen (all 6 categories, including empty ones,
-// with rename/hide/delete), just themed private instead of shared.
-export function MySavesScreen({ navigate, myIdeas, currentTrip, allCategories, addCustomCategory, renameCategory, deleteCategory, toggleCategoryHidden }) {
-  // "My Saves" inside a trip is that trip's own private stash, not the
-  // user's whole personal collection — items saved to a different trip (or
-  // saved before any trip existed) must never show up here.
-  const tripMyIdeas = myIdeas.filter(i => i.tripId === currentTrip?.id)
+// Full "My Ideas" list, reached from inside a trip. This is not a separate,
+// trip-scoped stash — it's the exact same flat `myIdeas` list shown on the
+// home page, just reachable from here too so you don't have to leave the
+// trip to see it. Categories are the only organizing mechanism; if someone
+// wants to keep a trip's ideas visually separate they can rename or add a
+// category for it themselves (e.g. "Inspiration – Ireland").
+export function MyIdeasScreen({ navigate, params = {}, myIdeas, allCategories, addCustomCategory, renameCategory, deleteCategory, toggleCategoryHidden }) {
+  const { backTo = 'groupHome' } = params
   const [addingSection, setAddingSection] = useState(false)
   const [sectionName, setSectionName]     = useState('')
   const [menuCat, setMenuCat]             = useState(null)
@@ -18,12 +18,8 @@ export function MySavesScreen({ navigate, myIdeas, currentTrip, allCategories, a
   const [renameValue, setRenameValue]     = useState('')
   const [deletingCat, setDeletingCat]     = useState(null)
   const [hiddenOpen, setHiddenOpen]       = useState(false)
-  // A trip whose destination was already filled in at creation never gets
-  // a default Destination category — the trip header is the only place
-  // that fact lives.
-  const isDestinationSkipped = (c) => c.id === 'destination' && currentTrip?.destinationSetAtCreation
-  const visibleCategories = allCategories.filter(c => !c.hidden && !isDestinationSkipped(c))
-  const hiddenCategories = allCategories.filter(c => c.hidden && !isDestinationSkipped(c))
+  const visibleCategories = allCategories.filter(c => !c.hidden)
+  const hiddenCategories = allCategories.filter(c => c.hidden)
 
   const handleAddSection = () => {
     if (!sectionName.trim()) return
@@ -44,18 +40,18 @@ export function MySavesScreen({ navigate, myIdeas, currentTrip, allCategories, a
     <div className="screen" style={{ background: COLORS.bgMyIdeas }}>
       <div style={{ padding: '16px 20px 16px', background: 'white', borderBottom: `1px solid ${COLORS.border}` }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-          <BackButton onClick={() => navigate('groupHome')} />
+          <BackButton onClick={() => navigate(backTo)} />
           <div>
             <p style={{ ...TEXT.subtext, marginBottom: 3, display: 'flex', alignItems: 'center', gap: 6 }}>
               🔒 Private
             </p>
             <h1 style={TEXT.screenTitle}>
-              My Saves
+              My Ideas
             </h1>
           </div>
         </div>
         <p style={{ ...TEXT.subtext, marginTop: 4 }}>
-          Only you can see these — the private ideas from My Ideas tagged to this trip
+          Only you can see these
         </p>
       </div>
 
@@ -65,7 +61,7 @@ export function MySavesScreen({ navigate, myIdeas, currentTrip, allCategories, a
           boxShadow: SHADOW_CARD,
         }}>
           {visibleCategories.map((cat) => {
-            const items = tripMyIdeas.filter(item => item.categoryIds.includes(cat.id))
+            const items = myIdeas.filter(item => item.categoryIds.includes(cat.id))
             const isRenaming = renamingId === cat.id
             return (
               <div key={cat.id} style={{ borderBottom: `1px solid ${COLORS.borderLight}` }}>
@@ -97,7 +93,7 @@ export function MySavesScreen({ navigate, myIdeas, currentTrip, allCategories, a
                     </div>
                   ) : (
                     <button
-                      onClick={() => navigate('myIdeasCategory', { categoryId: cat.id, backTo: 'mySaves', tripScoped: true })}
+                      onClick={() => navigate('myIdeasCategory', { categoryId: cat.id, backTo: 'myIdeasFull', insideTrip: true })}
                       style={{
                         flex: 1, border: 'none', background: 'none', cursor: 'pointer',
                         display: 'flex', alignItems: 'center', gap: 14,
