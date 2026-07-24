@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { TEXT, COLORS, SPACING } from '../styles'
-import { truncateName } from '../data'
+import { TEXT, COLORS, SPACING, tripCardBackground } from '../styles'
+import { truncateName, daysUntil, countdownLabel } from '../data'
 import { ActionMenu, TrashIcon } from '../components/ActionMenu'
 
 export function MyTripsScreen({ navigate, trips, openTrip, deleteTrip }) {
@@ -51,17 +51,24 @@ export function MyTripsScreen({ navigate, trips, openTrip, deleteTrip }) {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {trips.map(trip => (
-              <button
+              // A plain div acting as the "open trip" button, not a real
+              // <button> — its own "⋯" trip-options control has to be a
+              // real button too, and a button can't contain another button
+              // (invalid HTML, breaks hydration). Same pattern as ItemCard.
+              <div
                 key={trip.id}
+                role="button"
+                tabIndex={0}
                 onClick={() => openTrip(trip.id)}
-                style={{ width: '100%', border: 'none', cursor: 'pointer', textAlign: 'left', background: 'none', padding: 0 }}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openTrip(trip.id) } }}
+                style={{ width: '100%', cursor: 'pointer', textAlign: 'left' }}
               >
                 <div style={{
-                  background: `linear-gradient(135deg, ${COLORS.teal} 0%, ${COLORS.tealLight} 100%)`,
+                  ...tripCardBackground(),
                   borderRadius: 18, padding: '22px 20px',
                   boxShadow: `inset 0 1px 0 rgba(255,255,255,0.15), 0 8px 24px ${COLORS.teal}40`,
                 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
                     <div>
                       <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.6)', fontWeight: 700, letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 5 }}>
                         Planning in progress
@@ -77,9 +84,10 @@ export function MyTripsScreen({ navigate, trips, openTrip, deleteTrip }) {
                           const rect = e.currentTarget.getBoundingClientRect()
                           setMenuTrip({ trip, anchor: { top: rect.top, left: rect.left, width: rect.width, height: rect.height } })
                         }}
+                        aria-label="Trip options"
                         style={{
-                          height: 26, border: 'none', background: 'rgba(255,255,255,0.15)', borderRadius: 8,
-                          cursor: 'pointer', padding: '0 10px', fontSize: 15, color: 'white', lineHeight: 1,
+                          height: 30, border: 'none', background: 'rgba(255,255,255,0.18)', borderRadius: 8,
+                          cursor: 'pointer', padding: '0 10px', fontSize: 17, color: 'white', lineHeight: 1,
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                         }}
                       >
@@ -88,28 +96,55 @@ export function MyTripsScreen({ navigate, trips, openTrip, deleteTrip }) {
                     </div>
                   </div>
 
-                  {(trip.destination || trip.dates) && (
-                    <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)', marginBottom: 16, fontWeight: 500 }}>
-                      {trip.destination && `📍 ${trip.destination}`}
-                      {trip.destination && trip.dates && '  ·  '}
-                      {trip.dates && trip.dates}
+                  {/* Destination — same supporting-detail treatment as the
+                      full trip header: smaller than the name, but its own
+                      line rather than folded into the dates. */}
+                  {trip.destination && (
+                    <p style={{ fontSize: 15, fontWeight: 700, color: 'rgba(255,255,255,0.92)', letterSpacing: -0.1, marginBottom: 6 }}>
+                      📍 {trip.destination}
+                    </p>
+                  )}
+
+                  {/* Countdown — same imminent-vs-neutral pill treatment as
+                      trip home, so the same trip reads the same urgency in
+                      both places. */}
+                  {trip.startDate && (() => {
+                    const days = daysUntil(trip.startDate)
+                    const imminent = days <= 7
+                    return (
+                      <div style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 5,
+                        background: imminent ? COLORS.milestone : 'rgba(255,255,255,0.16)',
+                        borderRadius: 20, padding: '4px 10px', marginBottom: 8,
+                      }}>
+                        <span style={{ fontSize: 11 }}>🗓️</span>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: 'white' }}>
+                          {countdownLabel(days)}
+                        </span>
+                      </div>
+                    )
+                  })()}
+
+                  {trip.dates && (
+                    <p style={{ fontSize: 13, color: 'white', fontWeight: 600, marginBottom: 16 }}>
+                      📅 {trip.dates}
                     </p>
                   )}
 
                   {trip.members && trip.members.length > 0 && (
-                    <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
+                    <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.16)' }}>
                       {trip.members.map(m => (
                         <div key={m.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
                           <div style={{
-                            width: 34, height: 34, borderRadius: '50%',
+                            width: 36, height: 36, borderRadius: '50%',
                             background: m.color,
                             border: '2px solid white',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: 11, fontWeight: 700, color: 'white',
+                            fontSize: 12, fontWeight: 700, color: 'white',
                           }}>
                             {m.initial}
                           </div>
-                          <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.8)', fontWeight: 600 }} title={m.name}>
+                          <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.85)', fontWeight: 600 }} title={m.name}>
                             {truncateName(m.name)}
                           </span>
                         </div>
@@ -117,7 +152,7 @@ export function MyTripsScreen({ navigate, trips, openTrip, deleteTrip }) {
                     </div>
                   )}
                 </div>
-              </button>
+              </div>
             ))}
 
             <button

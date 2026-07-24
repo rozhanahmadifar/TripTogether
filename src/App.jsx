@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CATEGORIES, MEMBER_COLORS } from './data'
+import { CATEGORIES, colorForName } from './data'
 import { HouseIcon, SuitcaseIcon, ChatIcon, SparkleIcon } from './components/TabIcons'
 import { PlusIcon } from './components/ActionMenu'
 import { COLORS } from './styles'
@@ -256,7 +256,7 @@ export default function App() {
   const startGroupTrip = ({ name, destination, dates, startDate, budget, crewMembers, returnTo, returnParams }) => {
     // The creator is added as an already-joined member up front — they never
     // have to add themselves to their own trip.
-    const me = { id: 'me', name: userName, color: MEMBER_COLORS[0], initial: userName.charAt(0).toUpperCase(), joined: true }
+    const me = { id: 'me', name: userName, color: colorForName(userName), initial: userName.charAt(0).toUpperCase(), joined: true }
     const trimmedDestination = (destination || '').trim()
     // A destination filled in at creation is already decided, not an open
     // question — the trip header becomes the only place that fact lives,

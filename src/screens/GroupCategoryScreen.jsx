@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { MEMBER_COLORS } from '../data'
+import { colorForName } from '../data'
 import { ItemCard } from '../components/ItemCard'
 import { GridTile } from '../components/GridTile'
 import { ViewToggle } from '../components/ViewToggle'
@@ -15,12 +15,10 @@ export function GroupCategoryScreen({ navigate, params = {}, currentTrip, groupI
 
   const contributorNames = [...new Set(items.map(i => i.savedBy))]
 
-  const getMember = (name) => {
-    const found = tripMembers.find(m => m.name === name)
-    if (found) return found
-    if (name === userName) return { name, color: MEMBER_COLORS[0], initial: name.charAt(0).toUpperCase() }
-    return { name, color: COLORS.subtleIcon, initial: name.charAt(0).toUpperCase() }
-  }
+  // Color always comes from the name itself (see colorForName) rather than
+  // whatever's stored on the matching member object, so it's identical to
+  // how this same person's avatar renders on every other screen.
+  const getMember = (name) => ({ name, color: colorForName(name), initial: name.charAt(0).toUpperCase() })
 
   const nonContributors = tripMembers.filter(m => !contributorNames.includes(m.name))
 

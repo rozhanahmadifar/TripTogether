@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { MEMBER_COLORS, daysUntil, countdownLabel, displayTitle } from '../data'
+import { colorForName, daysUntil, countdownLabel, displayTitle } from '../data'
 import { TEXT, COLORS, SPACING, SHADOW_CARD } from '../styles'
 import { BackButton } from '../components/BackButton'
 import { ActionMenu, PencilIcon, TrashIcon, EyeOffIcon } from '../components/ActionMenu'
@@ -20,12 +20,10 @@ export function GroupSpaceScreen({
   const [hiddenOpen, setHiddenOpen]       = useState(false)
   const [view, setView]                   = useState(params.initialView === 'decided' ? 'decided' : 'categories')
 
-  const getMember = (name) => {
-    const found = tripMembers.find(m => m.name === name)
-    if (found) return found
-    if (name === userName) return { name, color: MEMBER_COLORS[0], initial: name.charAt(0).toUpperCase() }
-    return { name, color: COLORS.subtleIcon, initial: name.charAt(0).toUpperCase() }
-  }
+  // Color always comes from the name itself (see colorForName) rather than
+  // whatever's stored on the matching member object, so it's identical to
+  // how this same person's avatar renders on every other screen.
+  const getMember = (name) => ({ name, color: colorForName(name), initial: name.charAt(0).toUpperCase() })
   // A trip whose destination was already filled in at creation never gets
   // a default Destination category (the trip header is the only place that
   // fact lives) — it's omitted entirely, not just collapsed into "hidden".
@@ -253,11 +251,10 @@ export function GroupSpaceScreen({
                       {contributors.length > 0 && (
                         <div style={{ display: 'flex', marginRight: 4, flexShrink: 0 }}>
                           {contributors.slice(0, 4).map((name, idx) => {
-                            const member = tripMembers.find(m => m.name === name)
                             return (
                               <div key={idx} style={{
                                 width: 26, height: 26, borderRadius: '50%',
-                                background: member?.color || MEMBER_COLORS[0],
+                                background: colorForName(name),
                                 border: '2px solid white',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                                 fontSize: 9, fontWeight: 700, color: 'white',

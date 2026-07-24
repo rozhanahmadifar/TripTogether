@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { MEMBER_COLORS, truncateName, isValidEmail, daysUntil, countdownLabel } from '../data'
+import { colorForName, truncateName, isValidEmail, daysUntil, countdownLabel } from '../data'
 import { DateRangePicker, fmtDate } from '../components/DateRangePicker'
 import { BackButton } from '../components/BackButton'
 import { XIcon } from '../components/ActionMenu'
-import { TEXT, COLORS, SPACING, SHADOW_CARD } from '../styles'
+import { TEXT, COLORS, SPACING, SHADOW_CARD, tripCardBackground } from '../styles'
 
 // Proportional rather than a fixed "out of 6" — the category list is
 // dynamic (custom categories, hidden ones), so this scales to whatever
@@ -51,7 +51,7 @@ function IdeasCategoryRow({ cat, count, isLast, onClick }) {
   )
 }
 
-function GroupCategoryRow({ cat, count, contributors, getMember, isLast, onClick }) {
+function GroupCategoryRow({ cat, count, contributors, isLast, onClick }) {
   return (
     <button
       onClick={onClick}
@@ -73,11 +73,10 @@ function GroupCategoryRow({ cat, count, contributors, getMember, isLast, onClick
       {contributors.length > 0 && (
         <div style={{ display: 'flex', marginLeft: 6 }}>
           {contributors.slice(0, 4).map((name, idx) => {
-            const member = getMember(name)
             return (
               <div key={idx} style={{
                 width: 16, height: 16, borderRadius: '50%',
-                background: member?.color || COLORS.terracotta,
+                background: colorForName(name),
                 border: '1.5px solid white',
                 marginLeft: idx > 0 ? -5 : 0,
               }} />
@@ -181,7 +180,7 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
     const n = newMemberName.trim()
     const email = newMemberEmail.trim()
     if (!n || !isValidEmail(email)) return
-    const color = MEMBER_COLORS[tripMembers.length % MEMBER_COLORS.length]
+    const color = colorForName(n)
     updateTrip(currentTrip.id, {
       members: [...tripMembers, { id: `m-${Date.now()}`, name: n, email, color, initial: n.charAt(0).toUpperCase() }]
     })
@@ -197,8 +196,6 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
     const items = groupItems.filter(i => i.categoryIds.includes(categoryId))
     return [...new Set(items.map(i => i.savedBy))]
   }
-
-  const getMember = (name) => tripMembers.find(m => m.name === name)
 
   return (
     <div className="screen" style={{ background: COLORS.bgGroupSpace }}>
@@ -216,7 +213,7 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
             texture (same treatment as the "Plan a trip together" card),
             feels alive rather than a flat color fill. */}
         <div style={{
-          background: `radial-gradient(circle, rgba(255,255,255,0.14) 1px, transparent 1.4px) 0 0/16px 16px, linear-gradient(135deg, ${COLORS.teal} 0%, ${COLORS.tealLight} 100%)`,
+          ...tripCardBackground(),
           borderRadius: 18, padding: '24px 22px',
           marginBottom: SPACING.sectionGap,
           boxShadow: `inset 0 1px 0 rgba(255,255,255,0.15), 0 8px 24px ${COLORS.teal}40`,
@@ -309,24 +306,32 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
                 </div>
               )}
 
-              {/* Members — real people in a group photo, at the bottom of
-                  the card; editing them also happens through the single
-                  pencil above rather than a pencil of their own. */}
-              <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-                {tripMembers.map(m => (
-                  <div key={m.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
-                    <div style={{
-                      width: 36, height: 36, borderRadius: '50%',
-                      background: m.color,
-                      border: '2px solid white',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 13, fontWeight: 700, color: 'white',
-                    }}>
-                      {m.initial}
+              {/* Traveling with — its own labeled block, not names tacked
+                  onto the bottom of the card as an afterthought. Slightly
+                  larger avatars than the rest of the app's member circles,
+                  and a soft divider above, so the card reads as "this trip,
+                  with these people" rather than trip facts first, people
+                  second. */}
+              <div style={{ marginTop: 6, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.16)' }}>
+                <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.65)', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>
+                  Traveling with
+                </p>
+                <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap' }}>
+                  {tripMembers.map(m => (
+                    <div key={m.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                      <div style={{
+                        width: 42, height: 42, borderRadius: '50%',
+                        background: m.color,
+                        border: '2px solid white',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 15, fontWeight: 700, color: 'white',
+                      }}>
+                        {m.initial}
+                      </div>
+                      <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', fontWeight: 600 }} title={m.name}>{truncateName(m.name)}</span>
                     </div>
-                    <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.8)', fontWeight: 600 }} title={m.name}>{truncateName(m.name)}</span>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </>
           ) : (
@@ -585,7 +590,6 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
                 cat={cat}
                 count={groupItems.filter(i => i.categoryIds.includes(cat.id)).length}
                 contributors={getContributors(cat.id)}
-                getMember={getMember}
                 isLast={i === groupCategoriesWithItems.length - 1}
                 onClick={() => navigate('groupCategory', { categoryId: cat.id, backTo: 'groupHome' })}
               />
@@ -625,7 +629,7 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
                 cat={cat}
                 count={myIdeas.filter(i => i.categoryIds.includes(cat.id)).length}
                 isLast={i === ideasCategoriesWithItems.length - 1}
-                onClick={() => navigate('myIdeasCategory', { categoryId: cat.id, backTo: 'groupHome', insideTrip: true })}
+                onClick={() => navigate('myIdeasCategory', { categoryId: cat.id, backTo: 'groupHome' })}
               />
             ))}
           </div>

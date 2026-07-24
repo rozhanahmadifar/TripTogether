@@ -93,7 +93,7 @@ export function MyIdeasScreen({ navigate, params = {}, myIdeas, allCategories, a
                     </div>
                   ) : (
                     <button
-                      onClick={() => navigate('myIdeasCategory', { categoryId: cat.id, backTo: 'myIdeasFull', insideTrip: true })}
+                      onClick={() => navigate('myIdeasCategory', { categoryId: cat.id, backTo: 'myIdeasFull' })}
                       style={{
                         flex: 1, border: 'none', background: 'none', cursor: 'pointer',
                         display: 'flex', alignItems: 'center', gap: 14,

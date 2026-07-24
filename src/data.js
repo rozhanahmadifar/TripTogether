@@ -67,6 +67,21 @@ export const PLATFORM_COLORS = {
 // minimum for text (as low as 1.84:1 for the yellow). These hold ~4.6-4.9:1.
 export const MEMBER_COLORS = ['#1E5F5F', '#AA5B3B', '#4B7A61', '#4D78A1', '#7C6E9D', '#8B6E2C']
 
+function hashString(s) {
+  let h = 0
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0
+  return Math.abs(h)
+}
+
+// A person's avatar color is derived from their name, not their position in
+// whatever members list happens to be rendering them — so the same person
+// (e.g. the trip creator, or a crew member added to more than one trip)
+// reads as the same color on every screen, regardless of join order.
+export function colorForName(name) {
+  if (!name) return MEMBER_COLORS[0]
+  return MEMBER_COLORS[hashString(name) % MEMBER_COLORS.length]
+}
+
 // Keeps long member names from breaking avatar/member-list layouts.
 export function truncateName(name, max = 20) {
   if (!name) return ''

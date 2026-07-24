@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { BackButton } from '../components/BackButton'
 import { DEFAULT_THREAD, buildSimulatedThreadMessages } from '../discuss'
-import { MEMBER_COLORS } from '../data'
+import { colorForName } from '../data'
 import { COLORS } from '../styles'
 
 export function DiscussThreadScreen({ navigate, params = {}, currentTrip, userName, discussMessages, addDiscussMessage, customThreads }) {
@@ -20,11 +20,9 @@ export function DiscussThreadScreen({ navigate, params = {}, currentTrip, userNa
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages.length])
 
-  const getMe = () => {
-    const found = tripMembers.find(m => m.name === userName)
-    if (found) return found
-    return { name: userName || 'You', color: MEMBER_COLORS[0], initial: (userName || 'You').charAt(0).toUpperCase() }
-  }
+  const getMe = () => ({
+    name: userName || 'You', color: colorForName(userName || 'You'), initial: (userName || 'You').charAt(0).toUpperCase(),
+  })
 
   const handleSend = () => {
     const trimmed = text.trim()

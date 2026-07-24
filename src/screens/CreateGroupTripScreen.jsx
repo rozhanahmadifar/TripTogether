@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { MEMBER_COLORS, truncateName, isValidEmail } from '../data'
+import { colorForName, truncateName, isValidEmail } from '../data'
 import { DateRangePicker, fmtDate } from '../components/DateRangePicker'
 import { BackButton } from '../components/BackButton'
 import { XIcon } from '../components/ActionMenu'
@@ -48,9 +48,9 @@ export function CreateGroupTripScreen({ navigate, params = {}, startGroupTrip, u
     const n = nameInput.trim()
     const email = emailInput.trim()
     if (!n || !isValidEmail(email)) return
-    // +1 because the creator (added separately, below) always occupies
-    // palette index 0 — offsetting here keeps every member's color unique.
-    const color = MEMBER_COLORS[(members.length + 1) % MEMBER_COLORS.length]
+    // Derived from the name itself, not list position, so this same person
+    // reads as the same color on every screen they appear on.
+    const color = colorForName(n)
     // A counter (not just Date.now()) guarantees unique ids even when two
     // members are added in the same millisecond — colliding ids meant
     // removing one member could silently remove both.
@@ -149,10 +149,16 @@ export function CreateGroupTripScreen({ navigate, params = {}, startGroupTrip, u
                   <p style={{ fontSize: 12, fontWeight: 700, color: COLORS.warmGrey, letterSpacing: 0.3 }}>When are you going</p>
                   <span style={{ fontSize: 11, color: COLORS.warmGrey, fontWeight: 500 }}>Optional</span>
                 </div>
-                <button
+                {/* A div acting as the button, not a real <button> — the
+                    "clear dates" control has to be a real, nested button,
+                    and a button can't contain another button. */}
+                <div
+                  role="button"
+                  tabIndex={0}
                   onClick={() => setShowCalendar(c => !c)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setShowCalendar(c => !c) } }}
                   style={{
-                    width: '100%', height: 54, borderRadius: 14,
+                    width: '100%', height: 54, borderRadius: 14, boxSizing: 'border-box',
                     border: `2px solid ${dateRange.start ? COLORS.teal : COLORS.border}`,
                     background: 'white', cursor: 'pointer',
                     display: 'flex', alignItems: 'center', gap: 10,
@@ -172,7 +178,7 @@ export function CreateGroupTripScreen({ navigate, params = {}, startGroupTrip, u
                       ×
                     </button>
                   )}
-                </button>
+                </div>
 
                 {showCalendar && (
                   <DateRangePicker
@@ -284,7 +290,7 @@ export function CreateGroupTripScreen({ navigate, params = {}, startGroupTrip, u
                   boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
                 }}>
                   <div style={{
-                    width: 38, height: 38, borderRadius: '50%', background: MEMBER_COLORS[0],
+                    width: 38, height: 38, borderRadius: '50%', background: colorForName(userName),
                     border: '2px solid white', boxShadow: `0 0 0 1px ${COLORS.border}`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: 14, fontWeight: 700, color: 'white', flexShrink: 0,

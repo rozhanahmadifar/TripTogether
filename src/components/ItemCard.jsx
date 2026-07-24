@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { timeAgo, PLATFORMS, isImagePhoto, displayTitle } from '../data'
 import { COLORS, SHADOW_CARD, TEXT } from '../styles'
-import { PencilIcon, TrashIcon } from './ActionMenu'
+import { ActionMenu, PencilIcon, TrashIcon } from './ActionMenu'
 
 function DotsIcon({ size = 14, color = COLORS.charcoal }) {
   return (
@@ -145,7 +145,7 @@ export function ItemCard({ item, categories, contributor, source, note, hearts =
   const TopTag = onOpen ? 'button' : 'div'
   const primaryCategory = (categories && categories[0]) || { icon: '✨', color: COLORS.teal }
   const [pulsing, setPulsing] = useState(false)
-  const [menuOpen, setMenuOpen] = useState(false)
+  const [menuAnchor, setMenuAnchor] = useState(null)
   const [confirming, setConfirming] = useState(false)
   const [fading, setFading] = useState(false)
   const [editing, setEditing] = useState(false)
@@ -157,7 +157,7 @@ export function ItemCard({ item, categories, contributor, source, note, hearts =
     onToggleHeart()
   }
 
-  const closeMenu = () => setMenuOpen(false)
+  const closeMenu = () => setMenuAnchor(null)
 
   const handleConfirmDelete = () => {
     setConfirming(false)
@@ -207,52 +207,72 @@ export function ItemCard({ item, categories, contributor, source, note, hearts =
               fontFamily: 'inherit',
             }}
           >
-            {/* Top zone — real photo when the item has one, coloured preview otherwise */}
-            <div style={{
-              height: previewHeight,
-              background: isImagePhoto(item.photo) ? '#EFE8DE' : `${primaryCategory.color}30`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              position: 'relative', overflow: 'hidden',
-            }}>
-              {isImagePhoto(item.photo) ? (
+            {/* Top zone — a real photo earns full-bleed visual space; a
+                video gets a compact labeled strip; an item with neither
+                skips this zone entirely rather than spending the same
+                height on a flat color block with one big emoji in it —
+                its category shows instead as a small badge inline below,
+                where the rest of the card's actual content already is. */}
+            {isImagePhoto(item.photo) ? (
+              <div style={{ height: previewHeight, position: 'relative', overflow: 'hidden' }}>
                 <img src={item.photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              ) : item.photo ? (
-                <span style={{ fontSize: 38 }}>🎬</span>
-              ) : (
-                <span style={{ fontSize: 38 }}>{primaryCategory.icon}</span>
-              )}
-              {source && (
-                <span style={{
-                  position: 'absolute', top: 10, left: 10,
-                  background: 'white', color: COLORS.charcoal,
-                  fontSize: 10, fontWeight: 700, letterSpacing: 0.2,
-                  borderRadius: 20, padding: '4px 10px',
-                  boxShadow: '0 2px 6px rgba(0,0,0,0.14)',
-                }}>
-                  {source}
+                {source && (
+                  <span style={{
+                    position: 'absolute', top: 10, left: 10,
+                    background: 'white', color: COLORS.charcoal,
+                    fontSize: 10, fontWeight: 700, letterSpacing: 0.2,
+                    borderRadius: 20, padding: '4px 10px',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.14)',
+                  }}>
+                    {source}
+                  </span>
+                )}
+                {starredBy.length > 0 && (
+                  <span
+                    title={`Marked as decided by ${starredBy.join(', ')}`}
+                    style={{
+                      position: 'absolute', bottom: 10, right: 10,
+                      display: 'flex', alignItems: 'center', gap: 4,
+                      background: COLORS.milestone, color: 'white',
+                      fontSize: 11, fontWeight: 800, letterSpacing: 0.2,
+                      borderRadius: 20, padding: '5px 10px',
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.18)',
+                    }}
+                  >
+                    ✓ Decided
+                  </span>
+                )}
+              </div>
+            ) : item.photo ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 44px 12px 16px', background: COLORS.sand }}>
+                <span style={{ fontSize: 20, flexShrink: 0 }}>🎬</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: COLORS.charcoal, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+                  {item.photo}
                 </span>
-              )}
-              {starredBy.length > 0 && (
-                <span
-                  title={`Marked as decided by ${starredBy.join(', ')}`}
-                  style={{
-                    position: 'absolute', bottom: 10, right: 10,
-                    display: 'flex', alignItems: 'center', gap: 4,
-                    background: COLORS.milestone, color: 'white',
-                    fontSize: 11, fontWeight: 800, letterSpacing: 0.2,
-                    borderRadius: 20, padding: '5px 10px',
-                    boxShadow: '0 2px 6px rgba(0,0,0,0.18)',
-                  }}
-                >
-                  ✓ Decided
-                </span>
-              )}
-            </div>
+                {source && (
+                  <span style={{ background: 'white', color: COLORS.charcoal, fontSize: 10, fontWeight: 700, borderRadius: 20, padding: '4px 10px', flexShrink: 0 }}>
+                    {source}
+                  </span>
+                )}
+              </div>
+            ) : null}
 
-            {/* Middle zone */}
-            <div style={{ padding: 16, paddingBottom: 12 }}>
+            {/* Middle zone — when there's no photo header, the top row sits
+                directly under the card's top edge, in the same space the
+                absolutely-positioned "⋯" button occupies; the extra right
+                padding here keeps the timestamp from running underneath it. */}
+            <div style={{ padding: 16, paddingBottom: 12, paddingRight: isImagePhoto(item.photo) ? 16 : 44 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, gap: 8 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                  {!item.photo && (
+                    <div style={{
+                      width: 26, height: 26, borderRadius: '50%', background: `${primaryCategory.color}30`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 13, flexShrink: 0,
+                    }}>
+                      {primaryCategory.icon}
+                    </div>
+                  )}
                   {contributor && (
                     <div style={{
                       width: 24, height: 24, borderRadius: '50%', background: contributor.color,
@@ -274,6 +294,24 @@ export function ItemCard({ item, categories, contributor, source, note, hearts =
               <p style={TEXT.cardTitle}>
                 {displayTitle(item)}
               </p>
+
+              {/* No-photo items lost their corner "Decided" badge along
+                  with the decorative header block — this is the one place
+                  that status still needs to show without a photo to sit
+                  on. Photo items keep the overlay version above instead. */}
+              {!isImagePhoto(item.photo) && starredBy.length > 0 && (
+                <span
+                  title={`Marked as decided by ${starredBy.join(', ')}`}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 6,
+                    background: COLORS.milestone, color: 'white',
+                    fontSize: 11, fontWeight: 800, letterSpacing: 0.2,
+                    borderRadius: 20, padding: '4px 9px',
+                  }}
+                >
+                  ✓ Decided
+                </span>
+              )}
 
               {/* Sharing copies, it never moves — the item stays in My Ideas
                   too, so this is the only way to tell, from that private
@@ -335,47 +373,36 @@ export function ItemCard({ item, categories, contributor, source, note, hearts =
         )}
 
         {/* Three-dot menu button — sibling of TopTag (not nested inside it) so it
-            never ends up inside a <button>, and overlays the top-right corner. */}
+            never ends up inside a <button>, and overlays the top-right corner.
+            A visible fill + border rather than relying on the drop shadow
+            alone, so it still reads as a tappable control on a plain white
+            card (no photo underneath) and not just on a photo. The dropdown
+            itself is the shared, `position: fixed` ActionMenu (anchored via
+            the button's own bounding rect) rather than a locally-positioned
+            one — this card's own container clips overflow for its rounded
+            corners, which was silently cutting the menu off on short cards. */}
         {!editing && (
           <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 2 }}>
             <button
-              onClick={(e) => { e.stopPropagation(); setMenuOpen(o => !o) }}
+              onClick={(e) => {
+                e.stopPropagation()
+                if (menuAnchor) { closeMenu(); return }
+                const rect = e.currentTarget.getBoundingClientRect()
+                setMenuAnchor({ top: rect.top, left: rect.left, width: rect.width, height: rect.height })
+              }}
               aria-label="More options"
               style={{
-                width: 28, height: 28, borderRadius: '50%', border: 'none',
-                background: 'rgba(255,255,255,0.9)', boxShadow: '0 2px 6px rgba(0,0,0,0.14)',
+                width: 30, height: 30, borderRadius: '50%',
+                border: `1px solid ${COLORS.border}`,
+                background: 'rgba(255,255,255,0.95)', boxShadow: '0 2px 6px rgba(0,0,0,0.14)',
                 cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}
             >
               <DotsIcon />
             </button>
 
-            {menuOpen && (
-              <>
-                <div onClick={closeMenu} style={{ position: 'fixed', inset: 0, zIndex: 1 }} />
-                <div style={{
-                  position: 'absolute', top: '100%', right: 0, marginTop: 6,
-                  background: 'white', borderRadius: 10,
-                  boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
-                  overflow: 'hidden', zIndex: 2, minWidth: 160,
-                }}>
-                  {menuRows.map((row, i) => (
-                    <button
-                      key={i}
-                      onClick={row.onClick}
-                      style={{
-                        width: '100%', display: 'flex', alignItems: 'center', gap: 10,
-                        padding: '12px 16px', background: 'none', border: 'none',
-                        borderTop: i > 0 ? `1px solid ${COLORS.borderLight}` : 'none',
-                        cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
-                      }}
-                    >
-                      {row.icon}
-                      <span style={{ fontSize: 14, fontWeight: 600, color: row.color }}>{row.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </>
+            {menuAnchor && (
+              <ActionMenu anchorRect={menuAnchor} rows={menuRows} onClose={closeMenu} />
             )}
           </div>
         )}
@@ -412,15 +439,17 @@ export function ItemCard({ item, categories, contributor, source, note, hearts =
           </div>
         )}
 
-        {/* Bottom zone — one fixed row, heart pinned left and the decided
-            checkbox pinned right (space-between, not both bunched to one
-            side), so the two actions sit at a consistent, predictable spot
-            every time regardless of how much text either one has. */}
+        {/* Bottom zone — heart and decided grouped together into one
+            action cluster on the left (a thin divider between them, not
+            two controls pinned to opposite corners with empty space
+            stretched between), so it reads as a single coherent row of
+            actions rather than two unrelated things that happen to share
+            a footer. */}
         {!editing && !hideFooter && (
           <div style={{
             borderTop: `1px solid ${COLORS.borderLight}`,
             padding: '6px 14px', minHeight: 48,
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            display: 'flex', alignItems: 'center', gap: 4,
           }}>
             <button
               onClick={handleHeart}
@@ -435,6 +464,8 @@ export function ItemCard({ item, categories, contributor, source, note, hearts =
               <span className={pulsing ? 'heart-pulse' : ''} style={{ fontSize: 20, lineHeight: 1 }}>{hearted ? '❤️' : '🤍'}</span>
               <span style={{ fontSize: 13, fontWeight: 600, color: hearted ? COLORS.terracotta : COLORS.warmGrey }}>{hearts}</span>
             </button>
+
+            <div style={{ width: 1, height: 22, background: COLORS.borderLight, margin: '0 4px', flexShrink: 0 }} />
 
             {/* Decided — a real checkbox toggle (empty outline vs. filled
                 tick), not just a swapped icon or label, so the state reads
