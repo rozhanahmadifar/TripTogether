@@ -5,6 +5,24 @@ import { BackButton } from '../components/BackButton'
 import { XIcon } from '../components/ActionMenu'
 import { COLORS, SPACING } from '../styles'
 
+function PersonIcon({ size = 16, color = COLORS.subtleIcon }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 20c0-4.4 3.6-7 8-7s8 2.6 8 7" />
+    </svg>
+  )
+}
+
+function MailIcon({ size = 16, color = COLORS.subtleIcon }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="M3 7l9 6 9-6" />
+    </svg>
+  )
+}
+
 function ProgressBar({ step }) {
   return (
     <div style={{ paddingBottom: 24 }}>
@@ -106,6 +124,12 @@ export function CreateGroupTripScreen({ navigate, params = {}, startGroupTrip, u
       {step === 1 && (
         <p style={{ fontSize: 13, color: COLORS.warmGrey, fontWeight: 500, margin: '4px 20px 0 68px' }}>
           Let's start with the basics.
+        </p>
+      )}
+
+      {step === 2 && (
+        <p style={{ fontSize: 13, color: COLORS.warmGrey, fontWeight: 500, margin: '4px 20px 0 68px' }}>
+          Add your crew to start planning together.
         </p>
       )}
 
@@ -240,13 +264,14 @@ export function CreateGroupTripScreen({ navigate, params = {}, startGroupTrip, u
                 Name
               </p>
               <div style={fieldWrap(nameInput)}>
+                <span style={{ paddingLeft: 14, display: 'flex', flexShrink: 0 }}><PersonIcon /></span>
                 <input
                   value={nameInput}
                   onChange={e => setNameInput(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && addMember()}
                   placeholder="Their name"
                   autoFocus
-                  style={inputStyle()}
+                  style={{ ...inputStyle(), paddingLeft: 8 }}
                 />
               </div>
             </div>
@@ -260,13 +285,14 @@ export function CreateGroupTripScreen({ navigate, params = {}, startGroupTrip, u
                 </p>
               </div>
               <div style={fieldWrap(emailInput)}>
+                <span style={{ paddingLeft: 14, display: 'flex', flexShrink: 0 }}><MailIcon /></span>
                 <input
                   type="email"
                   value={emailInput}
                   onChange={e => setEmailInput(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && addMember()}
                   placeholder="their@email.com"
-                  style={inputStyle()}
+                  style={{ ...inputStyle(), paddingLeft: 8 }}
                 />
               </div>
             </div>
@@ -381,13 +407,25 @@ export function CreateGroupTripScreen({ navigate, params = {}, startGroupTrip, u
                 ))}
             </div>
 
-            <p style={{ fontSize: 12, color: COLORS.warmGrey, lineHeight: 1.5, marginBottom: 20, fontWeight: 500 }}>
-              Members will receive an invite link to join your trip at the email you provide.
-            </p>
-
-            <p style={{ fontSize: 12, color: COLORS.warmGrey, lineHeight: 1.5, marginBottom: 28, fontWeight: 500 }}>
-              You can add more people later.
-            </p>
+            <div style={{
+              display: 'flex', alignItems: 'flex-start', gap: 12,
+              background: COLORS.sand, borderRadius: 16, padding: 16, marginBottom: 28,
+            }}>
+              <div style={{
+                width: 36, height: 36, borderRadius: '50%', background: COLORS.teal,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+              }}>
+                <MailIcon size={16} color="white" />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontSize: 12, color: COLORS.warmGrey, lineHeight: 1.5, fontWeight: 500 }}>
+                  Members will receive an invite link to join your trip at the email you provide.
+                </p>
+                <p style={{ fontSize: 12, color: COLORS.warmGrey, lineHeight: 1.5, fontWeight: 500, fontStyle: 'italic', marginTop: 6 }}>
+                  You can add more people later.
+                </p>
+              </div>
+            </div>
 
             <button
               onClick={handleStart}
