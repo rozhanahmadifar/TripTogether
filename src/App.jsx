@@ -72,6 +72,10 @@ const getPlusBtnCtx = (s, p) => {
 }
 
 const CUSTOM_COLORS = ['#D4724A', '#1E5F5F', '#E8B84A', '#5B8DBE', '#6BAE8A', '#9B8AC4']
+// Deeper companion tone per CUSTOM_COLORS entry, same pairing idea as the
+// built-in CATEGORIES' color/shade pair — keeps user-created sections
+// visually consistent with the default six instead of looking flatter.
+const CUSTOM_SHADES = ['#A8532F', '#123D3D', '#C4922A', '#3D6B98', '#4A8A68', '#7563A0']
 
 export default function App() {
   const [screen, setScreen]                     = useState('welcome')
@@ -106,8 +110,10 @@ export default function App() {
 
   const addCustomCategory = (label) => {
     const id = `custom-${Date.now()}`
-    const color = CUSTOM_COLORS[categories.length % CUSTOM_COLORS.length]
-    setCategories(p => [...p, { id, icon: '📌', label, color }])
+    const idx = categories.length % CUSTOM_COLORS.length
+    const color = CUSTOM_COLORS[idx]
+    const shade = CUSTOM_SHADES[idx]
+    setCategories(p => [...p, { id, icon: '📌', label, color, shade }])
     return id
   }
 
@@ -347,6 +353,11 @@ export default function App() {
   const sharedProps = {
     navigate, params, userName, setUserName,
     appMode, myIdeas, groupItems: groupItemsInTrip,
+    // Unfiltered, all-trips version of groupItems — only needed by screens
+    // that show progress across several trips at once (e.g. My Trips'
+    // per-card planning %), unlike `groupItems` above which every other
+    // screen already gets pre-scoped to just the current trip.
+    allGroupItems: groupItems,
     trips, currentTrip, hasGroup,
     allCategories, addCustomCategory, renameCategory, deleteCategory, toggleCategoryHidden,
     saveToMyIdeas, addToGroup, toggleHeart, toggleStar,
@@ -411,9 +422,10 @@ export default function App() {
               onClick={() => navigate('saveSomething', plusCtx.navParams)}
               style={{
                 width: 52, height: 52, borderRadius: '50%',
-                background: COLORS.action, color: 'white', border: 'none',
+                background: `linear-gradient(160deg, #BD6B4A 0%, ${COLORS.action} 55%, #954C31 100%)`,
+                color: 'white', border: 'none',
                 cursor: 'pointer',
-                boxShadow: '0 3px 10px rgba(0,0,0,0.22)',
+                boxShadow: `0 2px 3px rgba(0,0,0,0.12), 0 6px 16px ${COLORS.action}55`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}
             >

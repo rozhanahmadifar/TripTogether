@@ -62,7 +62,7 @@ export function DiscussThreadScreen({ navigate, params = {}, currentTrip, userNa
             <div style={{
               width: 32, height: 32, borderRadius: '50%', background: m.color, flexShrink: 0,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 12, fontWeight: 700, color: 'white',
+              fontSize: 12, fontWeight: 700, color: 'white', lineHeight: 1,
             }}>
               {m.initial}
             </div>
@@ -98,7 +98,7 @@ export function DiscussThreadScreen({ navigate, params = {}, currentTrip, userNa
           disabled={!canSend}
           style={{
             width: 36, height: 36, borderRadius: '50%', border: 'none',
-            background: COLORS.action, color: 'white',
+            background: COLORS.action, color: 'white', lineHeight: 1,
             fontSize: 15, cursor: canSend ? 'pointer' : 'default', opacity: canSend ? 1 : 0.6,
             flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}

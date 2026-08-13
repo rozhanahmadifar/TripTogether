@@ -1,6 +1,7 @@
 import { COLORS, SPACING, TEXT, SHADOW_CARD } from '../styles'
 import { displayTitle } from '../data'
 import { BackButton } from '../components/BackButton'
+import { CategoryIcon } from '../components/CategoryIcons'
 
 function decidedIn(groupItems, categoryId) {
   return groupItems.filter(i => i.categoryIds.includes(categoryId) && (i.starredBy || []).length > 0)
@@ -22,7 +23,13 @@ function SummarySection({ icon, label, decided, children }) {
         color: decided ? COLORS.milestone : COLORS.teal,
         display: 'flex', alignItems: 'center', gap: 6,
       }}>
-        <span style={{ flex: 1 }}>{icon} {label}</span>
+        {/* This inner span has to be a flex container in its own right —
+            an SVG icon defaults to `display: block` under Tailwind's
+            preflight reset, so nested plainly next to text inside a
+            non-flex span it drops to its own line instead of sitting
+            beside the label. A plain emoji string (e.g. "📍") never hit
+            this, which is why only the SVG-icon sections broke. */}
+        <span style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6 }}>{icon} {label}</span>
         {decided && <span style={{ fontSize: 13 }}>✓</span>}
       </p>
       {children}
@@ -107,7 +114,7 @@ export function TripSummaryScreen({ navigate, currentTrip, groupItems, allCatego
         {summaryCategories.map(cat => {
           const items = decidedIn(groupItems, cat.id)
           return (
-            <SummarySection key={cat.id} icon={cat.icon} label={cat.label} decided={items.length > 0}>
+            <SummarySection key={cat.id} icon={<CategoryIcon id={cat.id} size={16} color="currentColor" />} label={cat.label} decided={items.length > 0}>
               <DecidedList items={items} />
             </SummarySection>
           )

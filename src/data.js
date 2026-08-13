@@ -1,11 +1,55 @@
+// Each category carries two tones, not one: `color` is the soft base used for
+// tinted backgrounds/badges (unchanged from before), `shade` is a deeper pull
+// of the same hue used for icon strokes/fills and anywhere that base tint
+// would be too low-contrast to read as a mark on its own — same six hues,
+// more tonal depth instead of one flat color reused at different opacities.
 export const CATEGORIES = [
-  { id: 'inspiration',   icon: '✨', label: 'Inspiration',   color: '#E8B84A' },
-  { id: 'destination',   icon: '📍', label: 'Destination',   color: '#5B8DBE' },
-  { id: 'accommodation', icon: '🏨', label: 'Accommodation', color: '#6BAE8A' },
-  { id: 'activities',    icon: '🎯', label: 'Activities',    color: '#D9805A' },
-  { id: 'transport',     icon: '🚌', label: 'Transport',     color: '#9B8AC4' },
-  { id: 'food',          icon: '🍔', label: 'Food',          color: '#C2678D' },
+  { id: 'inspiration',   icon: '✨', label: 'Inspiration',   color: '#E8B84A', shade: '#C4922A' },
+  { id: 'destination',   icon: '📍', label: 'Destination',   color: '#5B8DBE', shade: '#3D6B98' },
+  { id: 'accommodation', icon: '🏨', label: 'Accommodation', color: '#6BAE8A', shade: '#4A8A68' },
+  { id: 'activities',    icon: '🎯', label: 'Activities',    color: '#D9805A', shade: '#B85F3A' },
+  { id: 'transport',     icon: '🚌', label: 'Transport',     color: '#9B8AC4', shade: '#7563A0' },
+  { id: 'food',          icon: '🍔', label: 'Food',          color: '#C2678D', shade: '#9C4468' },
 ]
+
+// Curated real photography (Pexels — free to hotlink, each picked and
+// visually checked during this session) used as backdrop art on category
+// headers, empty states, and the trip hero card once a destination is set.
+// Deliberately not used on individual item/grid cards — the same stock photo
+// repeated across several same-category items would read as fake, not real;
+// one photo per category, used once per screen, reads as intentional art
+// direction instead. `w=800` keeps the downloaded size proportional to
+// where these actually render (never full desktop resolution).
+export const CATEGORY_PHOTOS = {
+  inspiration:   'https://images.pexels.com/photos/8828672/pexels-photo-8828672.jpeg?auto=compress&cs=tinysrgb&w=800',
+  destination:   'https://images.pexels.com/photos/38160670/pexels-photo-38160670.jpeg?auto=compress&cs=tinysrgb&w=800',
+  accommodation: 'https://images.pexels.com/photos/15667603/pexels-photo-15667603.jpeg?auto=compress&cs=tinysrgb&w=800',
+  activities:    'https://images.pexels.com/photos/914128/pexels-photo-914128.jpeg?auto=compress&cs=tinysrgb&w=800',
+  transport:     'https://images.pexels.com/photos/1008155/pexels-photo-1008155.jpeg?auto=compress&cs=tinysrgb&w=800',
+  food:          'https://images.pexels.com/photos/7973622/pexels-photo-7973622.jpeg?auto=compress&cs=tinysrgb&w=800',
+}
+
+// The Welcome screen's hero backdrop — sits outside the per-category set
+// since it's shown before any trip/category exists.
+export const WELCOME_PHOTO = 'https://images.pexels.com/photos/38463518/pexels-photo-38463518.jpeg?auto=compress&cs=tinysrgb&w=900'
+
+// The Home screen's "Plan a trip together" card — its own photo rather than
+// a CATEGORY_PHOTOS entry, since those are reserved one-per-category.
+export const PLAN_TOGETHER_PHOTO = 'https://images.pexels.com/photos/9943247/pexels-photo-9943247.jpeg?auto=compress&cs=tinysrgb&w=800'
+
+// The Home screen's My Ideas card — its own photo, not CATEGORY_PHOTOS.inspiration
+// (a colorful map/notebook scene, wrong mood for this light "journal" card and
+// already doing double duty as the Inspiration category's own header art). A
+// warm flat-lay of travel keepsakes — straw hat, daisies, a stamped passport
+// case, a compass — on cream marble, matching the soft/paper-toned card style.
+export const MY_IDEAS_PHOTO = 'https://images.pexels.com/photos/7235807/pexels-photo-7235807.jpeg?auto=compress&cs=tinysrgb&w=800'
+
+// The Home screen's atmosphere band — pure mood/branding, distinct from
+// every other photo already used on that screen (destination photo → trip
+// card, inspiration photo → My Ideas, this one → PLAN_TOGETHER_PHOTO).
+// Wide horizontal composition with open sky so it crops well into a short
+// full-bleed strip and still leaves room for a line of text.
+export const ATMOSPHERE_PHOTO = 'https://images.pexels.com/photos/30784224/pexels-photo-30784224.jpeg?auto=compress&cs=tinysrgb&w=1000'
 
 // One-line clarifying hints shown under each category name in the tag
 // picker, so it's obvious at a glance where something belongs instead of
@@ -21,31 +65,24 @@ export const CATEGORY_HINTS = {
 
 export const EMPTY_STATE_COPY = {
   inspiration: {
-    emojis: ['✨', '💡'],
     subtext: 'Start saving places, videos, and ideas that catch your eye.',
   },
   destination: {
-    emojis: ['📍', '🗺️'],
     subtext: 'Start dropping pins on the places that are calling your name.',
   },
   accommodation: {
-    emojis: ['🏠', '🔑'],
     subtext: 'Start collecting stays that feel like home away from home.',
   },
   activities: {
-    emojis: ['🎯', '🧭'],
     subtext: 'Start saving the adventures you don’t want to miss.',
   },
   transport: {
-    emojis: ['✈️', '🧳'],
     subtext: 'Start saving flights, trains, and the way you’ll get there.',
   },
   food: {
-    emojis: ['🍔', '🍜'],
     subtext: 'Start saving restaurants and dishes you don’t want to miss.',
   },
   default: {
-    emojis: ['✨', '💡'],
     subtext: 'Be the first to add something here.',
   },
 }

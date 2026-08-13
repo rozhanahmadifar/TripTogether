@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { timeAgo, PLATFORMS, isImagePhoto, displayTitle } from '../data'
 import { COLORS, SHADOW_CARD, TEXT } from '../styles'
 import { ActionMenu, PencilIcon, TrashIcon } from './ActionMenu'
+import { CategoryIcon } from './CategoryIcons'
 
 function DotsIcon({ size = 14, color = COLORS.charcoal }) {
   return (
@@ -13,11 +14,12 @@ function DotsIcon({ size = 14, color = COLORS.charcoal }) {
   )
 }
 
-function Pill({ label, selected, onClick }) {
+function Pill({ label, icon, selected, onClick }) {
   return (
     <button
       onClick={onClick}
       style={{
+        display: 'inline-flex', alignItems: 'center', gap: 5,
         padding: '6px 12px', borderRadius: 20, fontFamily: 'inherit',
         border: `1.5px solid ${selected ? COLORS.teal : COLORS.border}`,
         background: selected ? COLORS.tealTint : 'white',
@@ -25,7 +27,7 @@ function Pill({ label, selected, onClick }) {
         fontSize: 12, fontWeight: 600, cursor: 'pointer',
       }}
     >
-      {label}
+      {icon}{label}
     </button>
   )
 }
@@ -37,10 +39,9 @@ function EditForm({ item, categories, allCategories, onCancel, onSave }) {
   const [source, setSource]   = useState(item.platform || '')
   const [categoryIds, setCategoryIds] = useState((categories || []).map(c => c.id))
 
-  // A link, photo, or note already identifies the item at a glance, so
-  // title only needs to be required when none of those exist either.
-  const hasOtherContent = !!item.photo || link.trim().length > 0 || note.trim().length > 0
-  const canSave = (title.trim().length > 0 || hasOtherContent) && categoryIds.length > 0
+  // Title is always optional (same as the save flow) — displayTitle()
+  // already falls back to a sensible name when it's empty.
+  const canSave = categoryIds.length > 0
 
   const toggleCategory = (id) => {
     setCategoryIds(prev => prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id])
@@ -56,7 +57,7 @@ function EditForm({ item, categories, allCategories, onCancel, onSave }) {
       <input
         value={title}
         onChange={e => setTitle(e.target.value)}
-        placeholder={hasOtherContent ? 'Title (optional)' : 'Title'}
+        placeholder="Title (optional)"
         style={{
           width: '100%', minHeight: 40, borderRadius: 10,
           border: `1.5px solid ${COLORS.teal}`, padding: '0 12px',
@@ -104,7 +105,8 @@ function EditForm({ item, categories, allCategories, onCancel, onSave }) {
         {allCategories.map(c => (
           <Pill
             key={c.id}
-            label={`${c.icon} ${c.label}`}
+            label={c.label}
+            icon={<CategoryIcon id={c.id} size={15} color={categoryIds.includes(c.id) ? COLORS.teal : (c.shade || COLORS.warmGrey)} />}
             selected={categoryIds.includes(c.id)}
             onClick={() => toggleCategory(c.id)}
           />
@@ -141,9 +143,9 @@ function EditForm({ item, categories, allCategories, onCancel, onSave }) {
 
 // FIX 4 — consistent item card structure: coloured preview zone with source
 // badge, contributor + title + description, then a heart/comment footer.
-export function ItemCard({ item, categories, contributor, source, note, hearts = 0, hearted = false, onToggleHeart, onOpen, previewHeight = 100, isOwner = true, onDelete, onSave, allCategories = [], hideFooter = false, starred = false, starredBy = [], onToggleStar, decidedTip = false, onDismissDecidedTip, sharedWithTripName }) {
+export function ItemCard({ item, categories, contributor, source, note, hearts = 0, hearted = false, onToggleHeart, onOpen, previewHeight = 100, isOwner = true, onDelete, onSave, allCategories = [], hideFooter = false, starred = false, starredBy = [], onToggleStar, decidedTip = false, onDismissDecidedTip, sharedWithTripName, compact = false }) {
   const TopTag = onOpen ? 'button' : 'div'
-  const primaryCategory = (categories && categories[0]) || { icon: '✨', color: COLORS.teal }
+  const primaryCategory = (categories && categories[0]) || { color: COLORS.teal, shade: COLORS.teal }
   const [pulsing, setPulsing] = useState(false)
   const [menuAnchor, setMenuAnchor] = useState(null)
   const [confirming, setConfirming] = useState(false)
@@ -184,12 +186,157 @@ export function ItemCard({ item, categories, contributor, source, note, hearts =
         { label: 'Report this item', color: COLORS.warmGrey, onClick: closeMenu },
       ]
 
+  // Compact mode — the private My Ideas card: a square thumbnail beside
+  // title/source/category-pill, no contributor/timestamp/note/link badge
+  // (none of those appear in the reference, and the item's full detail is
+  // one tap away via onOpen anyway). Reuses the same menu/edit/delete
+  // machinery as the full card below — only the top-level layout differs.
+  // The group-decision card (Decided ribbon, heart/decided footer,
+  // contributor attribution) is untouched; this branch never runs there
+  // since only MyIdeasCategoryScreen passes `compact`.
+  if (compact) {
+    return (
+      <div style={{ position: 'relative' }}>
+        <div style={{
+          position: 'relative', background: COLORS.cardBg, borderRadius: 16,
+          boxShadow: SHADOW_CARD, opacity: fading ? 0 : 1, transition: 'opacity 200ms ease',
+        }}>
+          {editing ? (
+            <EditForm
+              item={item}
+              categories={categories}
+              allCategories={allCategories}
+              onCancel={() => setEditing(false)}
+              onSave={handleEditSave}
+            />
+          ) : (
+            <TopTag
+              onClick={onOpen}
+              style={{
+                display: 'flex', alignItems: 'flex-start', gap: 12, width: '100%',
+                border: 'none', padding: 16, paddingRight: 40, margin: 0,
+                background: 'none', textAlign: 'left', cursor: onOpen ? 'pointer' : 'default',
+                fontFamily: 'inherit',
+              }}
+            >
+              <div style={{ width: 72, height: 88, borderRadius: 14, overflow: 'hidden', flexShrink: 0, background: `${primaryCategory.color}30` }}>
+                {isImagePhoto(item.photo) ? (
+                  <img src={item.photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <CategoryIcon id={primaryCategory.id} size={26} color={primaryCategory.shade || primaryCategory.color} />
+                  </div>
+                )}
+              </div>
+              <div style={{ flex: 1, minWidth: 0, marginTop: 6 }}>
+                <p style={{ ...TEXT.cardTitle, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {displayTitle(item)}
+                </p>
+                {source && (
+                  <p style={{ fontSize: 13, color: COLORS.warmGrey, marginTop: 6 }}>
+                    {source}
+                  </p>
+                )}
+                {categories && categories.length > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 14 }}>
+                    {categories.map(c => (
+                      <span key={c.id} style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 4,
+                        background: `${c.color}1F`, color: COLORS.charcoal,
+                        fontSize: 12, fontWeight: 600, borderRadius: 20, padding: '3px 9px',
+                      }}>
+                        <CategoryIcon id={c.id} size={13} color={c.shade || COLORS.charcoal} /> {c.label}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </TopTag>
+          )}
+
+          {!editing && (
+            <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 2 }}>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  if (menuAnchor) { closeMenu(); return }
+                  const rect = e.currentTarget.getBoundingClientRect()
+                  setMenuAnchor({ top: rect.top, left: rect.left, width: rect.width, height: rect.height })
+                }}
+                aria-label="More options"
+                style={{
+                  width: 28, height: 28, borderRadius: '50%', border: 'none',
+                  background: 'none', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}
+              >
+                <DotsIcon />
+              </button>
+
+              {menuAnchor && (
+                <ActionMenu anchorRect={menuAnchor} rows={menuRows} onClose={closeMenu} />
+              )}
+            </div>
+          )}
+        </div>
+
+        {confirming && (
+          <div
+            style={{
+              position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.4)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 32,
+            }}
+            onClick={e => { if (e.target === e.currentTarget) setConfirming(false) }}
+          >
+            <div style={{
+              background: 'white', borderRadius: 16, padding: 20, width: '100%', maxWidth: 280,
+              boxShadow: '0 8px 30px rgba(0,0,0,0.2)', textAlign: 'center',
+            }}>
+              <p style={{ fontSize: 15, fontWeight: 600, color: COLORS.charcoal, marginBottom: 18, lineHeight: 1.4 }}>
+                Are you sure you want to delete this item?
+              </p>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button
+                  onClick={() => setConfirming(false)}
+                  style={{
+                    flex: 1, minHeight: 40, borderRadius: 10, border: 'none',
+                    background: COLORS.borderLight, color: COLORS.warmGrey,
+                    fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmDelete}
+                  style={{
+                    flex: 1, minHeight: 40, borderRadius: 10, border: 'none',
+                    background: COLORS.danger, color: 'white',
+                    fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                  }}
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  }
+
   return (
     <div style={{ position: 'relative' }}>
       <div
         style={{
           position: 'relative',
-          background: isDecided ? COLORS.milestoneTint : COLORS.cardBg, borderRadius: 14,
+          // A faint top-to-bottom gradient rather than one flat fill — the
+          // difference is subtle on purpose (a couple percent, not a visible
+          // band) but it's what keeps a plain white card from reading as a
+          // flat rectangle of color the way a single solid fill does.
+          background: isDecided
+            ? `linear-gradient(180deg, ${COLORS.milestoneTint} 0%, #EDF5F0 100%)`
+            : `linear-gradient(180deg, #FFFFFF 0%, #FCFAF8 100%)`,
+          borderRadius: 14,
           border: `2px solid ${isDecided ? COLORS.milestone : 'transparent'}`,
           boxShadow: SHADOW_CARD, overflow: 'hidden',
           opacity: fading ? 0 : 1, transition: 'opacity 200ms ease, background 150ms ease, border-color 150ms ease',
@@ -265,7 +412,7 @@ export function ItemCard({ item, categories, contributor, source, note, hearts =
                 background: `${primaryCategory.color}30`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
-                <span style={{ fontSize: 30, lineHeight: 1 }}>{primaryCategory.icon}</span>
+                <CategoryIcon id={primaryCategory.id} size={30} color={primaryCategory.shade || primaryCategory.color} />
                 {source && (
                   <span style={{
                     position: 'absolute', top: 10, left: 10,
@@ -306,7 +453,7 @@ export function ItemCard({ item, categories, contributor, source, note, hearts =
                     <div style={{
                       width: 24, height: 24, borderRadius: '50%', background: contributor.color,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 10, fontWeight: 700, color: 'white', flexShrink: 0,
+                      fontSize: 10, fontWeight: 700, color: 'white', lineHeight: 1, flexShrink: 0,
                     }}>
                       {contributor.initial}
                     </div>
@@ -356,7 +503,7 @@ export function ItemCard({ item, categories, contributor, source, note, hearts =
                       style={{
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         width: 22, height: 22, borderRadius: '50%', background: COLORS.tealTint,
-                        fontSize: 11, flexShrink: 0,
+                        fontSize: 11, lineHeight: 1, flexShrink: 0,
                       }}
                     >
                       🔗
@@ -366,9 +513,9 @@ export function ItemCard({ item, categories, contributor, source, note, hearts =
                     <span key={c.id} style={{
                       display: 'inline-flex', alignItems: 'center', gap: 4,
                       background: `${c.color}1F`, color: COLORS.charcoal,
-                      fontSize: 11, fontWeight: 600, borderRadius: 20, padding: '3px 9px',
+                      fontSize: 12, fontWeight: 600, borderRadius: 20, padding: '3px 9px',
                     }}>
-                      {c.icon} {c.label}
+                      <CategoryIcon id={c.id} size={14} color={c.shade || COLORS.charcoal} /> {c.label}
                     </span>
                   ))}
                 </div>

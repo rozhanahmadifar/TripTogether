@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { TEXT, COLORS, SPACING, SHADOW_CARD } from '../styles'
+import { MY_IDEAS_PHOTO } from '../data'
 import { BackButton } from '../components/BackButton'
 import { ActionMenu, PencilIcon, TrashIcon, EyeOffIcon } from '../components/ActionMenu'
+import { CategoryIcon, CategoryIconBadge } from '../components/CategoryIcons'
 
 // Full "My Ideas" list, reached from inside a trip. This is not a separate,
 // trip-scoped stash — it's the exact same flat `myIdeas` list shown on the
@@ -9,7 +11,8 @@ import { ActionMenu, PencilIcon, TrashIcon, EyeOffIcon } from '../components/Act
 // trip to see it. Categories are the only organizing mechanism; if someone
 // wants to keep a trip's ideas visually separate they can rename or add a
 // category for it themselves (e.g. "Inspiration – Ireland").
-export function MyIdeasScreen({ navigate, params = {}, myIdeas, allCategories, addCustomCategory, renameCategory, deleteCategory, toggleCategoryHidden }) {
+export function MyIdeasScreen({ navigate, params = {}, userName, myIdeas, allCategories, addCustomCategory, renameCategory, deleteCategory, toggleCategoryHidden }) {
+  const initial = userName ? userName.charAt(0).toUpperCase() : '?'
   const { backTo = 'groupHome' } = params
   const [addingSection, setAddingSection] = useState(false)
   const [sectionName, setSectionName]     = useState('')
@@ -39,23 +42,60 @@ export function MyIdeasScreen({ navigate, params = {}, myIdeas, allCategories, a
   return (
     <div className="screen" style={{ background: COLORS.bgMyIdeas }}>
       <div style={{ padding: '16px 20px 16px', background: 'white', borderBottom: `1px solid ${COLORS.border}` }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-          <BackButton onClick={() => navigate(backTo)} />
-          <div>
-            <p style={{ ...TEXT.subtext, marginBottom: 3, display: 'flex', alignItems: 'center', gap: 6 }}>
-              🔒 Private
-            </p>
-            <h1 style={TEXT.screenTitle}>
-              My Ideas
-            </h1>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+            <BackButton onClick={() => navigate(backTo)} />
+            <div>
+              <h1 style={TEXT.screenTitle}>
+                My Ideas
+              </h1>
+              <p style={{ ...TEXT.subtext, marginTop: 4 }}>
+                Only you can see these
+              </p>
+            </div>
+          </div>
+          {/* Same avatar recipe as Home's header — terracotta circle,
+              user's initial — so this screen doesn't feel like a
+              different app once you've navigated one level in. */}
+          <div style={{
+            width: 44, height: 44, borderRadius: '50%', background: COLORS.terracotta,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 18, fontWeight: 800, color: 'white', lineHeight: 1,
+            boxShadow: `0 2px 10px ${COLORS.terracotta}4D`, flexShrink: 0,
+          }}>
+            {initial}
           </div>
         </div>
-        <p style={{ ...TEXT.subtext, marginTop: 4 }}>
-          Only you can see these
-        </p>
       </div>
 
       <div className="screen-scroll" style={{ padding: `16px ${SPACING.screenX}px ${SPACING.scrollBottomPad}px` }}>
+        {/* Static hero — same photo/overlay recipe as Home's My Ideas
+            card, but not a button here: this screen already IS that
+            destination, so there's no chevron or onClick, just the
+            same warm, private-journal framing carried over. */}
+        <div style={{
+          position: 'relative',
+          backgroundImage: [
+            `linear-gradient(90deg, rgba(253,247,238,0.97) 0%, rgba(253,247,238,0.95) 48%, rgba(253,247,238,0.55) 65%, rgba(253,247,238,0.15) 100%)`,
+            `url("${MY_IDEAS_PHOTO}")`,
+          ].join(', '),
+          backgroundSize: 'cover, cover',
+          backgroundPosition: 'center, center 38%',
+          backgroundRepeat: 'no-repeat, no-repeat',
+          backgroundColor: COLORS.bgMyIdeas,
+          border: `1px solid ${COLORS.borderLight}`,
+          borderRadius: 20, padding: '22px 20px',
+          marginBottom: SPACING.cardGap,
+          boxShadow: '0 4px 16px rgba(26,18,12,0.08)',
+        }}>
+          <h3 style={{ ...TEXT.cardTitle, fontSize: 17, color: COLORS.charcoal, marginBottom: 6 }}>
+            Your private inspiration space
+          </h3>
+          <p style={{ ...TEXT.subtext, color: COLORS.warmGrey, maxWidth: 220 }}>
+            Save places, videos, notes and ideas for your next adventures.
+          </p>
+        </div>
+
         <div style={{
           background: COLORS.cardBg, borderRadius: 16, overflow: 'hidden',
           boxShadow: SHADOW_CARD,
@@ -66,13 +106,8 @@ export function MyIdeasScreen({ navigate, params = {}, myIdeas, allCategories, a
             return (
               <div key={cat.id} style={{ borderBottom: `1px solid ${COLORS.borderLight}` }}>
                 <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <div style={{
-                    width: 42, height: 42, borderRadius: '50%',
-                    background: `${cat.color}2A`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 18, flexShrink: 0, marginLeft: 16,
-                  }}>
-                    {cat.icon}
+                  <div style={{ marginLeft: 16 }}>
+                    <CategoryIconBadge id={cat.id} tint={cat.color} shade={cat.shade} />
                   </div>
 
                   {isRenaming ? (
@@ -143,61 +178,6 @@ export function MyIdeasScreen({ navigate, params = {}, myIdeas, allCategories, a
             />
           )}
 
-          {/* Add a section */}
-          <div style={{ padding: '8px 16px 12px' }}>
-            {!addingSection ? (
-              <button
-                onClick={() => setAddingSection(true)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 8,
-                  background: 'none', border: 'none', cursor: 'pointer',
-                  fontSize: 13, color: COLORS.teal, fontWeight: 600, padding: '6px 0',
-                }}
-              >
-                <span style={{ fontSize: 16, lineHeight: 1 }}>+</span>
-                Add a section
-              </button>
-            ) : (
-              <div style={{ display: 'flex', gap: 8, paddingTop: 4 }}>
-                <input
-                  autoFocus
-                  value={sectionName}
-                  onChange={e => setSectionName(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter') handleAddSection()
-                    if (e.key === 'Escape') { setAddingSection(false); setSectionName('') }
-                  }}
-                  placeholder="Section name…"
-                  style={{
-                    flex: 1, height: 40, borderRadius: 10,
-                    border: `1.5px solid ${COLORS.teal}`,
-                    padding: '0 12px', fontSize: 14, color: COLORS.charcoal,
-                    background: COLORS.bgMyIdeas, fontFamily: 'inherit',
-                  }}
-                />
-                <button
-                  onClick={handleAddSection}
-                  disabled={!sectionName.trim()}
-                  style={{
-                    background: sectionName.trim() ? COLORS.teal : COLORS.border,
-                    color: sectionName.trim() ? 'white' : COLORS.warmGrey,
-                    border: 'none', borderRadius: 10, padding: '0 14px',
-                    fontSize: 13, fontWeight: 700,
-                    cursor: sectionName.trim() ? 'pointer' : 'default', flexShrink: 0,
-                  }}
-                >
-                  Add
-                </button>
-                <button
-                  onClick={() => { setAddingSection(false); setSectionName('') }}
-                  style={{ background: 'none', border: 'none', color: COLORS.warmGrey, fontSize: 20, cursor: 'pointer', padding: '0 4px', flexShrink: 0 }}
-                >
-                  ×
-                </button>
-              </div>
-            )}
-          </div>
-
           {/* Hidden categories — collapsed out of the main list, one tap to bring back */}
           {hiddenCategories.length > 0 && (
             <div style={{ borderTop: `1px solid ${COLORS.borderLight}`, padding: '8px 16px 12px' }}>
@@ -215,7 +195,7 @@ export function MyIdeasScreen({ navigate, params = {}, myIdeas, allCategories, a
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 4 }}>
                   {hiddenCategories.map(cat => (
                     <div key={cat.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 0' }}>
-                      <span style={{ fontSize: 15, flexShrink: 0 }}>{cat.icon}</span>
+                      <CategoryIcon id={cat.id} size={15} color={cat.shade || COLORS.warmGrey} />
                       <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: COLORS.warmGrey }}>{cat.label}</span>
                       <button
                         onClick={() => toggleCategoryHidden(cat.id)}
@@ -230,6 +210,68 @@ export function MyIdeasScreen({ navigate, params = {}, myIdeas, allCategories, a
                   ))}
                 </div>
               )}
+            </div>
+          )}
+        </div>
+
+        {/* Add a section — its own dashed-border box below the category
+            list, same treatment as MyTripsScreen's "+ Start a New Trip"
+            button, instead of a plain inline text link inside the list
+            card. */}
+        <div style={{ marginTop: 12 }}>
+          {!addingSection ? (
+            <button
+              onClick={() => setAddingSection(true)}
+              style={{
+                width: '100%', height: 48, background: 'white',
+                border: `1.5px dashed ${COLORS.border}`, borderRadius: 14,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                cursor: 'pointer', fontSize: 14, color: COLORS.teal, fontWeight: 600,
+              }}
+            >
+              <span style={{ fontSize: 16, lineHeight: 1 }}>+</span>
+              Add a section
+            </button>
+          ) : (
+            <div style={{
+              display: 'flex', gap: 8, background: 'white', borderRadius: 14,
+              border: `1px solid ${COLORS.borderLight}`, padding: 10,
+            }}>
+              <input
+                autoFocus
+                value={sectionName}
+                onChange={e => setSectionName(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') handleAddSection()
+                  if (e.key === 'Escape') { setAddingSection(false); setSectionName('') }
+                }}
+                placeholder="Section name…"
+                style={{
+                  flex: 1, height: 40, borderRadius: 10,
+                  border: `1.5px solid ${COLORS.teal}`,
+                  padding: '0 12px', fontSize: 14, color: COLORS.charcoal,
+                  background: COLORS.bgMyIdeas, fontFamily: 'inherit',
+                }}
+              />
+              <button
+                onClick={handleAddSection}
+                disabled={!sectionName.trim()}
+                style={{
+                  background: sectionName.trim() ? COLORS.teal : COLORS.border,
+                  color: sectionName.trim() ? 'white' : COLORS.warmGrey,
+                  border: 'none', borderRadius: 10, padding: '0 14px',
+                  fontSize: 13, fontWeight: 700,
+                  cursor: sectionName.trim() ? 'pointer' : 'default', flexShrink: 0,
+                }}
+              >
+                Add
+              </button>
+              <button
+                onClick={() => { setAddingSection(false); setSectionName('') }}
+                style={{ background: 'none', border: 'none', color: COLORS.warmGrey, fontSize: 20, cursor: 'pointer', padding: '0 4px', flexShrink: 0 }}
+              >
+                ×
+              </button>
             </div>
           )}
         </div>

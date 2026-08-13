@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { PLATFORM_COLORS, CATEGORY_HINTS, timeAgo, truncateName, isImagePhoto, displayTitle } from '../data'
 import { TEXT, COLORS, SPACING } from '../styles'
 import { BackButton } from '../components/BackButton'
+import { CategoryIcon } from '../components/CategoryIcons'
 
 export function ItemDetailScreen({ navigate, params = {}, myIdeas, trips, addToGroup, updateMyIdea, allCategories }) {
   // A share flow with three possible stages: 'trip' (only shown when more
@@ -66,7 +67,14 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, trips, addToG
     if (pickedCategories.length === 0 || !targetTrip || alreadySharedWithTarget) return
     addToGroup({ title: item.title, note: item.note, link: item.link, platform: item.platform, categoryIds: pickedCategories, hasPhoto: item.hasPhoto, photo: item.photo, tripId: targetTrip.id })
     updateMyIdea(item.id, { sharedTripId: targetTrip.id })
-    navigate('shareSuccess', { categoryIds: pickedCategories })
+    // `tripId` is passed explicitly rather than left for ShareSuccessScreen
+    // to infer from "the currently open trip" — this flow never calls
+    // openTrip, so if the user's active trip differs from the one they just
+    // shared into (e.g. they picked a different trip in the share-target
+    // list), the success screen would otherwise show the wrong trip's name
+    // and its "Go to Group Space" button would open the wrong trip, making
+    // the just-shared item look like it never arrived.
+    navigate('shareSuccess', { categoryIds: pickedCategories, tripId: targetTrip.id })
   }
 
   const startEdit = () => {
@@ -111,8 +119,8 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, trips, addToG
     <div className="screen" style={{ background: 'white' }}>
       <div style={{ padding: '16px 20px 14px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: `1px solid ${COLORS.border}` }}>
         <BackButton onClick={handleBack} />
-        <p style={{ flex: 1, fontSize: 19, fontWeight: 800, color: COLORS.teal, letterSpacing: -0.4 }}>
-          {cat.icon} {cat.label}
+        <p style={{ flex: 1, fontSize: 19, fontWeight: 800, color: COLORS.teal, letterSpacing: -0.4, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <CategoryIcon id={cat.id} size={20} color={cat.shade || COLORS.teal} /> {cat.label}
         </p>
         {!editing && (
           <button
@@ -192,7 +200,9 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, trips, addToG
                     }}>
                       {selected ? '✓' : ''}
                     </span>
-                    <span style={{ fontSize: 18, width: 24, flexShrink: 0 }}>{c.icon}</span>
+                    <span style={{ width: 24, flexShrink: 0, display: 'flex', justifyContent: 'center' }}>
+                      <CategoryIcon id={c.id} size={17} color={selected ? COLORS.terracotta : (c.shade || COLORS.charcoal)} />
+                    </span>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <span style={{ fontSize: 14, fontWeight: selected ? 700 : 500, display: 'block', color: selected ? COLORS.terracotta : COLORS.charcoal }}>
                         {c.label}
@@ -241,8 +251,9 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, trips, addToG
                 <span key={c.id} style={{
                   background: `${c.color}22`, color: COLORS.charcoal,
                   fontSize: 12, fontWeight: 700, borderRadius: 8, padding: '5px 12px',
+                  display: 'inline-flex', alignItems: 'center', gap: 5,
                 }}>
-                  {c.icon} {c.label}
+                  <CategoryIcon id={c.id} size={13} color={c.shade || COLORS.charcoal} /> {c.label}
                 </span>
               ))}
               {item.platform && (
@@ -409,7 +420,7 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, trips, addToG
                                   width: 24, height: 24, borderRadius: '50%', background: m.color,
                                   border: '2px solid white', marginLeft: idx > 0 ? -8 : 0,
                                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                  fontSize: 10, fontWeight: 700, color: 'white',
+                                  fontSize: 10, fontWeight: 700, color: 'white', lineHeight: 1,
                                 }}>
                                   {m.initial}
                                 </div>
@@ -466,7 +477,9 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, trips, addToG
                           }}>
                             {selected ? '✓' : ''}
                           </span>
-                          <span style={{ fontSize: 18, width: 24, flexShrink: 0 }}>{c.icon}</span>
+                          <span style={{ width: 24, flexShrink: 0, display: 'flex', justifyContent: 'center' }}>
+                      <CategoryIcon id={c.id} size={17} color={selected ? COLORS.terracotta : (c.shade || COLORS.charcoal)} />
+                    </span>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <span style={{
                               fontSize: 14, fontWeight: selected ? 700 : 500, display: 'block',
@@ -523,7 +536,7 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, trips, addToG
                       <div style={{
                         width: 36, height: 36, borderRadius: '50%', background: m.color,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 13, fontWeight: 700, color: 'white',
+                        fontSize: 13, fontWeight: 700, color: 'white', lineHeight: 1,
                       }}>
                         {m.initial}
                       </div>

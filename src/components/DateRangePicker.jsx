@@ -100,7 +100,7 @@ export function DateRangePicker({ startDate, endDate, onChange, onDone }) {
           return (
             <div key={i} onClick={() => handleDay(d)} style={{
               height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              borderRadius: sel ? '50%' : rng ? 4 : '50%',
+              borderRadius: '50%',
               background: sel ? COLORS.teal : rng ? COLORS.sand : 'transparent',
               color: sel ? 'white' : pas ? '#C8BEB0' : d ? COLORS.charcoal : 'transparent',
               fontSize: 13, fontWeight: sel ? 700 : 400,

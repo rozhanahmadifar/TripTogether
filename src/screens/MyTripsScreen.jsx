@@ -1,23 +1,73 @@
 import { useState } from 'react'
-import { TEXT, COLORS, SPACING, tripCardBackground } from '../styles'
-import { truncateName, daysUntil, countdownLabel } from '../data'
+import { TEXT, COLORS, SPACING, SHADOW_SOFT } from '../styles'
+import { daysUntil, countdownLabel, CATEGORY_PHOTOS } from '../data'
 import { ActionMenu, TrashIcon } from '../components/ActionMenu'
 
-export function MyTripsScreen({ navigate, trips, openTrip, deleteTrip }) {
+// A compact overlapping avatar row (no name labels, "+N" overflow badge)
+// instead of the old full labeled stack — matches the reference's denser,
+// list-row-appropriate avatar treatment. Kept local to this file since
+// it's the only screen using this particular compact variant right now.
+function CompactAvatars({ members, max = 3 }) {
+  if (!members || members.length === 0) return null
+  const shown = members.slice(0, max)
+  const overflow = members.length - shown.length
+  return (
+    <div style={{ display: 'flex', alignItems: 'center' }}>
+      {shown.map((m, i) => (
+        <div key={m.id} title={m.name} style={{
+          width: 28, height: 28, borderRadius: '50%', background: m.color,
+          border: '2px solid white', marginLeft: i > 0 ? -8 : 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 11, fontWeight: 700, color: 'white', lineHeight: 1, flexShrink: 0,
+        }}>
+          {m.initial}
+        </div>
+      ))}
+      {overflow > 0 && (
+        <div style={{
+          width: 28, height: 28, borderRadius: '50%', background: 'rgba(255,255,255,0.25)',
+          border: '2px solid white', marginLeft: -8,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 11, fontWeight: 700, color: 'white', lineHeight: 1, flexShrink: 0,
+        }}>
+          +{overflow}
+        </div>
+      )}
+    </div>
+  )
+}
+
+export function MyTripsScreen({ navigate, trips, openTrip, deleteTrip, allGroupItems = [], allCategories = [] }) {
   const [menuTrip, setMenuTrip]         = useState(null)
   const [deletingTrip, setDeletingTrip] = useState(null)
 
   const confirmDelete = () => { deleteTrip(deletingTrip.id); setDeletingTrip(null) }
 
+  // Same "decided categories" metric Home's trip card and GroupHomeScreen
+  // both already use — computed per-trip here since this list shows every
+  // trip at once, not just the current one. Returns the raw decided/total
+  // counts too (not just the percent) since the card now shows both
+  // ("2 of 5 categories decided"), matching the phrasing GroupHomeScreen
+  // and GroupSpaceScreen already use.
+  const planningStats = (trip) => {
+    const tripItems = allGroupItems.filter(i => i.tripId === trip.id)
+    const visibleCategories = allCategories.filter(c => !c.hidden && !(c.id === 'destination' && trip.destinationSetAtCreation))
+    if (visibleCategories.length === 0) return null
+    const decided = visibleCategories.filter(cat =>
+      tripItems.some(i => i.categoryIds.includes(cat.id) && (i.starredBy || []).length > 0)
+    ).length
+    return { decided, total: visibleCategories.length, percent: Math.round((decided / visibleCategories.length) * 100) }
+  }
+
   return (
     <div className="screen" style={{ background: COLORS.bg }}>
       <div style={{ padding: '20px 20px 16px', background: 'white', borderBottom: `1px solid ${COLORS.border}` }}>
-        <p style={{ ...TEXT.subtext, marginBottom: 3 }}>
-          Trips you're part of
-        </p>
-        <h1 style={TEXT.screenTitle}>
+        <h1 style={{ ...TEXT.screenTitle, marginBottom: 3 }}>
           My Trips
         </h1>
+        <p style={TEXT.subtext}>
+          Trips you're planning with your crew
+        </p>
       </div>
 
       <div className="screen-scroll" style={{ padding: `16px ${SPACING.screenX}px ${SPACING.scrollBottomPad}px` }}>
@@ -50,110 +100,143 @@ export function MyTripsScreen({ navigate, trips, openTrip, deleteTrip }) {
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {trips.map(trip => (
-              // A plain div acting as the "open trip" button, not a real
-              // <button> — its own "⋯" trip-options control has to be a
-              // real button too, and a button can't contain another button
-              // (invalid HTML, breaks hydration). Same pattern as ItemCard.
-              <div
-                key={trip.id}
-                role="button"
-                tabIndex={0}
-                onClick={() => openTrip(trip.id)}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openTrip(trip.id) } }}
-                style={{ width: '100%', cursor: 'pointer', textAlign: 'left' }}
-              >
-                <div style={{
-                  ...tripCardBackground(),
-                  borderRadius: 18, padding: '22px 20px',
-                  boxShadow: `inset 0 1px 0 rgba(255,255,255,0.15), 0 8px 24px ${COLORS.teal}40`,
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                    <div>
-                      <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.6)', fontWeight: 700, letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 5 }}>
-                        Planning in progress
-                      </p>
-                      <p style={{ fontSize: 22, fontWeight: 800, color: 'white', letterSpacing: -0.4, lineHeight: 1.1 }}>
-                        {trip.name || 'Unnamed Trip'}
-                      </p>
-                    </div>
-                    <div style={{ flexShrink: 0 }}>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          const rect = e.currentTarget.getBoundingClientRect()
-                          setMenuTrip({ trip, anchor: { top: rect.top, left: rect.left, width: rect.width, height: rect.height } })
-                        }}
-                        aria-label="Trip options"
-                        style={{
-                          height: 30, border: 'none', background: 'rgba(255,255,255,0.18)', borderRadius: 8,
-                          cursor: 'pointer', padding: '0 10px', fontSize: 17, color: 'white', lineHeight: 1,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        }}
-                      >
-                        ⋯
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Destination — same supporting-detail treatment as the
-                      full trip header: smaller than the name, but its own
-                      line rather than folded into the dates. */}
-                  {trip.destination && (
-                    <p style={{ fontSize: 15, fontWeight: 700, color: 'rgba(255,255,255,0.92)', letterSpacing: -0.1, marginBottom: 6 }}>
-                      📍 {trip.destination}
-                    </p>
-                  )}
-
-                  {/* Countdown — same imminent-vs-neutral pill treatment as
-                      trip home, so the same trip reads the same urgency in
-                      both places. */}
-                  {trip.startDate && (() => {
-                    const days = daysUntil(trip.startDate)
-                    const imminent = days <= 7
-                    return (
-                      <div style={{
-                        display: 'inline-flex', alignItems: 'center', gap: 5,
-                        background: imminent ? COLORS.milestone : 'rgba(255,255,255,0.16)',
-                        borderRadius: 20, padding: '4px 10px', marginBottom: 8,
-                      }}>
-                        <span style={{ fontSize: 11 }}>🗓️</span>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: 'white' }}>
-                          {countdownLabel(days)}
-                        </span>
-                      </div>
-                    )
-                  })()}
-
-                  {trip.dates && (
-                    <p style={{ fontSize: 13, color: 'white', fontWeight: 600, marginBottom: 16 }}>
-                      📅 {trip.dates}
-                    </p>
-                  )}
-
-                  {trip.members && trip.members.length > 0 && (
-                    <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.16)' }}>
-                      {trip.members.map(m => (
-                        <div key={m.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                          <div style={{
-                            width: 36, height: 36, borderRadius: '50%',
-                            background: m.color,
-                            border: '2px solid white',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: 12, fontWeight: 700, color: 'white',
+            {trips.map(trip => {
+              const stats = planningStats(trip)
+              return (
+                // A plain div acting as the "open trip" button, not a real
+                // <button> — its own "⋯" trip-options control has to be a
+                // real button too, and a button can't contain another button
+                // (invalid HTML, breaks hydration). Same pattern as ItemCard.
+                <div
+                  key={trip.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => openTrip(trip.id)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openTrip(trip.id) } }}
+                  style={{ width: '100%', cursor: 'pointer', textAlign: 'left' }}
+                >
+                  {/* A white row card with a destination thumbnail — matches
+                      the Home screen's "Your trip" card language (same
+                      recipe: eyebrow-free header, real photo, teal progress
+                      bar) instead of the old full-bleed photo hero, so a
+                      trip reads the same way whether it's the one current
+                      trip on Home or one of several here. Wide and stretched
+                      to the full text-column height (not a small fixed
+                      square) so it reads as a real photo, not an icon. */}
+                  <div style={{
+                    background: COLORS.cardBg, border: `1px solid ${COLORS.borderLight}`,
+                    borderRadius: 20, padding: 18, boxShadow: SHADOW_SOFT,
+                  }}>
+                    {/* Fixed size, top-aligned with the title — a bit
+                        taller than the text column's own natural height so
+                        it visibly extends past the members row, matching
+                        the reference exactly (not stretched to match the
+                        column exactly, and not a small square). */}
+                    <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+                      {trip.destination && (
+                        <img
+                          src={CATEGORY_PHOTOS.destination}
+                          alt=""
+                          style={{ width: 128, height: 150, borderRadius: 18, objectFit: 'cover', flexShrink: 0 }}
+                        />
+                      )}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 4 }}>
+                          <p style={{
+                            fontSize: 18, fontWeight: 800, color: COLORS.charcoal, letterSpacing: -0.3, lineHeight: 1.2,
+                            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                           }}>
-                            {m.initial}
-                          </div>
-                          <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.85)', fontWeight: 600 }} title={m.name}>
-                            {truncateName(m.name)}
-                          </span>
+                            {trip.name || 'Unnamed Trip'}
+                          </p>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              const rect = e.currentTarget.getBoundingClientRect()
+                              setMenuTrip({ trip, anchor: { top: rect.top, left: rect.left, width: rect.width, height: rect.height } })
+                            }}
+                            aria-label="Trip options"
+                            style={{
+                              width: 26, height: 26, border: 'none', background: COLORS.borderLight, borderRadius: 8,
+                              cursor: 'pointer', fontSize: 15, color: COLORS.warmGrey, lineHeight: 1,
+                              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                            }}
+                          >
+                            ⋯
+                          </button>
                         </div>
-                      ))}
+
+                        {trip.destination && (
+                          <p style={{ fontSize: 13, fontWeight: 500, color: COLORS.warmGrey, marginBottom: 6 }}>
+                            📍 {trip.destination}
+                          </p>
+                        )}
+
+                        {/* Countdown — imminent trips (departing within a
+                            week, or already underway) get a solid green
+                            pill with a plane mark; everything further out
+                            stays a neutral sand/terracotta pill. Same
+                            urgency threshold as before, just recolored for
+                            a white card instead of a photo background. */}
+                        {trip.startDate && (() => {
+                          const days = daysUntil(trip.startDate)
+                          const imminent = days <= 7
+                          return (
+                            <div style={{
+                              display: 'inline-flex', alignItems: 'center', gap: 5,
+                              background: imminent ? COLORS.milestoneTint : COLORS.sand,
+                              borderRadius: 20, padding: '4px 10px', marginBottom: 8, marginLeft: -4,
+                            }}>
+                              <span style={{ fontSize: 11 }}>{days <= 0 ? '✈️' : '📅'}</span>
+                              <span style={{ fontSize: 11, fontWeight: 700, color: imminent ? COLORS.milestone : COLORS.terracotta }}>
+                                {countdownLabel(days)}
+                              </span>
+                            </div>
+                          )
+                        })()}
+
+                        {trip.dates && (
+                          <p style={{ fontSize: 13, color: COLORS.warmGrey, fontWeight: 500, marginBottom: trip.members?.length ? 10 : 0 }}>
+                            📅 {trip.dates}
+                          </p>
+                        )}
+
+                        {trip.members && trip.members.length > 0 && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <CompactAvatars members={trip.members} />
+                            <span style={{ fontSize: 13, color: COLORS.warmGrey, fontWeight: 500 }}>
+                              {trip.members.length} {trip.members.length === 1 ? 'member' : 'members'}
+                            </span>
+                          </div>
+                        )}
+
+                      </div>
                     </div>
-                  )}
+
+                    {/* Planning progress — a full-width section below a
+                        clear divider, separate from the photo/text row
+                        above it entirely (not mixed in alongside the
+                        photo, not a pill) — "X of Y categories decided"
+                        text with the percentage opposite it, then the bar
+                        underneath. Matches the reference's structure
+                        exactly: main info block (photo + text) on top,
+                        divider, progress info below. */}
+                    {stats && (
+                      <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${COLORS.borderLight}` }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                          <span style={{ fontSize: 13, color: COLORS.warmGrey, fontWeight: 500 }}>
+                            {stats.decided} of {stats.total} {stats.total === 1 ? 'category' : 'categories'} decided
+                          </span>
+                          <span style={{ fontSize: 13, color: COLORS.warmGrey, fontWeight: 500 }}>{stats.percent}%</span>
+                        </div>
+                        <div style={{ height: 6, background: COLORS.borderLight, borderRadius: 999, overflow: 'hidden' }}>
+                          <div style={{ width: `${stats.percent}%`, height: '100%', background: COLORS.milestone, borderRadius: 999 }} />
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
 
             <button
               onClick={() => navigate('createTrip', { backTo: 'myTrips' })}

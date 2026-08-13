@@ -103,6 +103,12 @@ export function CreateGroupTripScreen({ navigate, params = {}, startGroupTrip, u
         </h2>
       </div>
 
+      {step === 1 && (
+        <p style={{ fontSize: 13, color: COLORS.warmGrey, fontWeight: 500, margin: '4px 20px 0 68px' }}>
+          Let's start with the basics.
+        </p>
+      )}
+
       <div style={{ padding: '16px 20px 0' }}>
         <ProgressBar step={step} />
       </div>
@@ -293,7 +299,7 @@ export function CreateGroupTripScreen({ navigate, params = {}, startGroupTrip, u
                     width: 38, height: 38, borderRadius: '50%', background: colorForName(userName),
                     border: '2px solid white', boxShadow: `0 0 0 1px ${COLORS.border}`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 14, fontWeight: 700, color: 'white', flexShrink: 0,
+                    fontSize: 14, fontWeight: 700, color: 'white', lineHeight: 1, flexShrink: 0,
                   }}>
                     {(userName || '?').charAt(0).toUpperCase()}
                   </div>
@@ -317,7 +323,7 @@ export function CreateGroupTripScreen({ navigate, params = {}, startGroupTrip, u
                       width: 38, height: 38, borderRadius: '50%', background: m.color,
                       border: '2px solid white', boxShadow: `0 0 0 1px ${COLORS.border}`,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 14, fontWeight: 700, color: 'white', flexShrink: 0,
+                      fontSize: 14, fontWeight: 700, color: 'white', lineHeight: 1, flexShrink: 0,
                     }}>
                       {m.initial}
                     </div>

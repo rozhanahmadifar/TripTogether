@@ -5,6 +5,7 @@ import { BackButton } from '../components/BackButton'
 import { ActionMenu, PencilIcon, TrashIcon, EyeOffIcon } from '../components/ActionMenu'
 import { ItemCard } from '../components/ItemCard'
 import { EmptyState } from '../components/EmptyState'
+import { CategoryIcon, CategoryIconBadge } from '../components/CategoryIcons'
 
 export function GroupSpaceScreen({
   navigate, params = {}, currentTrip, groupItems, allCategories, addCustomCategory, renameCategory, deleteCategory, toggleCategoryHidden,
@@ -194,13 +195,8 @@ export function GroupSpaceScreen({
             return (
               <div key={cat.id} style={{ borderBottom: `1px solid ${COLORS.borderLight}` }}>
                 <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <div style={{
-                    width: 42, height: 42, borderRadius: '50%',
-                    background: `${cat.color}2A`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 18, flexShrink: 0, marginLeft: 16,
-                  }}>
-                    {cat.icon}
+                  <div style={{ marginLeft: 16 }}>
+                    <CategoryIconBadge id={cat.id} tint={cat.color} shade={cat.shade} />
                   </div>
 
                   {isRenaming ? (
@@ -257,7 +253,7 @@ export function GroupSpaceScreen({
                                 background: colorForName(name),
                                 border: '2px solid white',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                fontSize: 9, fontWeight: 700, color: 'white',
+                                fontSize: 9, fontWeight: 700, color: 'white', lineHeight: 1,
                                 marginLeft: idx > 0 ? -7 : 0,
                               }}>
                                 {name.charAt(0).toUpperCase()}
@@ -373,7 +369,7 @@ export function GroupSpaceScreen({
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 4 }}>
                   {hiddenCategories.map(cat => (
                     <div key={cat.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 0' }}>
-                      <span style={{ fontSize: 15, flexShrink: 0 }}>{cat.icon}</span>
+                      <CategoryIcon id={cat.id} size={15} color={cat.shade || COLORS.warmGrey} />
                       <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: COLORS.warmGrey }}>{cat.label}</span>
                       <button
                         onClick={() => toggleCategoryHidden(cat.id)}

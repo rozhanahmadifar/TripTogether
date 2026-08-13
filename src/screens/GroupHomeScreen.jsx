@@ -1,8 +1,11 @@
 import { useState } from 'react'
-import { colorForName, truncateName, isValidEmail, daysUntil, countdownLabel } from '../data'
+import { colorForName, truncateName, isValidEmail, daysUntil, countdownLabel, CATEGORY_PHOTOS } from '../data'
 import { DateRangePicker, fmtDate } from '../components/DateRangePicker'
 import { BackButton } from '../components/BackButton'
 import { XIcon } from '../components/ActionMenu'
+import { ChatIcon } from '../components/TabIcons'
+import { CategoryIconBadge } from '../components/CategoryIcons'
+import { ProgressRing } from '../components/ProgressRing'
 import { TEXT, COLORS, SPACING, SHADOW_CARD, tripCardBackground } from '../styles'
 
 // Proportional rather than a fixed "out of 6" — the category list is
@@ -28,6 +31,34 @@ function PencilIcon({ size = 13, color = COLORS.warmGrey }) {
   )
 }
 
+function ClipboardIcon({ size = 18, color }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="5" y="4" width="14" height="17" rx="2" />
+      <path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1" />
+      <path d="M9 11h6M9 15h6M9 19h3" />
+    </svg>
+  )
+}
+
+// The shared circular footprint every leading row-icon on this screen now
+// uses (Discussion / Categories decided / Trip Summary) — before this, one
+// row's icon was a bare 20px emoji and another was a 44px progress ring
+// with its own background disc, so the three stacked rows didn't line up
+// or carry the same visual weight. Giving all three the same badge size
+// (or, for the ring, the same outer diameter) fixes that.
+const ROW_ICON_SIZE = 36
+function RowIconBadge({ children, bg = COLORS.tealTint }) {
+  return (
+    <div style={{
+      width: ROW_ICON_SIZE, height: ROW_ICON_SIZE, borderRadius: '50%', flexShrink: 0,
+      background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }}>
+      {children}
+    </div>
+  )
+}
+
 function IdeasCategoryRow({ cat, count, isLast, onClick }) {
   return (
     <button
@@ -39,12 +70,7 @@ function IdeasCategoryRow({ cat, count, isLast, onClick }) {
         borderBottom: isLast ? 'none' : `1px solid ${COLORS.borderLight}`,
       }}
     >
-      <div style={{
-        width: 32, height: 32, borderRadius: '50%', background: `${cat.color}2A`,
-        display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, flexShrink: 0,
-      }}>
-        {cat.icon}
-      </div>
+      <CategoryIconBadge id={cat.id} tint={cat.color} shade={cat.shade} size={32} />
       <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: COLORS.charcoal }}>{cat.label}</span>
       <span style={{ fontSize: 13, color: COLORS.warmGrey }}>{count === 0 ? '—' : count}</span>
     </button>
@@ -62,12 +88,7 @@ function GroupCategoryRow({ cat, count, contributors, isLast, onClick }) {
         borderBottom: isLast ? 'none' : `1px solid ${COLORS.borderLight}`,
       }}
     >
-      <div style={{
-        width: 32, height: 32, borderRadius: '50%', background: `${cat.color}2A`,
-        display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, flexShrink: 0,
-      }}>
-        {cat.icon}
-      </div>
+      <CategoryIconBadge id={cat.id} tint={cat.color} shade={cat.shade} size={32} />
       <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: COLORS.charcoal }}>{cat.label}</span>
       <span style={{ fontSize: 13, color: COLORS.warmGrey }}>{count === 0 ? '—' : count}</span>
       {contributors.length > 0 && (
@@ -209,14 +230,14 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
 
       <div className="screen-scroll" style={{ padding: `16px ${SPACING.screenX}px ${SPACING.scrollBottomPad}px` }}>
 
-        {/* Trip card — rich collaborative gradient with a subtle dot
-            texture (same treatment as the "Plan a trip together" card),
-            feels alive rather than a flat color fill. */}
+        {/* Trip card — a real destination photo once one's set (see
+            tripCardBackground in styles.js), the gradient/dot-texture
+            treatment as a fallback before that. */}
         <div style={{
-          ...tripCardBackground(),
+          ...tripCardBackground(currentTrip.destination ? CATEGORY_PHOTOS.destination : null),
           borderRadius: 18, padding: '24px 22px',
           marginBottom: SPACING.sectionGap,
-          boxShadow: `inset 0 1px 0 rgba(255,255,255,0.15), 0 8px 24px ${COLORS.teal}40`,
+          boxShadow: `inset 0 1px 0 rgba(255,255,255,0.15), 0 2px 4px ${COLORS.teal}30, 0 16px 36px ${COLORS.teal}45`,
         }}>
           {!cardEditing ? (
             <>
@@ -324,7 +345,7 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
                         background: m.color,
                         border: '2px solid white',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 15, fontWeight: 700, color: 'white',
+                        fontSize: 15, fontWeight: 700, color: 'white', lineHeight: 1,
                       }}>
                         {m.initial}
                       </div>
@@ -412,7 +433,7 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
               <div style={{ marginBottom: 14 }}>
                 {tripMembers.map(m => (
                   <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-                    <div style={{ width: 28, height: 28, borderRadius: '50%', background: m.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: 'white', flexShrink: 0 }}>
+                    <div style={{ width: 28, height: 28, borderRadius: '50%', background: m.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: 'white', lineHeight: 1, flexShrink: 0 }}>
                       {m.initial}
                     </div>
                     <span style={{ flex: 1, color: 'white', fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }} title={m.name}>{truncateName(m.name)}</span>
@@ -492,7 +513,9 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
               marginBottom: SPACING.cardGap, fontFamily: 'inherit',
             }}
           >
-            <span style={{ fontSize: 20 }}>💬</span>
+            <RowIconBadge>
+              <ChatIcon active size={17} />
+            </RowIconBadge>
             <div style={{ flex: 1, minWidth: 0 }}>
               <p style={{ fontSize: 14, fontWeight: 700, color: COLORS.charcoal, letterSpacing: -0.2 }}>
                 {pinnedThread.title} discussion
@@ -510,7 +533,11 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
             testing showed users didn't find it unaided otherwise. The
             subtext line changes with how much of the trip is decided, and
             a fully-decided trip — the biggest milestone there is — gets
-            the milestone-colored treatment instead of the plain card. */}
+            the milestone-colored treatment instead of the plain card. A
+            real progress ring replaces the old plain emoji here — trip
+            progress is the one number this whole app is building toward,
+            so it gets a real visual instead of being conveyed by text
+            alone (design-refresh step 3: Trip Home richness). */}
         {visibleCategories.length > 0 && (
           <button
             onClick={() => navigate('groupSpace', { initialView: 'decided' })}
@@ -523,10 +550,17 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
               marginBottom: SPACING.cardGap, fontFamily: 'inherit',
             }}
           >
-            <span style={{ fontSize: 20 }}>{allCategoriesDecided ? '🎉' : '✅'}</span>
+            <ProgressRing
+              decided={decidedCategoriesCount}
+              total={visibleCategories.length}
+              size={ROW_ICON_SIZE}
+              strokeWidth={3.5}
+              color={allCategoriesDecided ? COLORS.milestone : COLORS.action}
+              trackColor={allCategoriesDecided ? 'white' : COLORS.borderLight}
+            />
             <div style={{ flex: 1, minWidth: 0 }}>
               <p style={{ fontSize: 14, fontWeight: 700, color: allCategoriesDecided ? COLORS.milestone : COLORS.charcoal, letterSpacing: -0.2 }}>
-                {decidedCategoriesCount} of {visibleCategories.length} {visibleCategories.length === 1 ? 'category' : 'categories'} decided
+                {allCategoriesDecided ? '🎉 ' : ''}{decidedCategoriesCount} of {visibleCategories.length} {visibleCategories.length === 1 ? 'category' : 'categories'} decided
               </p>
               <p style={{ fontSize: 12, color: allCategoriesDecided ? COLORS.milestone : COLORS.warmGrey, fontWeight: allCategoriesDecided ? 700 : 400, marginTop: 1 }}>
                 {progressMicrocopy(decidedCategoriesCount, visibleCategories.length)}
@@ -547,7 +581,9 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
             marginBottom: SPACING.cardGap, fontFamily: 'inherit',
           }}
         >
-          <span style={{ fontSize: 20 }}>📋</span>
+          <RowIconBadge bg={COLORS.sand}>
+            <ClipboardIcon size={17} color={COLORS.terracotta} />
+          </RowIconBadge>
           <div style={{ flex: 1, minWidth: 0 }}>
             <p style={{ fontSize: 14, fontWeight: 700, color: COLORS.charcoal, letterSpacing: -0.2 }}>
               Trip Summary

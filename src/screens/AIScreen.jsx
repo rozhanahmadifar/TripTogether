@@ -185,7 +185,7 @@ export function AIScreen({ currentTrip, groupItems }) {
               <div style={{
                 width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
                 background: COLORS.terracotta,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, lineHeight: 1,
               }}>
                 ✨
               </div>
@@ -277,7 +277,7 @@ export function AIScreen({ currentTrip, groupItems }) {
           style={{
             width: 48, height: 48, borderRadius: '50%', border: 'none',
             background: canSend ? COLORS.action : COLORS.border,
-            color: canSend ? 'white' : COLORS.warmGrey,
+            color: canSend ? 'white' : COLORS.warmGrey, lineHeight: 1,
             fontSize: 20, cursor: canSend ? 'pointer' : 'default',
             flexShrink: 0,
             display: 'flex', alignItems: 'center', justifyContent: 'center',

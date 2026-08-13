@@ -13,6 +13,11 @@ dist-ssr
 *.local
 .env
 screenshots
+.shots-tmp
+walkthrough-latest
+competitor-research
+TripTogether-Screenshots.png
+TripTogether-Walkthrough.pdf
 
 # Editor directories and files
 .vscode/*

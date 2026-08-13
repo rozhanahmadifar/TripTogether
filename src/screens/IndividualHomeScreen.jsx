@@ -1,55 +1,56 @@
-import { useState } from 'react'
-import { TEXT, COLORS, SPACING, SHADOW_CARD } from '../styles'
-import { truncateName } from '../data'
-import { ActionMenu, PencilIcon, TrashIcon, EyeOffIcon } from '../components/ActionMenu'
+import { COLORS, SPACING, tripCardBackground } from '../styles'
+import { PLAN_TOGETHER_PHOTO, MY_IDEAS_PHOTO, CATEGORY_PHOTOS } from '../data'
 
-export function IndividualHomeScreen({ navigate, userName, myIdeas, currentTrip, openTrip, allCategories, addCustomCategory, renameCategory, deleteCategory, toggleCategoryHidden }) {
-  const [ideasOpen, setIdeasOpen]       = useState(false)
-  const [addingSection, setAddingSection] = useState(false)
-  const [sectionName, setSectionName]   = useState('')
-  const [menuCat, setMenuCat]           = useState(null)
-  const [renamingId, setRenamingId]     = useState(null)
-  const [renameValue, setRenameValue]   = useState('')
-  const [deletingCat, setDeletingCat]   = useState(null)
-  const [hiddenOpen, setHiddenOpen]     = useState(false)
+// One explicit type scale for the whole screen — header included — so every
+// text element traces to a deliberate tier instead of a hand-typed one-off
+// size. Six tiers, each with one clear job:
+//   DISPLAY   28/800            — the "TripTogether" wordmark, once per screen
+//   HEADLINE  19/800            — each card's main headline
+//   BODY      14/500            — descriptions, metadata lines, the greeting
+//   CAPTION   12/500            — the tagline — one deliberate step below BODY
+//   LABEL     11/700 uppercase  — eyebrow tags, the status pill, the percent
+//   BUTTON    15/600            — every button label
+const DISPLAY = { fontSize: 28, fontWeight: 800, letterSpacing: -0.6, lineHeight: 1.05 }
+const HEADLINE = { fontSize: 19, fontWeight: 800, letterSpacing: -0.3, lineHeight: 1.2 }
+const BODY = { fontSize: 14, fontWeight: 500, lineHeight: 1.45 }
+const CAPTION = { fontSize: 12, fontWeight: 500, lineHeight: 1.4 }
+const LABEL = { fontSize: 11, fontWeight: 700, letterSpacing: 1.2, textTransform: 'uppercase' }
+const BUTTON = { fontSize: 15, fontWeight: 600, letterSpacing: -0.2 }
 
+export function IndividualHomeScreen({ navigate, userName, myIdeas, currentTrip, openTrip, groupItems = [], allCategories = [] }) {
   const initial = userName ? userName.charAt(0).toUpperCase() : '?'
   const totalItems = myIdeas.length
-  const visibleCategories = allCategories.filter(c => !c.hidden)
-  const hiddenCategories = allCategories.filter(c => c.hidden)
 
-  const handleAddSection = () => {
-    if (!sectionName.trim()) return
-    addCustomCategory(sectionName.trim())
-    setSectionName('')
-    setAddingSection(false)
-  }
-
-  const startRename = (cat) => { setRenamingId(cat.id); setRenameValue(cat.label); setMenuCat(null) }
-  const confirmRename = () => {
-    if (renameValue.trim()) renameCategory(renamingId, renameValue.trim())
-    setRenamingId(null)
-  }
-  const cancelRename = () => setRenamingId(null)
-  const confirmDelete = () => { deleteCategory(deletingCat.id); setDeletingCat(null) }
+  // Same "decided categories" metric GroupHomeScreen already computes —
+  // reused here, not reinvented, so the percentage shown on this compact
+  // card always agrees with the real one inside the trip.
+  const visibleCategories = allCategories.filter(c => !c.hidden && !(c.id === 'destination' && currentTrip?.destinationSetAtCreation))
+  const decidedCount = visibleCategories.filter(cat =>
+    groupItems.some(i => i.categoryIds.includes(cat.id) && (i.starredBy || []).length > 0)
+  ).length
+  const totalCategories = visibleCategories.length
+  const percent = totalCategories > 0 ? Math.round((decidedCount / totalCategories) * 100) : 0
 
   return (
     <div className="screen" style={{ background: COLORS.bgMyIdeas }}>
       {/* Header */}
-      <div style={{ padding: '20px 20px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ padding: '20px 20px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <p style={{ ...TEXT.greeting, marginBottom: 2 }}>
+          <p style={{ ...BODY, color: COLORS.warmGrey, marginBottom: 6 }}>
             Hello, {userName} 👋
           </p>
-          <h1 style={TEXT.appName}>
+          <h1 style={{ ...DISPLAY, color: COLORS.teal, marginBottom: 4 }}>
             TripTogether
           </h1>
+          <p style={{ ...CAPTION, color: COLORS.warmGrey }}>
+            Plan better trips, together.
+          </p>
         </div>
         <div style={{
           width: 44, height: 44, borderRadius: '50%', background: COLORS.terracotta,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 18, fontWeight: 800, color: 'white',
-          boxShadow: `0 2px 10px ${COLORS.terracotta}4D`,
+          fontSize: 18, fontWeight: 800, color: 'white', lineHeight: 1,
+          boxShadow: `0 2px 10px ${COLORS.terracotta}4D`, flexShrink: 0,
         }}>
           {initial}
         </div>
@@ -57,343 +58,198 @@ export function IndividualHomeScreen({ navigate, userName, myIdeas, currentTrip,
 
       <div className="screen-scroll" style={{ padding: `4px ${SPACING.screenX}px ${SPACING.scrollBottomPad}px` }}>
 
-        {/* My Ideas collapsible card — terracotta accent border signals "this is yours" */}
-        <div style={{ marginBottom: SPACING.sectionGap }}>
-          <p style={{ ...TEXT.sectionHeading, marginBottom: SPACING.headingGap }}>
-            My Ideas
+        {/* My Ideas — a light, paper-toned card (dark text, a lock mark, the
+            actual photo showing through clearly) rather than a moody dark
+            scrim, matching the reference's "journal" feel for a private,
+            personal space — distinct from the group cards below, which stay
+            bold/photo-forward since they're collaborative. The overlay is a
+            horizontal (not diagonal) fade — opacity depends only on how far
+            right you are, not on vertical position too — so every line of
+            text sits fully inside the opaque zone regardless of how long it
+            runs, instead of the longest line drifting into a faded patch. */}
+        <button
+          onClick={() => navigate('myIdeasFull', { backTo: 'individualHome' })}
+          style={{
+            width: '100%', border: `1px solid ${COLORS.borderLight}`, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit',
+            position: 'relative',
+            backgroundImage: [
+              `linear-gradient(90deg, rgba(253,247,238,0.97) 0%, rgba(253,247,238,0.95) 48%, rgba(253,247,238,0.55) 65%, rgba(253,247,238,0.15) 100%)`,
+              `url("${MY_IDEAS_PHOTO}")`,
+            ].join(', '),
+            backgroundSize: 'cover, cover',
+            backgroundPosition: 'center, center 38%',
+            backgroundRepeat: 'no-repeat, no-repeat',
+            backgroundColor: COLORS.bgMyIdeas,
+            borderRadius: 20, padding: '22px 20px 28px',
+            marginBottom: SPACING.cardGap,
+            boxShadow: '0 4px 16px rgba(26,18,12,0.08)',
+          }}
+        >
+          <p style={{ ...LABEL, color: COLORS.terracotta, marginBottom: 8 }}>
+            🔒 My ideas
           </p>
-
-          <div style={{
-            background: COLORS.cardBg, borderRadius: 14,
-            boxShadow: SHADOW_CARD,
-            borderLeft: `3px solid ${COLORS.terracotta}`,
-            overflow: 'hidden',
-          }}>
-            {/* Card header — always visible */}
-            <button
-              onClick={() => setIdeasOpen(o => !o)}
-              style={{
-                width: '100%', border: 'none', background: 'none', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', padding: '16px 16px',
-                textAlign: 'left',
-              }}
-            >
-              <span style={{ fontSize: 18, marginRight: 12 }}>💡</span>
-              <span style={{ flex: 1, ...TEXT.cardTitle }}>My Ideas</span>
-              <span style={{
-                fontSize: 12, fontWeight: 600, color: COLORS.warmGrey,
-                background: COLORS.sand, borderRadius: 20, padding: '3px 10px', marginRight: 10,
-              }}>
-                {totalItems} saved
-              </span>
-              <span style={{
-                fontSize: 18, color: COLORS.warmGrey,
-                display: 'inline-block',
-                transform: ideasOpen ? 'rotate(90deg)' : 'rotate(0deg)',
-                transition: 'transform 0.2s ease',
-              }}>›</span>
-            </button>
-
-            {/* Expandable body */}
-            {ideasOpen && (
-              <>
-                <div style={{ height: 1, background: COLORS.borderLight }} />
-                {visibleCategories.map((cat, i) => {
-                  const count = myIdeas.filter(item => item.categoryIds.includes(cat.id)).length
-                  const isRenaming = renamingId === cat.id
-                  return (
-                    <div
-                      key={cat.id}
-                      style={{
-                        display: 'flex', alignItems: 'center',
-                        borderBottom: i < visibleCategories.length - 1 ? `1px solid ${COLORS.borderLight}` : 'none',
-                      }}
-                    >
-                      <div style={{
-                        width: 38, height: 38, borderRadius: '50%',
-                        background: `${cat.color}2A`,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 17, flexShrink: 0, marginLeft: 16,
-                      }}>
-                        {cat.icon}
-                      </div>
-                      {isRenaming ? (
-                        <div style={{ flex: 1, display: 'flex', gap: 8, padding: '10px 8px 10px 12px' }}>
-                          <input
-                            autoFocus
-                            value={renameValue}
-                            onChange={e => setRenameValue(e.target.value)}
-                            onKeyDown={e => { if (e.key === 'Enter') confirmRename(); if (e.key === 'Escape') cancelRename() }}
-                            style={{
-                              flex: 1, height: 36, borderRadius: 8,
-                              border: `1.5px solid ${COLORS.teal}`, padding: '0 10px',
-                              fontSize: 14, color: COLORS.charcoal, background: COLORS.bgMyIdeas, fontFamily: 'inherit',
-                            }}
-                          />
-                          <button onClick={confirmRename} style={{ background: COLORS.teal, color: 'white', border: 'none', borderRadius: 8, padding: '0 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Save</button>
-                          <button onClick={cancelRename} style={{ background: 'none', border: 'none', color: COLORS.warmGrey, fontSize: 18, cursor: 'pointer', padding: '0 4px' }}>×</button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => navigate('myIdeasCategory', { categoryId: cat.id, backTo: 'individualHome' })}
-                          style={{
-                            flex: 1, border: 'none', background: 'none', cursor: 'pointer',
-                            display: 'flex', alignItems: 'center', gap: 14,
-                            padding: '15px 12px', textAlign: 'left', minWidth: 0,
-                          }}
-                        >
-                          <span style={{ ...TEXT.categoryRowName, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {cat.label}
-                          </span>
-                          <span style={{ fontSize: 13, color: COLORS.warmGrey, flexShrink: 0 }}>
-                            {count === 0 ? '—' : count}
-                          </span>
-                        </button>
-                      )}
-                      {!isRenaming && (
-                        <button
-                          onClick={(e) => {
-                            const rect = e.currentTarget.getBoundingClientRect()
-                            setMenuCat({ cat, anchor: { top: rect.top, left: rect.left, width: rect.width, height: rect.height } })
-                          }}
-                          style={{
-                            border: 'none', background: 'none', cursor: 'pointer',
-                            padding: '15px 16px', fontSize: 15, color: COLORS.subtleIcon, flexShrink: 0,
-                          }}
-                        >
-                          ⋯
-                        </button>
-                      )}
-                    </div>
-                  )
-                })}
-
-                {menuCat && (
-                  <ActionMenu
-                    anchorRect={menuCat.anchor}
-                    rows={[
-                      { icon: <PencilIcon />, label: 'Rename', color: COLORS.charcoal, onClick: () => startRename(menuCat.cat) },
-                      { icon: <EyeOffIcon />, label: 'Hide', color: COLORS.charcoal, onClick: () => { toggleCategoryHidden(menuCat.cat.id); setMenuCat(null) } },
-                      { icon: <TrashIcon />, label: 'Delete', color: COLORS.danger, onClick: () => { setDeletingCat(menuCat.cat); setMenuCat(null) } },
-                    ]}
-                    onClose={() => setMenuCat(null)}
-                  />
-                )}
-
-                {/* Add a section */}
-                <div style={{ borderTop: `1px solid ${COLORS.borderLight}`, padding: '8px 16px 12px' }}>
-                  {!addingSection ? (
-                    <button
-                      onClick={() => setAddingSection(true)}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: 8,
-                        background: 'none', border: 'none', cursor: 'pointer',
-                        fontSize: 13, color: COLORS.teal, fontWeight: 600, padding: '6px 0',
-                      }}
-                    >
-                      <span style={{ fontSize: 16, lineHeight: 1 }}>+</span>
-                      Add a section
-                    </button>
-                  ) : (
-                    <div style={{ display: 'flex', gap: 8, paddingTop: 4 }}>
-                      <input
-                        autoFocus
-                        value={sectionName}
-                        onChange={e => setSectionName(e.target.value)}
-                        onKeyDown={e => { if (e.key === 'Enter') handleAddSection(); if (e.key === 'Escape') { setAddingSection(false); setSectionName('') } }}
-                        placeholder="Section name…"
-                        style={{
-                          flex: 1, height: 40, borderRadius: 10,
-                          border: `1.5px solid ${COLORS.teal}`,
-                          padding: '0 12px', fontSize: 14, color: COLORS.charcoal,
-                          background: COLORS.bgMyIdeas, fontFamily: 'inherit',
-                        }}
-                      />
-                      <button
-                        onClick={handleAddSection}
-                        disabled={!sectionName.trim()}
-                        style={{
-                          background: sectionName.trim() ? COLORS.teal : COLORS.border,
-                          color: sectionName.trim() ? 'white' : COLORS.warmGrey,
-                          border: 'none', borderRadius: 10, padding: '0 14px',
-                          fontSize: 13, fontWeight: 700, cursor: sectionName.trim() ? 'pointer' : 'default',
-                          flexShrink: 0,
-                        }}
-                      >
-                        Add
-                      </button>
-                      <button
-                        onClick={() => { setAddingSection(false); setSectionName('') }}
-                        style={{
-                          background: 'none', border: 'none', color: COLORS.warmGrey,
-                          fontSize: 20, cursor: 'pointer', padding: '0 4px', flexShrink: 0,
-                        }}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {/* Hidden categories — collapsed out of the main list, one tap to bring back */}
-                {hiddenCategories.length > 0 && (
-                  <div style={{ borderTop: `1px solid ${COLORS.borderLight}`, padding: '8px 16px 12px' }}>
-                    <button
-                      onClick={() => setHiddenOpen(o => !o)}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: 6,
-                        background: 'none', border: 'none', cursor: 'pointer',
-                        fontSize: 13, color: COLORS.warmGrey, fontWeight: 600, padding: '6px 0',
-                      }}
-                    >
-                      {hiddenCategories.length} hidden {hiddenCategories.length === 1 ? 'category' : 'categories'} {hiddenOpen ? '▾' : '▸'}
-                    </button>
-                    {hiddenOpen && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 4 }}>
-                        {hiddenCategories.map(cat => (
-                          <div key={cat.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 0' }}>
-                            <span style={{ fontSize: 15, flexShrink: 0 }}>{cat.icon}</span>
-                            <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: COLORS.warmGrey }}>{cat.label}</span>
-                            <button
-                              onClick={() => toggleCategoryHidden(cat.id)}
-                              style={{
-                                background: COLORS.tealTint, color: COLORS.teal, border: 'none',
-                                borderRadius: 8, padding: '5px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer',
-                              }}
-                            >
-                              Show
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Trip summary card — shown once a group trip exists */}
-        {currentTrip && (
-          <div style={{
-            background: COLORS.cardBg, borderRadius: 14, padding: 20,
-            boxShadow: SHADOW_CARD, marginBottom: SPACING.sectionGap,
-          }}>
-            <p style={{ ...TEXT.sectionHeading, marginBottom: 6 }}>Your trip</p>
-            <h3 style={{ fontSize: 19, fontWeight: 800, color: COLORS.charcoal, letterSpacing: -0.3, marginBottom: 6 }}>
-              {currentTrip.name}
-            </h3>
-            <p style={{
-              fontSize: 13, fontWeight: 400, marginBottom: 16,
-              color: (currentTrip.destination || currentTrip.dates) ? COLORS.warmGrey : '#B5AA9C',
-              fontStyle: (currentTrip.destination || currentTrip.dates) ? 'normal' : 'italic',
-            }}>
-              {[currentTrip.destination && `📍 ${currentTrip.destination}`, currentTrip.dates && `📅 ${currentTrip.dates}`].filter(Boolean).join('   ') || 'No destination or dates yet'}
-            </p>
-
-            {currentTrip.members && currentTrip.members.length > 0 && (
-              <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 18 }}>
-                {currentTrip.members.map(m => (
-                  <div key={m.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
-                    <div style={{
-                      width: 36, height: 36, borderRadius: '50%', background: m.color,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 13, fontWeight: 700, color: 'white',
-                    }}>
-                      {m.initial}
-                    </div>
-                    <span style={{ fontSize: 10, fontWeight: 600, color: COLORS.warmGrey }} title={m.name}>{truncateName(m.name)}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            <button
-              onClick={() => openTrip(currentTrip.id)}
-              style={{
-                width: '100%', minHeight: SPACING.buttonMinHeight, borderRadius: 12, border: 'none',
-                background: COLORS.action, color: 'white',
-                fontSize: 15, fontWeight: 600, cursor: 'pointer',
-              }}
-            >
-              Open trip
-            </button>
-          </div>
-        )}
-
-        {/* Plan a trip together card — exciting invitation, subtle dot texture */}
-        <div style={{
-          background: `radial-gradient(circle, rgba(255,255,255,0.14) 1px, transparent 1.4px) 0 0/16px 16px, linear-gradient(140deg, ${COLORS.teal} 0%, ${COLORS.tealLight} 100%)`,
-          borderRadius: 20, padding: '24px 20px',
-          boxShadow: `0 6px 24px ${COLORS.teal}48`,
-        }}>
-          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', fontWeight: 700, letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 8 }}>
-            Ready to collaborate?
-          </p>
-          <h3 style={{ fontSize: 20, fontWeight: 800, color: 'white', letterSpacing: -0.4, marginBottom: 8, lineHeight: 1.2 }}>
-            Plan a trip together
+          <h3 style={{ ...HEADLINE, color: COLORS.charcoal, marginBottom: 8 }}>
+            {totalItems === 0 ? 'Nothing saved yet' : `${totalItems} saved`}
           </h3>
-          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.78)', lineHeight: 1.55, marginBottom: 20, fontWeight: 500 }}>
-            Bring your ideas together with your travel crew.
+          <p style={{ ...BODY, color: COLORS.warmGrey }}>
+            Tap to browse or save something new
           </p>
+          <span style={{
+            position: 'absolute', top: 22, right: 20,
+            width: 34, height: 34, borderRadius: '50%',
+            background: 'white',
+            boxShadow: '0 1px 4px rgba(26,18,12,0.14)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            {/* Reuses the exact same chevron shape as BackButton.jsx
+                (mirrored), on a square 24x24 viewBox — the previous 9x14
+                hand-picked box wasn't truly symmetric, which read as
+                off-center no matter how the flex alignment was tuned. A
+                square viewBox with the zigzag running corner-to-corner is
+                centered by construction. */}
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path d="M9 18l6-6-6-6" stroke={COLORS.terracotta} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </span>
+        </button>
+
+        {/* Create a Group — always present, trip or no trip, since starting
+            another trip is a real, supported action (MyTripsScreen also has
+            its own entry point for this). A real minimum height plus two
+            equal flexible spacers around the button center it in the space
+            below the text, instead of the button just hugging the copy. */}
+        <div style={{
+          ...tripCardBackground(PLAN_TOGETHER_PHOTO),
+          borderRadius: 20, padding: '20px 20px',
+          marginBottom: SPACING.cardGap, minHeight: 196,
+          boxShadow: `0 4px 16px ${COLORS.teal}28`,
+          display: 'flex', flexDirection: 'column',
+        }}>
+          <div>
+            <p style={{ ...LABEL, color: 'rgba(255,255,255,0.7)', marginBottom: 8 }}>
+              Ready to collaborate?
+            </p>
+            <h3 style={{ ...HEADLINE, color: 'white', marginBottom: 8 }}>
+              Plan a trip together
+            </h3>
+            <p style={{ ...BODY, color: 'rgba(255,255,255,0.78)' }}>
+              Bring your ideas together with your travel crew.
+            </p>
+          </div>
+          <div style={{ flex: 1 }} />
           <button
             onClick={() => navigate('createTrip')}
             style={{
-              background: 'white', color: COLORS.teal, border: 'none',
+              width: '100%', background: 'white', color: COLORS.teal, border: 'none',
               borderRadius: 12, minHeight: SPACING.buttonMinHeight, padding: '0 22px',
-              fontSize: 15, fontWeight: 600, cursor: 'pointer',
-              letterSpacing: -0.2,
+              ...BUTTON, cursor: 'pointer',
             }}
           >
             Create a Group Trip
           </button>
+          <div style={{ flex: 1 }} />
         </div>
-      </div>
 
-      {deletingCat && (
-        <div
-          style={{
-            position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.4)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 32,
-          }}
-          onClick={e => { if (e.target === e.currentTarget) setDeletingCat(null) }}
-        >
-          <div style={{
-            background: 'white', borderRadius: 16, padding: 20, width: '100%', maxWidth: 280,
-            boxShadow: '0 8px 30px rgba(0,0,0,0.2)', textAlign: 'center',
-          }}>
-            <p style={{ fontSize: 15, fontWeight: 600, color: COLORS.charcoal, marginBottom: 8, lineHeight: 1.4 }}>
-              Delete "{deletingCat.label}"?
+        {/* Current Trip — a compact white summary row instead of a
+            full-bleed photo hero: eyebrow, name, dates/member-count line,
+            a real decided-categories progress bar, and a square photo
+            thumbnail rather than the photo filling or stretching across
+            the whole card. Padding, border, and rhythm now match the
+            polish level of the two photo cards above it. The whole row is
+            the tap target, same pattern as My Ideas. */}
+        {currentTrip && (
+          <button
+            onClick={() => openTrip(currentTrip.id)}
+            style={{
+              width: '100%', border: `1px solid ${COLORS.borderLight}`, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit',
+              background: COLORS.cardBg, borderRadius: 20, padding: '16px 18px',
+              boxShadow: '0 4px 16px rgba(26,18,12,0.10)',
+            }}
+          >
+            {/* "Your trip" sits above the row entirely (not inside the
+                text column) — so the row's only two children are the text
+                column and the photo, and the photo's top naturally lines
+                up with the trip title instead of with this label. */}
+            <p style={{ ...LABEL, color: COLORS.teal, marginBottom: 7 }}>
+              Your trip
             </p>
-            <p style={{ fontSize: 13, color: COLORS.warmGrey, marginBottom: 18, lineHeight: 1.4 }}>
-              Saved items keep their other tags — they just won't show up here anymore.
-            </p>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button
-                onClick={() => setDeletingCat(null)}
-                style={{
-                  flex: 1, minHeight: 40, borderRadius: 10, border: 'none',
-                  background: COLORS.borderLight, color: COLORS.warmGrey,
-                  fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmDelete}
-                style={{
-                  flex: 1, minHeight: 40, borderRadius: 10, border: 'none',
-                  background: COLORS.danger, color: 'white',
-                  fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
-                }}
-              >
-                Delete
-              </button>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <h3 style={{
+                  ...HEADLINE, color: COLORS.charcoal, marginBottom: 2,
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                }}>
+                  {currentTrip.name}
+                </h3>
+                {/* Destination on its own line first, then dates/members
+                    on a second line below it — a dot only ever separates
+                    two things sharing a line, never stands in for a line
+                    break. Dates/members still wrap segment-aware (each
+                    part its own `whiteSpace: 'nowrap'` span) so a number
+                    never splits from its unit word. The bullet itself gets
+                    real horizontal margin (not just a literal space
+                    character either side) so "dates • members" reads with
+                    genuine breathing room, not crowded together. */}
+                {currentTrip.destination && (
+                  <p style={{ ...BODY, color: COLORS.warmGrey, marginBottom: 5 }}>
+                    {currentTrip.destination}
+                  </p>
+                )}
+                {(currentTrip.dates || currentTrip.members?.length > 0) && (
+                  <p style={{ ...BODY, color: COLORS.warmGrey }}>
+                    {(() => {
+                      const parts = [
+                        currentTrip.dates,
+                        currentTrip.members?.length ? `${currentTrip.members.length} ${currentTrip.members.length === 1 ? 'member' : 'members'}` : null,
+                      ].filter(Boolean)
+                      const nodes = []
+                      parts.forEach((part, i) => {
+                        if (i > 0) nodes.push(<span key={`dot${i}`} style={{ margin: '0 6px' }}>•</span>)
+                        nodes.push(<span key={i} style={{ whiteSpace: 'nowrap' }}>{part}</span>)
+                      })
+                      return nodes
+                    })()}
+                  </p>
+                )}
+                {!currentTrip.destination && !currentTrip.dates && !(currentTrip.members?.length > 0) && (
+                  <p style={{ ...BODY, color: COLORS.warmGrey }}>
+                    No destination or dates yet
+                  </p>
+                )}
+                {/* Status pill + progress bar + percentage — back inside
+                    the text column (not a full-width row below the photo),
+                    so it renders right after the meta line instead of
+                    waiting on the photo to clear, and it's naturally
+                    capped to the text column's width instead of running
+                    under the photo. Bar fill uses COLORS.milestone (not
+                    the brand teal) — that token is explicitly reserved in
+                    styles.js for progress/completion moments like this. */}
+                {totalCategories > 0 && (
+                  <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{
+                      fontSize: 12, fontWeight: 600, color: COLORS.teal, background: COLORS.tealTint,
+                      borderRadius: 999, padding: '4px 10px', flexShrink: 0, whiteSpace: 'nowrap',
+                    }}>
+                      {decidedCount === totalCategories ? 'All set!' : 'In progress'}
+                    </span>
+                    <div style={{ flex: 1, height: 6, background: COLORS.borderLight, borderRadius: 999, overflow: 'hidden' }}>
+                      <div style={{ width: `${percent}%`, height: '100%', background: COLORS.milestone, borderRadius: 999 }} />
+                    </div>
+                    <span style={{ ...BODY, color: COLORS.warmGrey, flexShrink: 0 }}>{percent}%</span>
+                  </div>
+                )}
+              </div>
+              {currentTrip.destination && (
+                <img
+                  src={CATEGORY_PHOTOS.destination}
+                  alt=""
+                  style={{ width: 96, height: 106, borderRadius: 16, objectFit: 'cover', flexShrink: 0, position: 'relative', top: -10 }}
+                />
+              )}
             </div>
-          </div>
-        </div>
-      )}
+          </button>
+        )}
+      </div>
     </div>
   )
 }

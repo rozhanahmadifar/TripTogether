@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { colorForName } from '../data'
+import { colorForName, CATEGORY_PHOTOS } from '../data'
 import { ItemCard } from '../components/ItemCard'
 import { GridTile } from '../components/GridTile'
 import { ViewToggle } from '../components/ViewToggle'
 import { EmptyState } from '../components/EmptyState'
 import { BackButton } from '../components/BackButton'
+import { CategoryIcon } from '../components/CategoryIcons'
 import { COLORS, SPACING } from '../styles'
 
 export function GroupCategoryScreen({ navigate, params = {}, currentTrip, groupItems, addToGroup, toggleHeart, toggleStar, deleteGroupItem, updateGroupItem, userName, allCategories, decidedTipDismissed, dismissDecidedTip }) {
@@ -26,15 +27,36 @@ export function GroupCategoryScreen({ navigate, params = {}, currentTrip, groupI
 
   return (
     <div className="screen" style={{ background: COLORS.bgGroupSpace }}>
-      <div style={{ padding: '16px 20px 14px', display: 'flex', alignItems: 'center', gap: 12, background: 'white', borderBottom: `1px solid ${COLORS.border}` }}>
-        <BackButton onClick={() => navigate(params.backTo || 'groupSpace')} />
-        <div style={{ flex: 1 }}>
-          <p style={{ fontSize: 19, fontWeight: 800, color: COLORS.teal, letterSpacing: -0.4 }}>
-            {cat.icon} {cat.label}
-          </p>
-          <p style={{ fontSize: 12, color: COLORS.warmGrey, marginTop: 2 }}>Group Space</p>
+      {/* A real photo banner instead of a plain white bar — six category
+          screens used to be the same template with a different label; a
+          photo per category (see CATEGORY_PHOTOS in data.js) gives each one
+          its own identity at a glance. */}
+      <div style={{
+        position: 'relative', padding: '16px 20px 20px', minHeight: 108,
+        display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+        backgroundImage: [
+          'linear-gradient(175deg, rgba(10,28,28,0.25) 0%, rgba(8,22,22,0.68) 100%)',
+          `url("${CATEGORY_PHOTOS[cat.id] || CATEGORY_PHOTOS.inspiration}")`,
+        ].join(', '),
+        backgroundSize: 'cover, cover', backgroundPosition: 'center, center',
+        backgroundRepeat: 'no-repeat, no-repeat', backgroundColor: COLORS.teal,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <BackButton onClick={() => navigate(params.backTo || 'groupSpace')} />
+          {items.length > 0 && <ViewToggle view={view} setView={setView} />}
         </div>
-        {items.length > 0 && <ViewToggle view={view} setView={setView} />}
+        <div>
+          <p style={{
+            fontSize: 20, fontWeight: 800, color: 'white', letterSpacing: -0.4,
+            display: 'flex', alignItems: 'center', gap: 8,
+            textShadow: '0 1px 8px rgba(0,0,0,0.4)',
+          }}>
+            <CategoryIcon id={cat.id} size={20} color="white" /> {cat.label}
+          </p>
+          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.85)', marginTop: 2, textShadow: '0 1px 6px rgba(0,0,0,0.35)' }}>
+            Group Space
+          </p>
+        </div>
       </div>
 
       <div className="screen-scroll" style={{ padding: `16px ${SPACING.screenX}px ${SPACING.scrollBottomPad}px` }}>
@@ -59,7 +81,7 @@ export function GroupCategoryScreen({ navigate, params = {}, currentTrip, groupI
                       background: contributed ? m.color : 'transparent',
                       border: contributed ? 'none' : `2px dashed ${COLORS.subtleIcon}`,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 14, fontWeight: 700, color: contributed ? 'white' : COLORS.subtleIcon,
+                      fontSize: 14, fontWeight: 700, color: contributed ? 'white' : COLORS.subtleIcon, lineHeight: 1,
                       boxShadow: contributed ? `0 0 0 3px ${m.color}40` : 'none',
                     }}>
                       {m.initial}
@@ -99,6 +121,8 @@ export function GroupCategoryScreen({ navigate, params = {}, currentTrip, groupI
         {items.length === 0 ? (
           <EmptyState
             categoryId={cat.id}
+            color={cat.color}
+            shade={cat.shade}
             heading={`Nothing in ${cat.label} yet`}
             actionLabel="Add the first item"
             onAction={() => navigate('saveSomething', { categoryId: cat.id, mode: 'group', backTo: 'groupCategory', returnParams: { categoryId: cat.id } })}

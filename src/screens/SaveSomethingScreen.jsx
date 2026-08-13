@@ -3,13 +3,14 @@ import { PLATFORMS, CATEGORY_HINTS, detectSourceFromLink, isImagePhoto } from '.
 import { fetchLinkPreview } from '../linkPreview'
 import { TEXT, COLORS, SPACING } from '../styles'
 import { BackButton } from '../components/BackButton'
+import { CategoryIcon } from '../components/CategoryIcons'
 
 function MemberCircle({ m }) {
   return (
     <div style={{
       width: 28, height: 28, borderRadius: '50%', background: m.color,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontSize: 10, fontWeight: 700, color: 'white',
+      fontSize: 10, fontWeight: 700, color: 'white', lineHeight: 1,
       border: '2px solid white', marginLeft: -6, flexShrink: 0,
     }}>
       {m.initial}
@@ -32,12 +33,11 @@ export function SaveSomethingScreen({ navigate, params = {}, allCategories, save
   const [previewStatus, setPreviewStatus] = useState('idle') // idle | loading | done
 
   const title = titleValue.trim()
-  // A link, photo, or note already identifies the item at a glance, so
-  // title only needs to be required when none of those exist either —
-  // otherwise it reintroduces the original "unidentifiable item" problem,
-  // and only a completely blank save attempt should be blocked.
-  const hasOtherContent = !!photo || linkValue.trim().length > 0 || noteValue.trim().length > 0
-  const canSave = (title.length > 0 || hasOtherContent) && categoryIds.length > 0
+  // Title is fully optional now — an untitled item still displays fine
+  // (displayTitle() in data.js already falls back to "Saved from
+  // {platform}" / "Saved link" / "Saved photo" / plain "Saved item"), so
+  // the only real requirement to save anything is picking a category.
+  const canSave = categoryIds.length > 0
   const isGroupMode = params.mode === 'group'
   const resolvedSource = platform === 'Other' && customSource.trim() ? customSource.trim() : platform
 
@@ -96,10 +96,15 @@ export function SaveSomethingScreen({ navigate, params = {}, allCategories, save
     // infer from the "current" trip — openTrip's state update hasn't taken
     // effect yet at this point in the same tick, so relying on it here
     // would tag the item to whatever trip was current before this switch.
+    // The same staleness applies to the shareSuccess screen right after —
+    // it used to read `currentTrip` itself and could render with the
+    // pre-switch trip for one frame (wrong member list, "Go to Group Space"
+    // opening the old trip) — so `tripId` is threaded through the
+    // navigation params instead, resolved once here.
     const targetTripId = tripId || currentTrip?.id
     if (tripId) openTrip(tripId)
     addToGroup({ title, note: noteValue.trim(), link: linkValue.trim(), platform: resolvedSource, categoryIds, hasPhoto: !!photo, photo, tripId: targetTripId })
-    navigate('shareSuccess', { categoryIds })
+    navigate('shareSuccess', { categoryIds, tripId: targetTripId })
   }
 
   const handleShare = () => {
@@ -177,18 +182,19 @@ export function SaveSomethingScreen({ navigate, params = {}, allCategories, save
       <div className="screen-scroll" style={{ padding: `20px ${SPACING.screenX}px 40px` }}>
 
         {/* Title — first, so it's always available to fill in right away
-            and edit later; required only when there's nothing else (no
-            link, photo, or note) to identify the item by. Auto-fill from
-            a link preview (below) may overwrite this after the user has
-            already typed something — expected with this field order, not
-            a bug, since the preview only fills in what's still empty. */}
+            and edit later; always optional (an untitled item still falls
+            back to a sensible display name via displayTitle() in
+            data.js). Auto-fill from a link preview (below) may overwrite
+            this after the user has already typed something — expected
+            with this field order, not a bug, since the preview only
+            fills in what's still empty. */}
         <p style={{ ...TEXT.sectionHeading, marginBottom: 8 }}>
-          Title {hasOtherContent && <span style={{ textTransform: 'none', fontWeight: 500, color: COLORS.warmGrey }}>Optional</span>}
+          Title <span style={{ textTransform: 'none', fontWeight: 500, color: COLORS.warmGrey }}>Optional</span>
         </p>
         <input
           value={titleValue}
           onChange={e => setTitleValue(e.target.value)}
-          placeholder={hasOtherContent ? "Give it a name (optional)" : "Give it a name (e.g. Cliffs of Moher hike)"}
+          placeholder="Give it a name (optional)"
           style={{
             width: '100%', minHeight: SPACING.inputMinHeight, borderRadius: 12,
             border: `1.5px solid ${titleValue ? COLORS.teal : COLORS.border}`, padding: '0 16px',
@@ -265,7 +271,7 @@ export function SaveSomethingScreen({ navigate, params = {}, allCategories, save
                 onClick={() => setPhoto('')}
                 style={{
                   position: 'absolute', top: -8, right: -8, width: 24, height: 24, borderRadius: '50%',
-                  border: '2px solid white', background: COLORS.danger, color: 'white',
+                  border: '2px solid white', background: COLORS.danger, color: 'white', lineHeight: 1,
                   fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}
               >
@@ -354,7 +360,9 @@ export function SaveSomethingScreen({ navigate, params = {}, allCategories, save
                 }}>
                   {selected ? '✓' : ''}
                 </span>
-                <span style={{ fontSize: 18, width: 24, flexShrink: 0 }}>{cat.icon}</span>
+                <span style={{ width: 24, flexShrink: 0, display: 'flex', justifyContent: 'center' }}>
+                  <CategoryIcon id={cat.id} size={17} color={selected ? COLORS.terracotta : (cat.shade || COLORS.charcoal)} />
+                </span>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <span style={{ ...TEXT.categoryRowName, display: 'block', color: selected ? COLORS.terracotta : COLORS.charcoal }}>
                     {cat.label}

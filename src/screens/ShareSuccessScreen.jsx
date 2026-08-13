@@ -1,12 +1,25 @@
 import { COLORS } from '../styles'
 import { truncateName } from '../data'
 import { BackButton } from '../components/BackButton'
+import { CategoryIcon } from '../components/CategoryIcons'
 
-export function ShareSuccessScreen({ navigate, params = {}, currentTrip, openTrip, allCategories }) {
+export function ShareSuccessScreen({ navigate, params = {}, currentTrip, trips, openTrip, allCategories }) {
   const sharedCategories = (params.categoryIds || []).map(id => allCategories.find(c => c.id === id)).filter(Boolean)
+  // The trip this item was actually just shared into — resolved from the
+  // id passed explicitly through navigation params, not from `currentTrip`
+  // (the globally "active" trip). Those two can differ (the user shared
+  // into a trip other than the one currently open) or `currentTrip` can be
+  // one render behind if this screen was reached right after an openTrip()
+  // call in the same tick — either way, reading `currentTrip` here made
+  // this screen show the wrong trip's members and sent "Go to Group Space"
+  // to the wrong trip, so the item that was just shared looked like it had
+  // never arrived. `params.tripId` is always the source of truth when
+  // present; `currentTrip` is only a fallback for any older call site that
+  // hasn't been updated to pass it.
+  const targetTrip = (trips || []).find(t => t.id === params.tripId) || currentTrip
 
   const goToGroupSpace = () => {
-    if (currentTrip) openTrip(currentTrip.id)
+    if (targetTrip) openTrip(targetTrip.id)
     else navigate('groupHome')
   }
 
@@ -30,7 +43,7 @@ export function ShareSuccessScreen({ navigate, params = {}, currentTrip, openTri
           width: 84, height: 84, borderRadius: '50%',
           background: COLORS.milestone,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 40, marginBottom: 28, color: 'white',
+          fontSize: 40, marginBottom: 28, color: 'white', lineHeight: 1,
           boxShadow: `0 8px 28px ${COLORS.milestone}59`,
         }}>
           ✓
@@ -48,9 +61,11 @@ export function ShareSuccessScreen({ navigate, params = {}, currentTrip, openTri
             {sharedCategories.map(cat => (
               <div key={cat.id} style={{
                 background: `${cat.color}22`, borderRadius: 10, padding: '7px 18px',
+                display: 'inline-flex', alignItems: 'center', gap: 6,
               }}>
+                <CategoryIcon id={cat.id} size={14} color={cat.shade || COLORS.charcoal} />
                 <span style={{ fontSize: 13, fontWeight: 700, color: COLORS.charcoal }}>
-                  {cat.icon} {cat.label}
+                  {cat.label}
                 </span>
               </div>
             ))}
@@ -61,18 +76,18 @@ export function ShareSuccessScreen({ navigate, params = {}, currentTrip, openTri
           Your group can now see this.
         </p>
 
-        {currentTrip && currentTrip.members && currentTrip.members.length > 0 && (
+        {targetTrip && targetTrip.members && targetTrip.members.length > 0 && (
           <div style={{ marginBottom: 44, textAlign: 'center' }}>
             <p style={{ fontSize: 12, color: COLORS.warmGrey, marginBottom: 16, fontWeight: 500 }}>
-              Shared with {currentTrip.name}
+              Shared with {targetTrip.name}
             </p>
             <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
-              {currentTrip.members.map(m => (
+              {targetTrip.members.map(m => (
                 <div key={m.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
                   <div style={{
                     width: 44, height: 44, borderRadius: '50%', background: m.color,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 16, fontWeight: 700, color: 'white',
+                    fontSize: 16, fontWeight: 700, color: 'white', lineHeight: 1,
                     boxShadow: `0 2px 10px ${m.color}50`,
                   }}>
                     {m.initial}

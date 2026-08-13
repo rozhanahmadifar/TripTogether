@@ -1,5 +1,6 @@
 import { COLORS, CATEGORY_COLORS } from '../styles'
 import { isImagePhoto, displayTitle } from '../data'
+import { CategoryIcon } from './CategoryIcons'
 
 const PLATFORM_ICONS = {
   TikTok: '🎵', Instagram: '📷', Google: '🔍', Airbnb: '🏠',
@@ -63,9 +64,13 @@ export function GridTile({ item, category, onOpen, decidable = false }) {
             width: 52, height: 52, borderRadius: '50%',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
-            <span style={{ fontSize: 26, lineHeight: 1 }}>
-              {item.photo ? '🎬' : item.hasPhoto ? '🖼️' : (PLATFORM_ICONS[item.platform] || category?.icon || '✨')}
-            </span>
+            {item.photo || item.hasPhoto || PLATFORM_ICONS[item.platform] ? (
+              <span style={{ fontSize: 26, lineHeight: 1 }}>
+                {item.photo ? '🎬' : item.hasPhoto ? '🖼️' : PLATFORM_ICONS[item.platform]}
+              </span>
+            ) : (
+              <CategoryIcon id={category?.id} size={24} color={category?.shade || category?.color || COLORS.teal} />
+            )}
           </div>
         </div>
       )}

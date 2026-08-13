@@ -55,21 +55,29 @@ export const COLORS = {
 }
 
 // Section 10 — typography scale, applied consistently everywhere
+//
+// Accessibility pass: the smallest tier (`sectionHeading`, previously 11px)
+// is the uppercase micro-label used all over the app — "SOURCE", "TAG IT",
+// "WHO HAS CONTRIBUTED", every category group header — so at 11px it was
+// the single biggest source of the app reading as too small/delicate.
+// Raised the whole bottom half of the scale by ~1-2px and eased the
+// uppercase letter-spacing down slightly so it doesn't over-open at the
+// larger size; nothing here changes color/contrast, only legibility.
 export const TEXT = {
   appName:        { fontSize: 30, fontWeight: 800, color: COLORS.teal, letterSpacing: -0.6, lineHeight: 1.05 },
   screenTitle:    { fontSize: 24, fontWeight: 800, color: COLORS.charcoal, letterSpacing: -0.4, lineHeight: 1.15 },
-  sectionHeading: { fontSize: 11, fontWeight: 700, color: COLORS.warmGrey, letterSpacing: 1.5, textTransform: 'uppercase', lineHeight: 1.3 },
+  sectionHeading: { fontSize: 13, fontWeight: 700, color: COLORS.warmGrey, letterSpacing: 1.1, textTransform: 'uppercase', lineHeight: 1.35 },
   cardTitle:      { fontSize: 16, fontWeight: 600, color: COLORS.charcoal, letterSpacing: -0.2, lineHeight: 1.35 },
-  body:           { fontSize: 14, fontWeight: 400, color: COLORS.charcoal, lineHeight: 1.5 },
-  subtext:        { fontSize: 12, fontWeight: 400, color: COLORS.warmGrey, lineHeight: 1.4 },
+  body:           { fontSize: 15, fontWeight: 400, color: COLORS.charcoal, lineHeight: 1.5 },
+  subtext:        { fontSize: 13, fontWeight: 400, color: COLORS.warmGrey, lineHeight: 1.4 },
   buttonText:     { fontSize: 15, fontWeight: 600 },
-  timestamp:      { fontSize: 12, fontWeight: 400, color: COLORS.warmGrey, lineHeight: 1.4 },
+  timestamp:      { fontSize: 13, fontWeight: 400, color: COLORS.warmGrey, lineHeight: 1.4 },
 
   // Supplementary tokens (not part of the 8-tier core scale, but needed for
   // specific moments called out in the brief)
   greeting:           { fontSize: 14, fontWeight: 400, color: COLORS.warmGrey, lineHeight: 1.3 },
   categoryRowName:    { fontSize: 15, fontWeight: 600, color: COLORS.charcoal, letterSpacing: -0.1 },
-  categoryRowSubtext: { fontSize: 13, fontWeight: 400, color: COLORS.warmGrey },
+  categoryRowSubtext: { fontSize: 14, fontWeight: 400, color: COLORS.warmGrey },
 }
 
 // Section 10 — spacing system
@@ -91,8 +99,21 @@ export const SPACING = {
   inputMinHeight: 48,
 }
 
-export const SHADOW_CARD = '0 2px 12px rgba(0,0,0,0.06)'
-export const SHADOW_SOFT = '0 2px 8px rgba(0,0,0,0.05)'
+// Two-layer shadows — a tight, barely-there "contact" shadow right against
+// the edge plus a softer, wider "ambient" shadow underneath — read as real
+// elevation the way a single soft blur doesn't; one flat shadow makes a
+// card look like it's tinted, not like it's sitting above the page. Both
+// use the app's own charcoal rather than pure black, so the shadow itself
+// picks up a hint of the same warm palette instead of a cold grey cast.
+// Since every card/surface in the app already imports these two tokens
+// rather than hardcoding its own shadow, this one change elevates the
+// whole app at once.
+export const SHADOW_CARD = '0 1px 2px rgba(26,18,12,0.05), 0 10px 24px rgba(26,18,12,0.09)'
+export const SHADOW_SOFT = '0 1px 2px rgba(26,18,12,0.04), 0 4px 12px rgba(26,18,12,0.06)'
+// A stronger tier for the handful of surfaces that should read as sitting
+// clearly above everything else (modals, the trip hero card) — same warm
+// shadow color, just louder.
+export const SHADOW_ELEVATED = '0 2px 4px rgba(26,18,12,0.06), 0 16px 40px rgba(26,18,12,0.16)'
 
 // Each of the five default categories gets its own gentle colour (section 3 / 5)
 export const CATEGORY_COLORS = {
@@ -122,7 +143,25 @@ const FLIGHT_PATH_SVG = encodeURIComponent(
   </svg>`
 )
 
-export function tripCardBackground() {
+// `photoUrl` is optional — once a trip has a real destination, its category
+// photo (see CATEGORY_PHOTOS in data.js) becomes the card's actual
+// background under the same teal brand tint, real photography instead of a
+// dot-texture-on-gradient stand-in. Before a destination is set there's no
+// photo to show yet, so the original gradient/texture/flight-path treatment
+// stays as the fallback — the card never renders broken or blank.
+export function tripCardBackground(photoUrl) {
+  if (photoUrl) {
+    return {
+      backgroundImage: [
+        `linear-gradient(150deg, rgba(30,95,95,0.80) 0%, rgba(18,55,55,0.88) 100%)`,
+        `url("${photoUrl}")`,
+      ].join(', '),
+      backgroundSize: 'cover, cover',
+      backgroundPosition: 'center, center',
+      backgroundRepeat: 'no-repeat, no-repeat',
+      backgroundColor: COLORS.teal,
+    }
+  }
   return {
     backgroundImage: [
       `linear-gradient(135deg, rgba(30,95,95,0.93) 0%, rgba(45,122,122,0.93) 100%)`,
