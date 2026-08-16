@@ -76,8 +76,11 @@ export function AIScreen({ currentTrip }) {
       const { text: raw, sources } = await askGemini(history, tripContextBlock)
       const { text: aiText } = parseAIResponse(raw)
       setMessages(prev => prev.map(m => m.id === loadingId ? { id: loadingId, role: 'ai', text: aiText, sources } : m))
-    } catch {
-      setMessages(prev => prev.map(m => m.id === loadingId ? { id: loadingId, role: 'ai', text: ERROR_TEXT } : m))
+    } catch (err) {
+      // The backend returns a specific, actionable message for known
+      // failure cases (missing key, timeout) — show that instead of the
+      // generic fallback whenever we have one.
+      setMessages(prev => prev.map(m => m.id === loadingId ? { id: loadingId, role: 'ai', text: err.message || ERROR_TEXT } : m))
     } finally {
       setSending(false)
     }
