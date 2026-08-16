@@ -6,13 +6,10 @@ Format: write your answer as short bullet points or numbered steps, not long par
 
 Honesty: if a question involves information that varies by season, provider, or that you are not confident about, say so plainly and suggest the user check the relevant official source, instead of answering confidently. When you reference a fact found via search, prefer official government, transit authority, or provider sources. If you do not have a verified source for a claim, say so rather than naming a source with nothing to back it up.
 
-Follow-up questions: after your answer, write exactly two short follow-up questions, each on its own line starting with QUESTION:. A follow-up question may only mention a specific date, month, destination, number of travelers, or traveler type (such as student or senior) if that exact detail was given in the trip facts below or stated earlier in this conversation by the user. Otherwise keep follow-up questions fully generic and do not invent any such detail.
-
 Do not use dashes or em dashes in your responses. Use commas or full stops instead.`
 
-// Trip facts get their own labeled block so the model can use them without
-// the user retyping them, and so it has a concrete, checkable list of "what
-// counts as already known" when deciding what a follow-up question may name.
+// Trip facts get their own labeled block so the model can use them
+// automatically without the user having to retype them.
 export function buildTripContextBlock(currentTrip) {
   const facts = []
   if (currentTrip?.destination) facts.push(`Destination: ${currentTrip.destination}`)
@@ -61,32 +58,9 @@ function extractSources(candidate) {
   return sources
 }
 
-// Bubbles and chips render plain text, so strip markdown emphasis Gemini sometimes adds.
+// Bubbles render plain text, so strip markdown emphasis Gemini sometimes adds.
 const stripMarkdown = (s) => s.replace(/\*\*(.*?)\*\*/g, '$1').replace(/__(.*?)__/g, '$1')
 
-// Parses the QUESTION: structure. If the model deviates from the format
-// badly enough that no main answer text is left, fall back to showing the
-// raw response as a plain bubble rather than guessing.
 export function parseAIResponse(raw) {
-  try {
-    const lines = raw.split('\n').map(l => l.trim()).filter(Boolean)
-    const questions = []
-
-    const textLines = lines.filter(line => {
-      if (line.startsWith('QUESTION:')) { questions.push(stripMarkdown(line.slice(9).trim())); return false }
-      return true
-    })
-
-    // Joined with newlines, not spaces, so bullet points and numbered
-    // steps the model wrote on separate lines stay on separate lines.
-    const text = stripMarkdown(textLines.join('\n').trim())
-    if (!text) throw new Error('no main answer text after parsing')
-
-    return {
-      text,
-      questions: questions.length ? questions.slice(0, 2) : undefined,
-    }
-  } catch {
-    return { text: stripMarkdown(raw.trim()) }
-  }
+  return { text: stripMarkdown(raw.trim()) }
 }

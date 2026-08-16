@@ -1,75 +1,34 @@
 import { useState, useRef, useEffect } from 'react'
 import { TEXT, COLORS } from '../styles'
 import { askGemini, parseAIResponse, buildTripContextBlock } from '../gemini'
-import { displayTitle } from '../data'
 
-function tripMonth(currentTrip) {
-  if (!currentTrip?.startDate) return null
-  const d = new Date(currentTrip.startDate)
-  return Number.isNaN(d.getTime()) ? null : d.toLocaleString('en-US', { month: 'long' })
+// Natural-language stand-in for the trip's start date since the trip only
+// stores a startDate ISO string (no endDate) — "late August" rather than
+// a raw date, bucketed to which third of the month the trip starts in.
+function dayBucket(startDate) {
+  if (!startDate) return null
+  const d = new Date(startDate)
+  if (Number.isNaN(d.getTime())) return null
+  const month = d.toLocaleString('en-US', { month: 'long' })
+  const day = d.getDate()
+  const part = day <= 10 ? 'early' : day <= 20 ? 'mid' : 'late'
+  return `${part} ${month}`
 }
 
-// The item a chip should reference for a category: whichever candidate is
-// already decided, or else the most recently saved one — same "which one
-// wins" rule CategoryCover uses for a category's cover photo.
-function pickItem(items) {
-  if (items.length === 0) return null
-  return items.find(i => (i.starredBy || []).length > 0) || [...items].sort((a, b) => b.savedAt - a.savedAt)[0]
-}
-
-// Each chip may only reference a fact (destination, month/season, traveler
-// count, a specific saved/decided item) that's actually present in the
-// trip's data — never a guessed month, item, or group composition. The
-// pool is rebuilt on every render, so as the group adds more data (dates,
-// an accommodation, an activity) the newly-specific chips take priority
-// over the generic ones they replace, instead of the suggestions staying
-// frozen at whatever was known when the trip was created.
-function buildSuggestionChips(currentTrip, groupItems) {
-  const destination = currentTrip?.destination
+// Opening chips only — one fixed template per fact (visa/destination, group
+// discount/member count, weather/destination+when), each omitted outright
+// when its underlying trip data isn't set, rather than falling back to a
+// generic version of itself.
+function buildOpeningChips(currentTrip) {
+  const destination = currentTrip?.destination?.trim()
   const count = currentTrip?.members?.length
-  const month = tripMonth(currentTrip)
-  const accommodation = pickItem(groupItems.filter(i => i.categoryIds.includes('accommodation')))
-  const activity = pickItem(groupItems.filter(i => i.categoryIds.includes('activities')))
+  const when = dayBucket(currentTrip?.startDate)
 
-  const pool = [
-    {
-      // Nationality drives visa/entry rules, but the app never collects
-      // it, so this chip is upfront about needing it rather than implying
-      // destination alone is enough for a real answer.
-      specific: !!destination,
-      text: destination
-        ? `What visa or entry requirements should we check for ${destination}? (Tell me your nationality so I can give a real answer)`
-        : `What visa or entry requirements should we check? (Tell me your nationality so I can give a real answer)`,
-    },
-    {
-      specific: !!count,
-      text: count
-        ? `We're a group of ${count} — are there any group ticket discounts worth looking into?`
-        : `Are there any group ticket discounts worth looking into?`,
-    },
-    {
-      specific: !!month,
-      text: month
-        ? `Anything weather- or season-related we should plan around for a trip in ${month}?`
-        : `What typically needs booking in advance vs. can be decided closer to the trip?`,
-    },
-    {
-      specific: !!accommodation,
-      text: accommodation
-        ? `How do we usually get from ${displayTitle(accommodation)} to the city center?`
-        : `What's the best way to get around once we land?`,
-    },
-    {
-      specific: !!activity,
-      text: activity
-        ? `What's the best way to handle booking or tickets for ${displayTitle(activity)}?`
-        : `What should we keep in mind for booking activities or tickets in advance?`,
-    },
-  ]
-
-  const specifics = pool.filter(p => p.specific)
-  const generics = pool.filter(p => !p.specific)
-  return [...specifics, ...generics].slice(0, 3).map(p => p.text)
+  const chips = []
+  if (destination) chips.push(`Do we need a visa for ${destination}?`)
+  if (count) chips.push(`Are there group discounts for ${count} people?`)
+  if (destination && when) chips.push(`What is the weather like in ${destination} in ${when}?`)
+  return chips
 }
 
 const ERROR_TEXT = 'Sorry, I could not connect right now. Please try again in a moment.'
@@ -84,12 +43,12 @@ function TypingDots() {
   )
 }
 
-export function AIScreen({ currentTrip, groupItems }) {
+export function AIScreen({ currentTrip }) {
   const [messages, setMessages] = useState([])
   const [input, setInput]       = useState('')
   const [sending, setSending]   = useState(false)
   const bottomRef               = useRef(null)
-  const suggestionChips         = buildSuggestionChips(currentTrip, groupItems)
+  const suggestionChips         = buildOpeningChips(currentTrip)
   const tripContextBlock        = buildTripContextBlock(currentTrip)
 
   const showEmptyState = messages.length === 0 && input === ''
@@ -105,7 +64,7 @@ export function AIScreen({ currentTrip, groupItems }) {
     const loadingId = Date.now() + 1
     // Full prior conversation goes with every call — not just the latest
     // message — so the model can pick up facts the user already stated
-    // (e.g. "we're students") when it later writes follow-up questions.
+    // earlier (e.g. "we're students") in its answer.
     const history = [...messages, userMsg]
       .filter(m => !m.loading)
       .map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', text: m.text }))
@@ -115,8 +74,8 @@ export function AIScreen({ currentTrip, groupItems }) {
 
     try {
       const { text: raw, sources } = await askGemini(history, tripContextBlock)
-      const { text: aiText, questions } = parseAIResponse(raw)
-      setMessages(prev => prev.map(m => m.id === loadingId ? { id: loadingId, role: 'ai', text: aiText, questions, sources } : m))
+      const { text: aiText } = parseAIResponse(raw)
+      setMessages(prev => prev.map(m => m.id === loadingId ? { id: loadingId, role: 'ai', text: aiText, sources } : m))
     } catch {
       setMessages(prev => prev.map(m => m.id === loadingId ? { id: loadingId, role: 'ai', text: ERROR_TEXT } : m))
     } finally {
@@ -218,28 +177,6 @@ export function AIScreen({ currentTrip, groupItems }) {
                       >
                         🔗 {s.title}
                       </a>
-                    ))}
-                  </div>
-                )}
-
-                {/* Follow-up question chips */}
-                {msg.questions && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                    {msg.questions.map((q, i) => (
-                      <button
-                        key={i}
-                        onClick={() => sendMessage(q)}
-                        disabled={sending}
-                        style={{
-                          background: 'white', border: `1.5px solid ${COLORS.teal}`,
-                          borderRadius: 20, padding: '8px 12px',
-                          fontSize: 13, fontWeight: 600, color: COLORS.teal,
-                          cursor: sending ? 'default' : 'pointer', textAlign: 'left',
-                          maxWidth: '100%',
-                        }}
-                      >
-                        {q}
-                      </button>
                     ))}
                   </div>
                 )}
