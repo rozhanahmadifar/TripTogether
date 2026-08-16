@@ -21,17 +21,21 @@ export async function onRequestOptions() {
 // Null on any failure (network error or timeout) rather than throwing, so
 // the caller can fall back to a second attempt the same way it already
 // does for a non-OK HTTP response.
-async function tryCallGemini(apiKey, body) {
+async function tryCallGemini(apiKey, body, label, debugLog) {
+  const start = Date.now()
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
   try {
-    return await fetch(`${GEMINI_URL}?key=${apiKey}`, {
+    const res = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
       signal: controller.signal,
     })
-  } catch {
+    debugLog.push({ label, ms: Date.now() - start, status: res.status })
+    return res
+  } catch (err) {
+    debugLog.push({ label, ms: Date.now() - start, error: err.name === 'AbortError' ? 'timeout' : err.message })
     return null
   } finally {
     clearTimeout(timer)
@@ -67,19 +71,20 @@ export async function onRequestPost(context) {
     // failing the whole request — the system prompt tells the model to say
     // when it has no verified source, which covers this case honestly
     // either way.
-    let response = await tryCallGemini(apiKey, { ...baseBody, tools: [{ google_search: {} }] })
+    const debugLog = []
+    let response = await tryCallGemini(apiKey, { ...baseBody, tools: [{ google_search: {} }] }, 'grounded', debugLog)
     if (!response || !response.ok) {
-      response = await tryCallGemini(apiKey, baseBody)
+      response = await tryCallGemini(apiKey, baseBody, 'fallback', debugLog)
     }
     if (!response) {
-      return new Response(JSON.stringify({ error: 'The AI took too long to respond. Try a shorter or more specific question.' }), {
+      return new Response(JSON.stringify({ error: 'The AI took too long to respond. Try a shorter or more specific question.', debugLog }), {
         status: 504,
         headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
       })
     }
 
     const data = await response.json()
-    if (!response.ok) throw new Error(data?.error?.message || 'Gemini API request failed')
+    if (!response.ok) throw new Error(`${data?.error?.message || 'Gemini API request failed'} | debug=${JSON.stringify(debugLog)}`)
 
     return new Response(JSON.stringify(data), {
       status: 200,
