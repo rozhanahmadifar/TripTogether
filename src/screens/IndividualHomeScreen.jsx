@@ -195,20 +195,14 @@ export function IndividualHomeScreen({ navigate, userName, myIdeas, currentTrip,
                     {currentTrip.destination}
                   </p>
                 )}
-                {(currentTrip.dates || currentTrip.members?.length > 0) && (
+                {currentTrip.dates && (
+                  <p style={{ ...BODY, color: COLORS.warmGrey, marginBottom: currentTrip.members?.length ? 2 : 0 }}>
+                    {currentTrip.dates}
+                  </p>
+                )}
+                {currentTrip.members?.length > 0 && (
                   <p style={{ ...BODY, color: COLORS.warmGrey }}>
-                    {(() => {
-                      const parts = [
-                        currentTrip.dates,
-                        currentTrip.members?.length ? `${currentTrip.members.length} ${currentTrip.members.length === 1 ? 'member' : 'members'}` : null,
-                      ].filter(Boolean)
-                      const nodes = []
-                      parts.forEach((part, i) => {
-                        if (i > 0) nodes.push(<span key={`dot${i}`} style={{ margin: '0 6px' }}>•</span>)
-                        nodes.push(<span key={i} style={{ whiteSpace: 'nowrap' }}>{part}</span>)
-                      })
-                      return nodes
-                    })()}
+                    {currentTrip.members.length} {currentTrip.members.length === 1 ? 'member' : 'members'}
                   </p>
                 )}
                 {!currentTrip.destination && !currentTrip.dates && !(currentTrip.members?.length > 0) && (
@@ -243,7 +237,7 @@ export function IndividualHomeScreen({ navigate, userName, myIdeas, currentTrip,
                 <img
                   src={CATEGORY_PHOTOS.destination}
                   alt=""
-                  style={{ width: 96, height: 106, borderRadius: 16, objectFit: 'cover', flexShrink: 0, position: 'relative', top: -10 }}
+                  style={{ width: 96, height: 132, borderRadius: 16, objectFit: 'cover', flexShrink: 0 }}
                 />
               )}
             </div>

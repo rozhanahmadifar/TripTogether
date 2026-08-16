@@ -137,7 +137,7 @@ export function MyTripsScreen({ navigate, trips, openTrip, deleteTrip, allGroupI
                         <img
                           src={CATEGORY_PHOTOS.destination}
                           alt=""
-                          style={{ width: 128, height: 150, borderRadius: 18, objectFit: 'cover', flexShrink: 0 }}
+                          style={{ width: 118, height: 160, borderRadius: 18, objectFit: 'cover', flexShrink: 0 }}
                         />
                       )}
                       <div style={{ flex: 1, minWidth: 0 }}>
