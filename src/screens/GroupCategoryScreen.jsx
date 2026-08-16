@@ -22,6 +22,7 @@ export function GroupCategoryScreen({ navigate, params = {}, currentTrip, groupI
   const getMember = (name) => ({ name, color: colorForName(name), initial: name.charAt(0).toUpperCase() })
 
   const nonContributors = tripMembers.filter(m => !contributorNames.includes(m.name))
+  const contributingMembers = tripMembers.filter(m => contributorNames.includes(m.name))
 
   const [view, setView] = useState('list')
 
@@ -72,26 +73,25 @@ export function GroupCategoryScreen({ navigate, params = {}, currentTrip, groupI
             <p style={{ fontSize: 12, color: COLORS.warmGrey, fontStyle: 'italic', fontWeight: 500 }}>No group members yet.</p>
           ) : (
             <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-              {tripMembers.map(m => {
-                const contributed = contributorNames.includes(m.name)
-                return (
-                  <div key={m.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-                    <div style={{
-                      width: 40, height: 40, borderRadius: '50%',
-                      background: contributed ? m.color : 'transparent',
-                      border: contributed ? 'none' : `2px dashed ${COLORS.subtleIcon}`,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 14, fontWeight: 700, color: contributed ? 'white' : COLORS.subtleIcon, lineHeight: 1,
-                      boxShadow: contributed ? `0 0 0 3px ${m.color}40` : 'none',
-                    }}>
-                      {m.initial}
-                    </div>
-                    <span style={{ fontSize: 10, fontWeight: 600, color: contributed ? COLORS.charcoal : COLORS.warmGrey }}>
-                      {m.name}
-                    </span>
+              {/* Only members who've contributed are ever rendered here —
+                  no dashed placeholder circle or name for anyone who
+                  hasn't, so the interface never identifies who's behind. */}
+              {contributingMembers.map(m => (
+                <div key={m.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                  <div style={{
+                    width: 40, height: 40, borderRadius: '50%',
+                    background: m.color,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 14, fontWeight: 700, color: 'white', lineHeight: 1,
+                    boxShadow: `0 0 0 3px ${m.color}40`,
+                  }}>
+                    {m.initial}
                   </div>
-                )
-              })}
+                  <span style={{ fontSize: 10, fontWeight: 600, color: COLORS.charcoal }}>
+                    {m.name}
+                  </span>
+                </div>
+              ))}
             </div>
           )}
           {/* Aggregate, not a named call-out — everyone sees the same

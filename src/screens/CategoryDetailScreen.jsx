@@ -22,7 +22,10 @@ export function CategoryDetailScreen({ navigate, params = {} }) {
   }
 
   const contributorIds = [...new Set(cards.map(c => c.savedBy))]
-  const notContributed = members.filter(m => !contributorIds.includes(m.id))
+  // Demo data for the accommodation accountability box below — everyone
+  // except this one member has picked an option, standing in for whatever
+  // real per-person decision state this box would read from once wired up.
+  const decidedMembers = members.filter(m => m.name !== 'Sara')
 
   return (
     <div className="screen">
@@ -53,21 +56,13 @@ export function CategoryDetailScreen({ navigate, params = {} }) {
                 </div>
               )
             })}
-            {notContributed.length > 0 && (
-              <>
-                <div style={{ width: 1, height: 34, background: '#EDE7E0' }} />
-                {notContributed.map(m => (
-                  <div key={m.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                    <MemberDot memberId={m.id} size={30} grey />
-                    <span style={{ fontSize: 9, fontWeight: 600, color: '#C8BEB4' }}>{m.name}</span>
-                  </div>
-                ))}
-              </>
-            )}
           </div>
-          {notContributed.length > 0 && (
+          {/* Aggregate, not a named call-out — the group sees only a
+              neutral count, never which specific member hasn't added
+              anything yet. */}
+          {contributorIds.length < members.length && (
             <p style={{ fontSize: 11, color: '#C8BEB4', marginTop: 8 }}>
-              {notContributed.map(m => m.name).join(' & ')} {notContributed.length === 1 ? 'hasn\'t' : 'haven\'t'} added anything yet
+              {contributorIds.length} of {members.length} crew have added something
             </p>
           )}
         </div>
@@ -84,31 +79,33 @@ export function CategoryDetailScreen({ navigate, params = {} }) {
             <p style={{ fontSize: 13, fontWeight: 800, color: '#1C1410', letterSpacing: -0.2, marginBottom: 10 }}>
               🎯 Everyone needs to find one option
             </p>
+            {/* Only members who've picked an option get an avatar here —
+                no naming, greyed styling, or "waiting" marker for whoever
+                hasn't decided yet, only the neutral count below. */}
             <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
-              {members.map(m => {
-                const hasSara = m.name === 'Sara'
-                return (
-                  <div key={m.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                    <div style={{
-                      width: 34, height: 34, borderRadius: '50%',
-                      background: hasSara ? '#DDD6CE' : m.color,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: hasSara ? 14 : 12, fontWeight: 700,
-                      color: 'white', position: 'relative',
-                      boxShadow: hasSara ? 'none' : `0 2px 8px ${m.color}55`,
-                    }}>
-                      {hasSara ? '⏳' : '✓'}
-                    </div>
-                    <span style={{
-                      fontSize: 9, fontWeight: 600,
-                      color: hasSara ? '#B5A898' : '#5a4a3a',
-                    }}>
-                      {m.name}
-                    </span>
+              {decidedMembers.map(m => (
+                <div key={m.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                  <div style={{
+                    width: 34, height: 34, borderRadius: '50%',
+                    background: m.color,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 12, fontWeight: 700,
+                    color: 'white', position: 'relative',
+                    boxShadow: `0 2px 8px ${m.color}55`,
+                  }}>
+                    ✓
                   </div>
-                )
-              })}
+                  <span style={{ fontSize: 9, fontWeight: 600, color: '#5a4a3a' }}>
+                    {m.name}
+                  </span>
+                </div>
+              ))}
             </div>
+            {decidedMembers.length < members.length && (
+              <p style={{ fontSize: 12, color: '#8A7A6A', fontWeight: 600, marginBottom: 10 }}>
+                {decidedMembers.length} of {members.length} have chosen an option
+              </p>
+            )}
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <span style={{ fontSize: 12 }}>📅</span>
               <p style={{ fontSize: 12, color: '#8A7A6A', fontWeight: 600 }}>
