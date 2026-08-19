@@ -61,30 +61,28 @@ export async function onRequestPost(context) {
 
     // Try grounding answers in real Google Search results first, so citation
     // links point at actual pages instead of the model's own guesses.
-    // Grounding has its own, tighter quota separate from plain generation —
-    // a 429 there means the whole API key is under quota pressure right
-    // now (confirmed in production: a grounded 429 was consistently
-    // followed by the plain fallback call hanging for the full timeout
-    // instead of failing fast), so that's reported immediately rather than
-    // spending another full timeout on a retry likely to fail the same
-    // way. Any other grounding failure — network error, timeout, a non-429
-    // error — still falls back to a plain ungrounded answer, since that's
-    // usually a grounding-specific hiccup rather than account-wide
-    // throttling, and the system prompt already tells the model to say
-    // when it has no verified source.
+    // Grounding has its own, tighter quota separate from plain generation,
+    // so it fails (often 429) more often than plain generation does — but
+    // the plain fallback below has its own quota and genuinely does
+    // succeed even when grounding is 429ing (confirmed in production: a
+    // short-circuit that skipped straight to an error on a grounded 429,
+    // without ever trying the fallback, ended up failing on essentially
+    // every message, plain ones included). So any grounding failure —
+    // 429, network error, timeout — always falls back to a plain
+    // ungrounded attempt rather than assuming the whole key is down.
     let response = await tryCallGemini(apiKey, { ...baseBody, tools: [{ google_search: {} }] })
-    if (response?.status === 429) {
-      return new Response(JSON.stringify({ error: 'The AI is getting a lot of requests right now. Please wait a few seconds and try again.' }), {
-        status: 429,
-        headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
-      })
-    }
     if (!response || !response.ok) {
       response = await tryCallGemini(apiKey, baseBody)
     }
     if (!response) {
       return new Response(JSON.stringify({ error: 'The AI took too long to respond. Try a shorter or more specific question.' }), {
         status: 504,
+        headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+      })
+    }
+    if (!response.ok && response.status === 429) {
+      return new Response(JSON.stringify({ error: 'The AI is getting a lot of requests right now. Please wait a few seconds and try again.' }), {
+        status: 429,
         headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
       })
     }
