@@ -6,11 +6,14 @@ import { CategoryIcon } from '../components/CategoryIcons'
 
 export function ItemDetailScreen({ navigate, params = {}, myIdeas, trips, addToGroup, updateMyIdea, allCategories }) {
   // A share flow with three possible stages: 'trip' (only shown when more
-  // than one trip exists and none has been picked yet), 'categories', or
-  // closed. With zero or exactly one trip, there's never a real choice to
-  // make, so the flow skips straight to categories.
-  const [shareStep, setShareStep]     = useState('closed')
-  const [targetTripId, setTargetTripId] = useState(null)
+  // than one trip exists), 'categories', or closed. With zero or exactly
+  // one trip, there's never a real choice of trip to make, so the flow
+  // skips straight to categories. The trip step is multi-select — an idea
+  // can be shared into more than one trip's Group Space in one pass —
+  // mirroring the category step's own tick-to-select, Confirm-to-advance
+  // pattern rather than the old tap-to-navigate single pick.
+  const [shareStep, setShareStep]         = useState('closed')
+  const [pickedTripIds, setPickedTripIds] = useState([])
   const [pickedCategories, setPickedCategories] = useState([])
   const [editing, setEditing]         = useState(false)
   const [editTitle, setEditTitle]     = useState('')
@@ -28,15 +31,14 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, trips, addToG
   // this screen happened to be reached:
   //   0 trips  → nothing to share into, no share action at all
   //   1 trip   → "Share with <name>" directly, no picker needed
-  //   2+ trips → "Share with Group" opens a trip picker first
+  //   2+ trips → "Share with Group" opens a multi-select trip picker first
   const allTrips = trips || []
   const onlyTrip = allTrips.length === 1 ? allTrips[0] : null
-  const targetTrip = onlyTrip || allTrips.find(t => t.id === targetTripId) || null
-  // An item can only ever be shared to one trip at a time — sharing again
-  // elsewhere simply moves which trip it's tagged as shared to, rather than
-  // tracking a list.
-  const sharedTrip = allTrips.find(t => t.id === item?.sharedTripId)
-  const alreadySharedWithTarget = !!(targetTrip && item?.sharedTripId === targetTrip.id)
+  // An idea can be shared into more than one trip — this list only ever
+  // grows, since re-sharing into a trip it's already in would just
+  // duplicate the group item there.
+  const sharedTripIds = item?.sharedTripIds || []
+  const targetTrips = allTrips.filter(t => pickedTripIds.includes(t.id))
 
   const handleBack = () => navigate(backTo, { categoryId, backTo: params.parentBackTo })
 
@@ -44,37 +46,45 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, trips, addToG
     setPickedCategories(prev => prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id])
   }
 
+  const toggleTripPicked = (id) => {
+    setPickedTripIds(prev => prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id])
+  }
+
   const startShare = () => {
     if (onlyTrip) {
-      setTargetTripId(onlyTrip.id)
+      setPickedTripIds([onlyTrip.id])
       setShareStep('categories')
     } else {
+      setPickedTripIds([])
       setShareStep('trip')
     }
   }
 
-  const pickTrip = (trip) => {
-    setTargetTripId(trip.id)
+  const confirmTripStep = () => {
+    if (pickedTripIds.length === 0) return
     setShareStep('categories')
   }
 
   const cancelShare = () => {
     setShareStep('closed')
     setPickedCategories([])
+    setPickedTripIds([])
   }
 
   const handleConfirmShare = () => {
-    if (pickedCategories.length === 0 || !targetTrip || alreadySharedWithTarget) return
-    addToGroup({ title: item.title, note: item.note, link: item.link, platform: item.platform, categoryIds: pickedCategories, hasPhoto: item.hasPhoto, photo: item.photo, tripId: targetTrip.id })
-    updateMyIdea(item.id, { sharedTripId: targetTrip.id })
-    // `tripId` is passed explicitly rather than left for ShareSuccessScreen
+    if (pickedCategories.length === 0 || pickedTripIds.length === 0) return
+    // One addToGroup call per selected trip — each is its own independent
+    // group item, same as sharing into them one at a time would produce.
+    pickedTripIds.forEach(tripId => {
+      addToGroup({ title: item.title, note: item.note, link: item.link, platform: item.platform, categoryIds: pickedCategories, hasPhoto: item.hasPhoto, photo: item.photo, tripId })
+    })
+    updateMyIdea(item.id, { sharedTripIds: [...new Set([...sharedTripIds, ...pickedTripIds])] })
+    // `tripIds` is passed explicitly rather than left for ShareSuccessScreen
     // to infer from "the currently open trip" — this flow never calls
-    // openTrip, so if the user's active trip differs from the one they just
-    // shared into (e.g. they picked a different trip in the share-target
-    // list), the success screen would otherwise show the wrong trip's name
-    // and its "Go to Group Space" button would open the wrong trip, making
-    // the just-shared item look like it never arrived.
-    navigate('shareSuccess', { categoryIds: pickedCategories, tripId: targetTrip.id })
+    // openTrip, so if the user's active trip differs from the one(s) they
+    // just shared into, the success screen would otherwise show the wrong
+    // trip and send "Go to Group Space" to the wrong place.
+    navigate('shareSuccess', { categoryIds: pickedCategories, tripIds: pickedTripIds })
   }
 
   const startEdit = () => {
@@ -330,18 +340,6 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, trips, addToG
               <p style={{ fontSize: 14, color: COLORS.charcoal, lineHeight: 1.55, fontWeight: 500 }}>
                 Only you can see this. You can share it with your group whenever you're ready.
               </p>
-
-              {/* Sharing copies, it never moves — the item stays here in My
-                  Ideas and also appears in that trip's Group Space, so this
-                  badge is the only way to tell, from the private copy, that
-                  it's already out there. */}
-              {sharedTrip && (
-                <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${COLORS.border}` }}>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: COLORS.teal }}>
-                    🔗 Shared with {sharedTrip.name}
-                  </span>
-                </div>
-              )}
             </div>
 
             {/* Share — adapts to how many trips exist rather than to how
@@ -355,7 +353,7 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, trips, addToG
                 here, so this is the only sharing action ever visible on
                 the page itself. */}
             {allTrips.length > 0 && (
-              alreadySharedWithTarget ? (
+              onlyTrip && sharedTripIds.includes(onlyTrip.id) ? (
                 <div style={{
                   width: '100%', minHeight: 52, borderRadius: 14,
                   background: COLORS.tealTint, color: COLORS.teal,
@@ -363,7 +361,7 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, trips, addToG
                   fontSize: 15, fontWeight: 700, letterSpacing: -0.2,
                   marginBottom: 12, padding: '10px 16px', textAlign: 'center',
                 }}>
-                  ✓ Already shared with {targetTrip.name}
+                  ✓ Already shared with {onlyTrip.name}
                 </div>
               ) : (
                 <button
@@ -396,33 +394,47 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, trips, addToG
           <div style={{ background: 'white', borderRadius: '20px 20px 0 0', padding: '24px 20px 28px', width: '100%', maxHeight: '80vh', overflowY: 'auto', boxSizing: 'border-box' }}>
             {shareStep === 'trip' ? (
               <>
-                <div style={{ display: 'flex', alignItems: 'center', marginBottom: 20 }}>
-                  <h3 style={{ flex: 1, fontSize: 20, fontWeight: 800, color: COLORS.charcoal, letterSpacing: -0.5 }}>Which trip is this for?</h3>
-                  <button
-                    onClick={cancelShare}
-                    style={{ background: 'rgba(0,0,0,0.06)', border: 'none', borderRadius: '50%', width: 32, height: 32, cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                  >
-                    ✕
-                  </button>
-                </div>
-                <div style={{ borderRadius: 14, overflow: 'hidden', border: `1px solid ${COLORS.border}` }}>
+                <h3 style={{ fontSize: 20, fontWeight: 800, color: COLORS.charcoal, letterSpacing: -0.5, marginBottom: 4 }}>
+                  Which trip is this for?
+                </h3>
+                <p style={{ fontSize: 12, color: COLORS.warmGrey, marginBottom: 16 }}>
+                  Choose one or more
+                </p>
+                <div style={{
+                  borderRadius: 14, overflow: 'hidden', marginBottom: 20,
+                  border: `1px solid ${COLORS.border}`,
+                }}>
                   {allTrips.map((t, i) => {
-                    const alreadyShared = item.sharedTripId === t.id
+                    const alreadyShared = sharedTripIds.includes(t.id)
+                    const selected = pickedTripIds.includes(t.id)
                     return (
                       <button
                         key={t.id}
-                        onClick={() => !alreadyShared && pickTrip(t)}
+                        onClick={() => !alreadyShared && toggleTripPicked(t.id)}
                         disabled={alreadyShared}
                         style={{
                           width: '100%', border: 'none', cursor: alreadyShared ? 'default' : 'pointer',
                           display: 'flex', alignItems: 'center', gap: 12,
                           padding: '13px 16px', textAlign: 'left',
-                          background: alreadyShared ? COLORS.bg : 'white',
+                          background: alreadyShared ? COLORS.bg : selected ? `${COLORS.terracotta}12` : 'white',
                           borderBottom: i < allTrips.length - 1 ? `1px solid ${COLORS.borderLight}` : 'none',
+                          borderLeft: selected ? `3px solid ${COLORS.terracotta}` : '3px solid transparent',
                         }}
                       >
+                        <span style={{
+                          width: 20, height: 20, borderRadius: 6, flexShrink: 0,
+                          border: `2px solid ${selected ? COLORS.terracotta : COLORS.border}`,
+                          background: selected ? COLORS.terracotta : 'white',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: 12, color: 'white', fontWeight: 800,
+                        }}>
+                          {selected ? '✓' : ''}
+                        </span>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <span style={{ fontSize: 14, fontWeight: 700, display: 'block', color: alreadyShared ? COLORS.warmGrey : COLORS.charcoal }}>
+                          <span style={{
+                            fontSize: 14, fontWeight: selected ? 700 : 500, display: 'block',
+                            color: alreadyShared ? COLORS.warmGrey : selected ? COLORS.terracotta : COLORS.charcoal,
+                          }}>
                             {t.name}
                           </span>
                           {t.destination && (
@@ -431,25 +443,37 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, trips, addToG
                             </span>
                           )}
                         </div>
-                        {alreadyShared ? (
+                        {alreadyShared && (
                           <span style={{ fontSize: 12, fontWeight: 700, color: COLORS.teal, flexShrink: 0 }}>✓ Already shared</span>
-                        ) : (
-                          <div style={{ display: 'flex', flexShrink: 0 }}>
-                            {(t.members || []).slice(0, 3).map((m, idx) => (
-                              <div key={m.id} style={{
-                                width: 24, height: 24, borderRadius: '50%', background: m.color,
-                                border: '2px solid white', marginLeft: idx > 0 ? -8 : 0,
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                fontSize: 10, fontWeight: 700, color: 'white', lineHeight: 1,
-                              }}>
-                                {m.initial}
-                              </div>
-                            ))}
-                          </div>
                         )}
                       </button>
                     )
                   })}
+                </div>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button
+                    onClick={cancelShare}
+                    style={{
+                      flex: 1, minHeight: 48, borderRadius: 12, border: 'none',
+                      background: COLORS.borderLight, color: COLORS.warmGrey,
+                      fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={confirmTripStep}
+                    disabled={pickedTripIds.length === 0}
+                    style={{
+                      flex: 1, minHeight: 48, borderRadius: 12, border: 'none',
+                      background: pickedTripIds.length > 0 ? COLORS.action : COLORS.border,
+                      color: pickedTripIds.length > 0 ? 'white' : COLORS.warmGrey,
+                      fontSize: 14, fontWeight: 600,
+                      cursor: pickedTripIds.length > 0 ? 'pointer' : 'default', fontFamily: 'inherit',
+                    }}
+                  >
+                    Confirm
+                  </button>
                 </div>
               </>
             ) : (
@@ -458,7 +482,7 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, trips, addToG
                   Which categories in Group Space?
                 </h3>
                 <p style={{ fontSize: 12, color: COLORS.warmGrey, marginBottom: 16 }}>
-                  Choose one or more{!onlyTrip && targetTrip ? ` · ${targetTrip.name}` : ''}
+                  Choose one or more{!onlyTrip && targetTrips.length > 0 ? ` · ${targetTrips.map(t => t.name).join(', ')}` : ''}
                 </p>
                 <div style={{
                   borderRadius: 14, overflow: 'hidden', marginBottom: 20,

@@ -5,21 +5,28 @@ import { CategoryIcon } from '../components/CategoryIcons'
 
 export function ShareSuccessScreen({ navigate, params = {}, currentTrip, trips, openTrip, allCategories }) {
   const sharedCategories = (params.categoryIds || []).map(id => allCategories.find(c => c.id === id)).filter(Boolean)
-  // The trip this item was actually just shared into — resolved from the
-  // id passed explicitly through navigation params, not from `currentTrip`
-  // (the globally "active" trip). Those two can differ (the user shared
-  // into a trip other than the one currently open) or `currentTrip` can be
-  // one render behind if this screen was reached right after an openTrip()
-  // call in the same tick — either way, reading `currentTrip` here made
-  // this screen show the wrong trip's members and sent "Go to Group Space"
-  // to the wrong trip, so the item that was just shared looked like it had
-  // never arrived. `params.tripId` is always the source of truth when
-  // present; `currentTrip` is only a fallback for any older call site that
-  // hasn't been updated to pass it.
-  const targetTrip = (trips || []).find(t => t.id === params.tripId) || currentTrip
+  // The trip(s) this item was actually just shared into — resolved from the
+  // id(s) passed explicitly through navigation params, not from
+  // `currentTrip` (the globally "active" trip). Those two can differ (the
+  // user shared into a trip other than the one currently open) or
+  // `currentTrip` can be one render behind if this screen was reached right
+  // after an openTrip() call in the same tick — either way, reading
+  // `currentTrip` here made this screen show the wrong trip's members and
+  // sent "Go to Group Space" to the wrong trip, so the item that was just
+  // shared looked like it had never arrived. `params.tripIds` (an idea can
+  // now be shared into more than one trip at once) or the older singular
+  // `params.tripId` are always the source of truth when present;
+  // `currentTrip` is only a fallback for any call site that predates both.
+  const targetTripIds = params.tripIds || (params.tripId ? [params.tripId] : [])
+  const targetTrips = targetTripIds.map(id => (trips || []).find(t => t.id === id)).filter(Boolean)
+  const resolvedTrips = targetTrips.length > 0 ? targetTrips : (currentTrip ? [currentTrip] : [])
+  // Member avatars only make sense to show for a single, unambiguous trip —
+  // when the idea was just shared into several trips at once, whose
+  // members would they be? A plain trip-name list covers that case instead.
+  const singleTrip = resolvedTrips.length === 1 ? resolvedTrips[0] : null
 
   const goToGroupSpace = () => {
-    if (targetTrip) openTrip(targetTrip.id)
+    if (resolvedTrips[0]) openTrip(resolvedTrips[0].id)
     else navigate('groupHome')
   }
 
@@ -76,13 +83,13 @@ export function ShareSuccessScreen({ navigate, params = {}, currentTrip, trips, 
           Your group can now see this.
         </p>
 
-        {targetTrip && targetTrip.members && targetTrip.members.length > 0 && (
+        {singleTrip && singleTrip.members && singleTrip.members.length > 0 ? (
           <div style={{ marginBottom: 44, textAlign: 'center' }}>
             <p style={{ fontSize: 12, color: COLORS.warmGrey, marginBottom: 16, fontWeight: 500 }}>
-              Shared with {targetTrip.name}
+              Shared with {singleTrip.name}
             </p>
             <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
-              {targetTrip.members.map(m => (
+              {singleTrip.members.map(m => (
                 <div key={m.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
                   <div style={{
                     width: 44, height: 44, borderRadius: '50%', background: m.color,
@@ -97,7 +104,11 @@ export function ShareSuccessScreen({ navigate, params = {}, currentTrip, trips, 
               ))}
             </div>
           </div>
-        )}
+        ) : resolvedTrips.length > 1 ? (
+          <p style={{ fontSize: 13, color: COLORS.warmGrey, marginBottom: 44, fontWeight: 600, textAlign: 'center' }}>
+            Shared with {resolvedTrips.map(t => t.name).join(', ')}
+          </p>
+        ) : null}
 
         <button
           onClick={goToGroupSpace}

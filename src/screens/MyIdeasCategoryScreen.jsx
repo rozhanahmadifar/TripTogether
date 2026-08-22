@@ -14,7 +14,14 @@ export function MyIdeasCategoryScreen({ navigate, params = {}, myIdeas, trips, a
   // filtering by trip, whether opened from the home page or from inside a
   // trip.
   const items = myIdeas.filter(i => i.categoryIds.includes(cat.id))
-  const sharedTripNameFor = (item) => (trips || []).find(t => t.id === item.sharedTripId)?.name
+  // An idea can be shared into more than one trip, so this joins every
+  // shared trip's name into one readable string for the card's single badge.
+  const sharedTripNameFor = (item) => {
+    const names = (item.sharedTripIds || []).map(id => (trips || []).find(t => t.id === id)?.name).filter(Boolean)
+    if (names.length === 0) return undefined
+    if (names.length === 1) return names[0]
+    return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
+  }
   const [view, setView] = useState('list')
   // Inspiration's own CATEGORY_PHOTOS entry is a busy, colorful map/
   // notebook scene — already identified and replaced elsewhere in the app

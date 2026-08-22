@@ -250,6 +250,20 @@ export function ItemCard({ item, categories, contributor, source, note, hearts =
                     ))}
                   </div>
                 )}
+                {/* Sharing copies, it never moves — the item stays in My
+                    Ideas too, so this is the only way to tell, from that
+                    private copy, that it's also sitting in a trip's Group
+                    Space. Can be shared into more than one trip, so the
+                    name here may already be a joined list. */}
+                {sharedWithTripName && (
+                  <span style={{
+                    display: 'inline-block', marginTop: 8,
+                    background: COLORS.tealTint, color: COLORS.teal,
+                    fontSize: 11, fontWeight: 700, borderRadius: 8, padding: '3px 9px',
+                  }}>
+                    🔗 Shared with {sharedWithTripName}
+                  </span>
+                )}
               </div>
             </TopTag>
           )}
@@ -473,8 +487,9 @@ export function ItemCard({ item, categories, contributor, source, note, hearts =
 
               {/* Sharing copies, it never moves — the item stays in My Ideas
                   too, so this is the only way to tell, from that private
-                  copy, that it's also sitting in a trip's Group Space. Only
-                  ever one trip at a time, so a single badge is enough. */}
+                  copy, that it's also sitting in a trip's Group Space. Can
+                  be shared into more than one trip, so the name here may
+                  already be a joined list rather than a single trip. */}
               {sharedWithTripName && (
                 <span style={{
                   display: 'inline-block', marginTop: 6,
