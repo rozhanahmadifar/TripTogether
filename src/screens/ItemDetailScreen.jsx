@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { PLATFORM_COLORS, CATEGORY_HINTS, timeAgo, isImagePhoto, displayTitle } from '../data'
 import { TEXT, COLORS, SPACING } from '../styles'
 import { BackButton } from '../components/BackButton'
 import { CategoryIcon } from '../components/CategoryIcons'
+import { ActionMenu, PencilIcon, TrashIcon, DotsIcon, XIcon } from '../components/ActionMenu'
 
-export function ItemDetailScreen({ navigate, params = {}, myIdeas, trips, addToGroup, updateMyIdea, allCategories }) {
+export function ItemDetailScreen({ navigate, params = {}, myIdeas, trips, addToGroup, updateMyIdea, deleteMyIdea, allCategories }) {
   // A share flow with three possible stages: 'trip' (only shown when more
   // than one trip exists), 'categories', or closed. With zero or exactly
   // one trip, there's never a real choice of trip to make, so the flow
@@ -19,7 +20,11 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, trips, addToG
   const [editTitle, setEditTitle]     = useState('')
   const [editLink, setEditLink]       = useState('')
   const [editNote, setEditNote]       = useState('')
+  const [editPhoto, setEditPhoto]     = useState('')
   const [editCategoryIds, setEditCategoryIds] = useState([])
+  const [menuAnchor, setMenuAnchor]   = useState(null)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const fileInputRef = useRef(null)
 
   const { itemId, categoryId, backTo = 'myIdeasCategory' } = params
   const item = myIdeas.find(i => i.id === itemId)
@@ -87,10 +92,13 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, trips, addToG
     navigate('shareSuccess', { categoryIds: pickedCategories, tripIds: pickedTripIds })
   }
 
+  const closeMenu = () => setMenuAnchor(null)
+
   const startEdit = () => {
     setEditTitle(item.title || '')
     setEditLink(item.link || '')
     setEditNote(item.note || '')
+    setEditPhoto(item.photo || '')
     setEditCategoryIds(item.categoryIds || [])
     setEditing(true)
   }
@@ -99,18 +107,46 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, trips, addToG
     setEditCategoryIds(prev => prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id])
   }
 
+  // Read client-side and stored as a data URL, same as the save flow —
+  // no server upload for this prototype. Videos just keep their filename
+  // as a placeholder.
+  const handleEditFileChange = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    if (file.type.startsWith('video/')) {
+      setEditPhoto(file.name)
+    } else {
+      const reader = new FileReader()
+      reader.onload = () => setEditPhoto(reader.result)
+      reader.readAsDataURL(file)
+    }
+    e.target.value = ''
+  }
+
   // A link, photo, or note already identifies the item at a glance, so
   // title only needs to be required when none of those exist either.
-  const editHasOtherContent = !!item.photo || editLink.trim().length > 0 || editNote.trim().length > 0
+  const editHasOtherContent = !!editPhoto || editLink.trim().length > 0 || editNote.trim().length > 0
   const canSaveEdit = (editTitle.trim().length > 0 || editHasOtherContent) && editCategoryIds.length > 0
 
   const saveEdit = () => {
     if (!canSaveEdit) return
     updateMyIdea(item.id, {
       title: editTitle.trim(), link: editLink.trim(), note: editNote.trim(), categoryIds: editCategoryIds,
+      photo: editPhoto, hasPhoto: !!editPhoto,
     })
     setEditing(false)
   }
+
+  const confirmDelete = () => {
+    setConfirmingDelete(false)
+    deleteMyIdea(item.id)
+    handleBack()
+  }
+
+  const menuRows = [
+    { icon: <PencilIcon />, label: 'Edit', color: COLORS.charcoal, onClick: () => { closeMenu(); startEdit() } },
+    { icon: <TrashIcon />, label: 'Delete', color: COLORS.danger, onClick: () => { closeMenu(); setConfirmingDelete(true) } },
+  ]
 
   if (!item) {
     return (
@@ -133,12 +169,26 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, trips, addToG
           <CategoryIcon id={cat.id} size={20} color={cat.shade || COLORS.teal} /> {cat.label}
         </p>
         {!editing && (
-          <button
-            onClick={startEdit}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: COLORS.teal, padding: '4px 0' }}
-          >
-            Edit
-          </button>
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={(e) => {
+                if (menuAnchor) { closeMenu(); return }
+                const rect = e.currentTarget.getBoundingClientRect()
+                setMenuAnchor({ top: rect.top, left: rect.left, width: rect.width, height: rect.height })
+              }}
+              aria-label="More options"
+              style={{
+                width: 30, height: 30, borderRadius: '50%', border: 'none',
+                background: 'none', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
+            >
+              <DotsIcon />
+            </button>
+            {menuAnchor && (
+              <ActionMenu anchorRect={menuAnchor} rows={menuRows} onClose={closeMenu} />
+            )}
+          </div>
         )}
       </div>
 
@@ -183,6 +233,47 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, trips, addToG
                 marginBottom: 14, boxSizing: 'border-box',
               }}
             />
+
+            <p style={{ fontSize: 11, fontWeight: 700, color: COLORS.warmGrey, letterSpacing: 0.6, textTransform: 'uppercase', marginBottom: 6 }}>Photo or video</p>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*,video/*"
+              onChange={handleEditFileChange}
+              style={{ display: 'none' }}
+            />
+            <div style={{ marginBottom: 14 }}>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  border: `1.5px solid ${editPhoto ? COLORS.teal : COLORS.border}`,
+                  borderRadius: 10, padding: '10px 14px',
+                  background: editPhoto ? COLORS.tealTint : 'white', cursor: 'pointer',
+                  fontFamily: 'inherit',
+                }}
+              >
+                <span style={{ fontSize: 16 }}>{editPhoto && !isImagePhoto(editPhoto) ? '🎬' : '📷'}</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: editPhoto ? COLORS.teal : COLORS.warmGrey }}>
+                  {!editPhoto ? 'Add a photo or video' : isImagePhoto(editPhoto) ? 'Change photo' : `Video attached: ${editPhoto}`}
+                </span>
+              </button>
+              {editPhoto && isImagePhoto(editPhoto) && (
+                <div style={{ marginTop: 10, position: 'relative', width: 90, height: 90 }}>
+                  <img src={editPhoto} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 12 }} />
+                  <button
+                    onClick={() => setEditPhoto('')}
+                    style={{
+                      position: 'absolute', top: -8, right: -8, width: 24, height: 24, borderRadius: '50%',
+                      border: '2px solid white', background: COLORS.danger, color: 'white', lineHeight: 1,
+                      cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}
+                  >
+                    <XIcon size={11} color="white" />
+                  </button>
+                </div>
+              )}
+            </div>
 
             <p style={{ fontSize: 11, fontWeight: 700, color: COLORS.warmGrey, letterSpacing: 0.6, textTransform: 'uppercase', marginBottom: 8 }}>Tags — choose one or more</p>
             <div style={{ borderRadius: 14, overflow: 'hidden', marginBottom: 20, border: `1px solid ${COLORS.border}` }}>
@@ -559,6 +650,47 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, trips, addToG
                 </div>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {confirmingDelete && (
+        <div
+          style={{
+            position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.4)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 32,
+          }}
+          onClick={e => { if (e.target === e.currentTarget) setConfirmingDelete(false) }}
+        >
+          <div style={{
+            background: 'white', borderRadius: 16, padding: 20, width: '100%', maxWidth: 280,
+            boxShadow: '0 8px 30px rgba(0,0,0,0.2)', textAlign: 'center',
+          }}>
+            <p style={{ fontSize: 15, fontWeight: 600, color: COLORS.charcoal, marginBottom: 18, lineHeight: 1.4 }}>
+              Delete this item? This can't be undone.
+            </p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={() => setConfirmingDelete(false)}
+                style={{
+                  flex: 1, minHeight: 40, borderRadius: 10, border: 'none',
+                  background: COLORS.borderLight, color: COLORS.warmGrey,
+                  fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                style={{
+                  flex: 1, minHeight: 40, borderRadius: 10, border: 'none',
+                  background: COLORS.danger, color: 'white',
+                  fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                }}
+              >
+                Delete
+              </button>
+            </div>
           </div>
         </div>
       )}

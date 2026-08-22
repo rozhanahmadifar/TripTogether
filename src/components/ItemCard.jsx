@@ -1,18 +1,8 @@
 import { useState } from 'react'
 import { timeAgo, PLATFORMS, isImagePhoto, displayTitle } from '../data'
 import { COLORS, SHADOW_CARD, TEXT } from '../styles'
-import { ActionMenu, PencilIcon, TrashIcon } from './ActionMenu'
+import { ActionMenu, PencilIcon, TrashIcon, DotsIcon } from './ActionMenu'
 import { CategoryIcon } from './CategoryIcons'
-
-function DotsIcon({ size = 14, color = COLORS.charcoal }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
-      <circle cx="12" cy="5" r="2" />
-      <circle cx="12" cy="12" r="2" />
-      <circle cx="12" cy="19" r="2" />
-    </svg>
-  )
-}
 
 function Pill({ label, icon, selected, onClick }) {
   return (

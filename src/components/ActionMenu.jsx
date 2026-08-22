@@ -36,6 +36,16 @@ export function XIcon({ size = 12, color = COLORS.warmGrey }) {
   )
 }
 
+export function DotsIcon({ size = 14, color = COLORS.charcoal }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+      <circle cx="12" cy="5" r="2" />
+      <circle cx="12" cy="12" r="2" />
+      <circle cx="12" cy="19" r="2" />
+    </svg>
+  )
+}
+
 export function TrashIcon({ size = 16, color = COLORS.danger }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -48,10 +58,19 @@ export function TrashIcon({ size = 16, color = COLORS.danger }) {
   )
 }
 
-// Small floating menu anchored above the element whose bounding rect is passed in.
-// Positioned with `fixed` (viewport-relative) so it escapes ancestor overflow clipping.
+// Small floating menu anchored above the element whose bounding rect is
+// passed in — unless the anchor is close enough to the top of the viewport
+// that opening upward would push it off-screen (e.g. a header's "⋯" button),
+// in which case it opens downward instead. Positioned with `fixed`
+// (viewport-relative) so it escapes ancestor overflow clipping.
 export function ActionMenu({ anchorRect, rows, onClose }) {
   if (!anchorRect) return null
+
+  // Rough per-row height (padding + text + divider) times row count, plus
+  // the 8px gap kept from the anchor — good enough to decide up vs. down
+  // without needing to measure the menu's actual rendered size first.
+  const estimatedHeight = rows.length * 45 + 8
+  const openUpward = anchorRect.top - estimatedHeight > 0
 
   return (
     <>
@@ -62,9 +81,9 @@ export function ActionMenu({ anchorRect, rows, onClose }) {
       <div
         style={{
           position: 'fixed',
-          top: anchorRect.top - 8,
+          top: openUpward ? anchorRect.top - 8 : anchorRect.top + anchorRect.height + 8,
           left: anchorRect.left + anchorRect.width / 2,
-          transform: 'translate(-50%, -100%)',
+          transform: openUpward ? 'translate(-50%, -100%)' : 'translate(-50%, 0)',
           background: 'white', borderRadius: 10,
           boxShadow: '0 4px 16px rgba(0,0,0,0.18)',
           overflow: 'hidden', zIndex: 301, minWidth: 172,
