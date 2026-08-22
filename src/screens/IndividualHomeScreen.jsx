@@ -176,7 +176,7 @@ export function IndividualHomeScreen({ navigate, userName, myIdeas, currentTrip,
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <h3 style={{
-                  ...HEADLINE, color: COLORS.charcoal, marginBottom: 2,
+                  ...HEADLINE, color: COLORS.charcoal, marginBottom: 4,
                   overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                 }}>
                   {currentTrip.name}
@@ -189,14 +189,17 @@ export function IndividualHomeScreen({ navigate, userName, myIdeas, currentTrip,
                     never splits from its unit word. The bullet itself gets
                     real horizontal margin (not just a literal space
                     character either side) so "dates • members" reads with
-                    genuine breathing room, not crowded together. */}
+                    genuine breathing room, not crowded together. Every line
+                    in this stack uses the same marginBottom so the rhythm
+                    between title/destination/dates/members reads as one
+                    consistent gap, not a mix of different spacings. */}
                 {currentTrip.destination && (
-                  <p style={{ ...BODY, color: COLORS.warmGrey, marginBottom: 5 }}>
+                  <p style={{ ...BODY, color: COLORS.warmGrey, marginBottom: 4 }}>
                     {currentTrip.destination}
                   </p>
                 )}
                 {currentTrip.dates && (
-                  <p style={{ ...BODY, color: COLORS.warmGrey, marginBottom: currentTrip.members?.length ? 2 : 0 }}>
+                  <p style={{ ...BODY, color: COLORS.warmGrey, marginBottom: currentTrip.members?.length ? 4 : 0 }}>
                     {currentTrip.dates}
                   </p>
                 )}
@@ -237,7 +240,7 @@ export function IndividualHomeScreen({ navigate, userName, myIdeas, currentTrip,
                 <img
                   src={CATEGORY_PHOTOS.destination}
                   alt=""
-                  style={{ width: 96, height: 132, borderRadius: 16, objectFit: 'cover', flexShrink: 0, marginTop: -6 }}
+                  style={{ width: 96, height: 132, borderRadius: 16, objectFit: 'cover', flexShrink: 0, marginTop: -12 }}
                 />
               )}
             </div>
