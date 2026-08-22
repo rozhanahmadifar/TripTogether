@@ -4,6 +4,7 @@ import { fetchLinkPreview } from '../linkPreview'
 import { TEXT, COLORS, SPACING } from '../styles'
 import { BackButton } from '../components/BackButton'
 import { CategoryIcon } from '../components/CategoryIcons'
+import { XIcon } from '../components/ActionMenu'
 
 function MemberCircle({ m }) {
   return (
@@ -272,10 +273,10 @@ export function SaveSomethingScreen({ navigate, params = {}, allCategories, save
                 style={{
                   position: 'absolute', top: -8, right: -8, width: 24, height: 24, borderRadius: '50%',
                   border: '2px solid white', background: COLORS.danger, color: 'white', lineHeight: 1,
-                  fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}
               >
-                ×
+                <XIcon size={11} color="white" />
               </button>
             </div>
           )}
