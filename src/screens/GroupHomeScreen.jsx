@@ -87,25 +87,6 @@ function QuickAccessTile({ badge, title, subtitle, onClick }) {
   )
 }
 
-function IdeasCategoryRow({ cat, count, isLast, onClick }) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        width: '100%', border: 'none', background: 'none', cursor: 'pointer',
-        display: 'flex', alignItems: 'center', gap: 12,
-        padding: '12px 0', textAlign: 'left',
-        borderBottom: isLast ? 'none' : `1px solid ${COLORS.borderLight}`,
-      }}
-    >
-      <CategoryIconBadge id={cat.id} tint={cat.color} shade={cat.shade} size={32} />
-      <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: COLORS.charcoal }}>{cat.label}</span>
-      <span style={{ fontSize: 13, color: COLORS.warmGrey }}>{count === 0 ? '—' : count}</span>
-    </button>
-  )
-}
-
-
 export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, groupItems, updateTrip, setTripDestination, customThreads, allCategories }) {
   // Everything about the card — name, destination, dates, budget, and
   // members — now opens from the single edit icon at the top of the card
@@ -142,15 +123,6 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
   // that fact lives.
   const visibleCategories = allCategories.filter(c => !c.hidden && !(c.id === 'destination' && currentTrip.destinationSetAtCreation))
 
-  // Trip home is a compact preview, capped to the top 3 most-active
-  // categories — otherwise a trip with content everywhere would make this
-  // look identical to "See all" and defeat the point of having both. The
-  // full 6-category list (including empty ones) lives behind "See all".
-  const countIn = (items, catId) => items.filter(i => i.categoryIds.includes(catId)).length
-  const topCategories = (items) => visibleCategories
-    .filter(cat => countIn(items, cat.id) > 0)
-    .sort((a, b) => countIn(items, b.id) - countIn(items, a.id))
-    .slice(0, 3)
   // Surfaced on trip home as a visible entry point into the decisions
   // view — testing showed this otherwise goes unnoticed inside Group Space.
   const decidedCategoriesCount = visibleCategories.filter(cat =>
@@ -158,8 +130,11 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
   ).length
   const allCategoriesDecided = visibleCategories.length > 0 && decidedCategoriesCount === visibleCategories.length
   // My Ideas is the same flat, unfiltered list shown everywhere — never a
-  // trip-scoped subset, even here inside a trip.
-  const ideasCategoriesWithItems = topCategories(myIdeas)
+  // trip-scoped subset, even here inside a trip. Only Inspiration gets its
+  // own standalone row below (see render) — everything else in My Ideas is
+  // reached through the grid tile's "See all" instead of a preview here.
+  const inspirationCat = allCategories.find(c => c.id === 'inspiration')
+  const inspirationCount = myIdeas.filter(i => i.categoryIds.includes('inspiration')).length
 
   // Name, destination, dates, and budget open together in one panel —
   // separately they added up to a pencil per field scattered around the
@@ -580,43 +555,32 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
           />
         </div>
 
-        {/* My Ideas — the same private space as the home page's My Ideas,
-            not a separate trip-scoped stash. Orange border + lock icon +
-            explicit "Private" label keep it visually distinct so it's
-            never mistaken for shared content. */}
-        <div style={{
-          background: COLORS.cardBg, borderRadius: 14, boxShadow: SHADOW_CARD,
-          padding: 16, borderLeft: `3px solid ${COLORS.terracotta}`,
-        }}>
+        {/* Inspiration — its own standalone row now, in the same page
+            position the old detailed My Ideas card used to occupy. My
+            Ideas itself is fully represented by the grid tile above now
+            (no duplicate surface for it), but Inspiration specifically
+            stays put here rather than disappearing along with that card. */}
+        {inspirationCat && (
           <button
-            onClick={() => navigate('myIdeasFull')}
+            onClick={() => navigate('myIdeasCategory', { categoryId: 'inspiration', backTo: 'groupHome' })}
             style={{
-              width: '100%', display: 'flex', alignItems: 'center', marginBottom: 4,
-              background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left', fontFamily: 'inherit',
+              width: '100%', display: 'flex', alignItems: 'center', gap: 12,
+              background: COLORS.cardBg, borderRadius: 14, boxShadow: SHADOW_CARD,
+              padding: 16, border: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit',
             }}
           >
-            <span style={{ flex: 1, fontSize: 11, fontWeight: 700, color: COLORS.teal, letterSpacing: 1.5, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}>
-              🔒 My Ideas
-            </span>
-            <span style={{ fontSize: 13, fontWeight: 600, color: COLORS.teal }}>
-              See all
-            </span>
+            <CategoryIconBadge id="inspiration" tint={inspirationCat.color} shade={inspirationCat.shade} size={ROW_ICON_SIZE} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontSize: 14, fontWeight: 700, color: COLORS.charcoal, letterSpacing: -0.2 }}>
+                Inspiration
+              </p>
+              <p style={{ fontSize: 12, color: COLORS.warmGrey, marginTop: 1 }}>
+                {inspirationCount === 0 ? 'Nothing saved yet' : `${inspirationCount} ${inspirationCount === 1 ? 'idea' : 'ideas'} saved`}
+              </p>
+            </div>
+            <span style={{ fontSize: 16, color: COLORS.subtleIcon }}>›</span>
           </button>
-          <p style={{ fontSize: 12, color: COLORS.warmGrey, fontStyle: 'italic', marginBottom: 10 }}>
-            {myIdeas.length === 0 ? 'Nothing saved yet' : 'Private, only you can see these'}
-          </p>
-          <div>
-            {ideasCategoriesWithItems.map((cat, i) => (
-              <IdeasCategoryRow
-                key={cat.id}
-                cat={cat}
-                count={myIdeas.filter(i => i.categoryIds.includes(cat.id)).length}
-                isLast={i === ideasCategoriesWithItems.length - 1}
-                onClick={() => navigate('myIdeasCategory', { categoryId: cat.id, backTo: 'groupHome' })}
-              />
-            ))}
-          </div>
-        </div>
+        )}
       </div>
     </div>
   )
