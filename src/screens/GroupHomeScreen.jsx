@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { colorForName, truncateName, isValidEmail, daysUntil, countdownLabel, CATEGORY_PHOTOS } from '../data'
 import { DateRangePicker, fmtDate } from '../components/DateRangePicker'
 import { BackButton } from '../components/BackButton'
-import { XIcon } from '../components/ActionMenu'
+import { XIcon, PlusIcon } from '../components/ActionMenu'
 import { ChatIcon } from '../components/TabIcons'
 import { CategoryIconBadge } from '../components/CategoryIcons'
 import { ProgressRing } from '../components/ProgressRing'
@@ -59,6 +59,34 @@ function RowIconBadge({ children, bg = COLORS.tealTint }) {
   )
 }
 
+// One of the four equal-sized quick-access cards below the Discussions row
+// (Trip Summary, Categories, Group Space, My Ideas) — icon/ring badge on
+// top, title, one short line of subtext, no trailing chevron (unlike the
+// full-width rows elsewhere on this screen) since a 2x2 grid of tiles reads
+// as tappable on its own without one.
+function QuickAccessTile({ badge, title, subtitle, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 10,
+        background: COLORS.cardBg, borderRadius: 14, boxShadow: SHADOW_CARD,
+        padding: 16, border: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit',
+      }}
+    >
+      {badge}
+      <div>
+        <p style={{ fontSize: 14, fontWeight: 700, color: COLORS.charcoal, letterSpacing: -0.2, marginBottom: 2 }}>
+          {title}
+        </p>
+        <p style={{ fontSize: 12, color: COLORS.warmGrey, lineHeight: 1.35 }}>
+          {subtitle}
+        </p>
+      </div>
+    </button>
+  )
+}
+
 function IdeasCategoryRow({ cat, count, isLast, onClick }) {
   return (
     <button
@@ -77,37 +105,6 @@ function IdeasCategoryRow({ cat, count, isLast, onClick }) {
   )
 }
 
-function GroupCategoryRow({ cat, count, contributors, isLast, onClick }) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        width: '100%', border: 'none', background: 'none', cursor: 'pointer',
-        display: 'flex', alignItems: 'center', gap: 12,
-        padding: '12px 0', textAlign: 'left',
-        borderBottom: isLast ? 'none' : `1px solid ${COLORS.borderLight}`,
-      }}
-    >
-      <CategoryIconBadge id={cat.id} tint={cat.color} shade={cat.shade} size={32} />
-      <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: COLORS.charcoal }}>{cat.label}</span>
-      <span style={{ fontSize: 13, color: COLORS.warmGrey }}>{count === 0 ? '—' : count}</span>
-      {contributors.length > 0 && (
-        <div style={{ display: 'flex', marginLeft: 6 }}>
-          {contributors.slice(0, 4).map((name, idx) => {
-            return (
-              <div key={idx} style={{
-                width: 16, height: 16, borderRadius: '50%',
-                background: colorForName(name),
-                border: '1.5px solid white',
-                marginLeft: idx > 0 ? -5 : 0,
-              }} />
-            )
-          })}
-        </div>
-      )}
-    </button>
-  )
-}
 
 export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, groupItems, updateTrip, setTripDestination, customThreads, allCategories }) {
   // Everything about the card — name, destination, dates, budget, and
@@ -154,7 +151,6 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
     .filter(cat => countIn(items, cat.id) > 0)
     .sort((a, b) => countIn(items, b.id) - countIn(items, a.id))
     .slice(0, 3)
-  const groupCategoriesWithItems = topCategories(groupItems)
   // Surfaced on trip home as a visible entry point into the decisions
   // view — testing showed this otherwise goes unnoticed inside Group Space.
   const decidedCategoriesCount = visibleCategories.filter(cat =>
@@ -213,11 +209,6 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
     updateTrip(currentTrip.id, { members: tripMembers.filter(m => m.id !== memberId) })
   }
 
-  const getContributors = (categoryId) => {
-    const items = groupItems.filter(i => i.categoryIds.includes(categoryId))
-    return [...new Set(items.map(i => i.savedBy))]
-  }
-
   return (
     <div className="screen" style={{ background: COLORS.bgGroupSpace }}>
       {/* Header with back button */}
@@ -247,8 +238,8 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
                   not the other way around. */}
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, marginBottom: 8 }}>
                 <div style={{ flex: 1 }}>
-                  <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.6)', fontWeight: 700, letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 4 }}>Current trip</p>
-                  <h2 style={{ fontSize: 27, fontWeight: 800, color: 'white', letterSpacing: -0.6, lineHeight: 1.1 }}>{currentTrip.name}</h2>
+                  <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.75)', fontWeight: 700, letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 4, textShadow: '0 1px 6px rgba(0,0,0,0.35)' }}>Current trip</p>
+                  <h2 style={{ fontSize: 27, fontWeight: 800, color: 'white', letterSpacing: -0.6, lineHeight: 1.1, textShadow: '0 1px 8px rgba(0,0,0,0.4)' }}>{currentTrip.name}</h2>
                 </div>
                 <button
                   onClick={openCardEdit}
@@ -268,7 +259,7 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
                   a second headline: noticeably smaller than the name above
                   it. */}
               {currentTrip.destination ? (
-                <p style={{ fontSize: 17, fontWeight: 700, color: 'rgba(255,255,255,0.92)', letterSpacing: -0.2, lineHeight: 1.3, marginBottom: 8 }}>
+                <p style={{ fontSize: 17, fontWeight: 700, color: 'rgba(255,255,255,0.95)', letterSpacing: -0.2, lineHeight: 1.3, marginBottom: 8, textShadow: '0 1px 6px rgba(0,0,0,0.35)' }}>
                   📍 {currentTrip.destination}
                 </p>
               ) : hasAnyTripDetails ? (
@@ -318,40 +309,52 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
                   yet" placeholder state stays dimmed and italic. */}
               {hasAnyTripDetails && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 20 }}>
-                  <p style={{ fontSize: 13, fontWeight: 600, color: currentTrip.dates ? 'white' : 'rgba(255,255,255,0.55)', fontStyle: currentTrip.dates ? 'normal' : 'italic' }}>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: currentTrip.dates ? 'white' : 'rgba(255,255,255,0.55)', fontStyle: currentTrip.dates ? 'normal' : 'italic', textShadow: currentTrip.dates ? '0 1px 5px rgba(0,0,0,0.3)' : 'none' }}>
                     📅 {currentTrip.dates || 'Dates not set yet'}
                   </p>
-                  <p style={{ fontSize: 13, fontWeight: 600, color: currentTrip.budget ? 'white' : 'rgba(255,255,255,0.55)', fontStyle: currentTrip.budget ? 'normal' : 'italic' }}>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: currentTrip.budget ? 'white' : 'rgba(255,255,255,0.55)', fontStyle: currentTrip.budget ? 'normal' : 'italic', textShadow: currentTrip.budget ? '0 1px 5px rgba(0,0,0,0.3)' : 'none' }}>
                     💰 {currentTrip.budget ? `Budget: ${currentTrip.budget}` : 'Budget not set yet'}
                   </p>
                 </div>
               )}
 
               {/* Traveling with — its own labeled block, not names tacked
-                  onto the bottom of the card as an afterthought. Slightly
-                  larger avatars than the rest of the app's member circles,
-                  and a soft divider above, so the card reads as "this trip,
-                  with these people" rather than trip facts first, people
-                  second. */}
+                  onto the bottom of the card as an afterthought. A compact
+                  row of avatar circles (no name labels — the row itself is
+                  the point, not each individual name) ending in a dashed
+                  "+" button so inviting someone is a one-tap action right
+                  here, not buried inside the full trip-edit panel. */}
               <div style={{ marginTop: 6, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.16)' }}>
-                <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.65)', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>
+                <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.75)', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12, textShadow: '0 1px 5px rgba(0,0,0,0.3)' }}>
                   Traveling with
                 </p>
-                <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
                   {tripMembers.map(m => (
-                    <div key={m.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-                      <div style={{
-                        width: 42, height: 42, borderRadius: '50%',
+                    <div
+                      key={m.id}
+                      title={m.name}
+                      style={{
+                        width: 40, height: 40, borderRadius: '50%',
                         background: m.color,
                         border: '2px solid white',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 15, fontWeight: 700, color: 'white', lineHeight: 1,
-                      }}>
-                        {m.initial}
-                      </div>
-                      <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', fontWeight: 600 }} title={m.name}>{truncateName(m.name)}</span>
+                        fontSize: 14, fontWeight: 700, color: 'white', lineHeight: 1, flexShrink: 0,
+                      }}
+                    >
+                      {m.initial}
                     </div>
                   ))}
+                  <button
+                    onClick={openCardEdit}
+                    aria-label="Add a traveler"
+                    style={{
+                      width: 40, height: 40, borderRadius: '50%', flexShrink: 0,
+                      border: '2px dashed rgba(255,255,255,0.6)', background: 'rgba(255,255,255,0.10)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+                    }}
+                  >
+                    <PlusIcon size={16} color="white" />
+                  </button>
                 </div>
               </div>
             </>
@@ -528,109 +531,53 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
           </button>
         )}
 
-        {/* Progress/decisions entry point — visible on trip home itself
-            rather than requiring "Group Space" then "See all", since
-            testing showed users didn't find it unaided otherwise. The
-            subtext line changes with how much of the trip is decided, and
-            a fully-decided trip — the biggest milestone there is — gets
-            the milestone-colored treatment instead of the plain card. A
-            real progress ring replaces the old plain emoji here — trip
-            progress is the one number this whole app is building toward,
-            so it gets a real visual instead of being conveyed by text
-            alone (design-refresh step 3: Trip Home richness). */}
-        {visibleCategories.length > 0 && (
-          <button
-            onClick={() => navigate('groupSpace', { initialView: 'decided' })}
-            style={{
-              width: '100%', display: 'flex', alignItems: 'center', gap: 12,
-              background: allCategoriesDecided ? COLORS.milestoneTint : COLORS.cardBg,
-              borderRadius: 14, boxShadow: SHADOW_CARD,
-              padding: 16, border: `1.5px solid ${allCategoriesDecided ? COLORS.milestone : 'transparent'}`,
-              cursor: 'pointer', textAlign: 'left',
-              marginBottom: SPACING.cardGap, fontFamily: 'inherit',
-            }}
-          >
-            <ProgressRing
-              decided={decidedCategoriesCount}
-              total={visibleCategories.length}
-              size={ROW_ICON_SIZE}
-              strokeWidth={3.5}
-              color={allCategoriesDecided ? COLORS.milestone : COLORS.action}
-              trackColor={allCategoriesDecided ? 'white' : COLORS.borderLight}
+        {/* Quick access — four equal-sized cards in a fixed 2x2 grid, all
+            matching in size/style (no single item spanning a full row).
+            Trip Summary and Group Space are now plain link-out tiles;
+            their previous full-width cards (with a longer description or
+            a nested category-preview list) traded that detail for
+            consistency here. Categories keeps the real progress ring —
+            trip progress is the one number this whole app is building
+            toward, so it still gets a real visual instead of plain text
+            (design-refresh step 3: Trip Home richness) — and is simply
+            omitted from the grid on the rare trip with no categories at
+            all, rather than left as an empty tile. */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: SPACING.cardGap, marginBottom: SPACING.cardGap }}>
+          <QuickAccessTile
+            badge={<RowIconBadge bg={COLORS.sand}><ClipboardIcon size={17} color={COLORS.terracotta} /></RowIconBadge>}
+            title="Trip Summary"
+            subtitle="View your trip overview"
+            onClick={() => navigate('tripSummary')}
+          />
+          {visibleCategories.length > 0 && (
+            <QuickAccessTile
+              badge={
+                <ProgressRing
+                  decided={decidedCategoriesCount}
+                  total={visibleCategories.length}
+                  size={ROW_ICON_SIZE}
+                  strokeWidth={3.5}
+                  color={allCategoriesDecided ? COLORS.milestone : COLORS.action}
+                  trackColor={allCategoriesDecided ? COLORS.milestoneTint : COLORS.borderLight}
+                />
+              }
+              title="Categories"
+              subtitle={allCategoriesDecided ? '🎉 All decided!' : progressMicrocopy(decidedCategoriesCount, visibleCategories.length)}
+              onClick={() => navigate('groupSpace', { initialView: 'decided' })}
             />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontSize: 14, fontWeight: 700, color: allCategoriesDecided ? COLORS.milestone : COLORS.charcoal, letterSpacing: -0.2 }}>
-                {allCategoriesDecided ? '🎉 ' : ''}{decidedCategoriesCount} of {visibleCategories.length} {visibleCategories.length === 1 ? 'category' : 'categories'} decided
-              </p>
-              <p style={{ fontSize: 12, color: allCategoriesDecided ? COLORS.milestone : COLORS.warmGrey, fontWeight: allCategoriesDecided ? 700 : 400, marginTop: 1 }}>
-                {progressMicrocopy(decidedCategoriesCount, visibleCategories.length)}
-              </p>
-            </div>
-            <span style={{ fontSize: 16, color: COLORS.subtleIcon }}>›</span>
-          </button>
-        )}
-
-        {/* Trip Summary — a clean read-only overview of the trip's key
-            facts, reachable straight from trip home. */}
-        <button
-          onClick={() => navigate('tripSummary')}
-          style={{
-            width: '100%', display: 'flex', alignItems: 'center', gap: 12,
-            background: COLORS.cardBg, borderRadius: 14, boxShadow: SHADOW_CARD,
-            padding: 16, border: 'none', cursor: 'pointer', textAlign: 'left',
-            marginBottom: SPACING.cardGap, fontFamily: 'inherit',
-          }}
-        >
-          <RowIconBadge bg={COLORS.sand}>
-            <ClipboardIcon size={17} color={COLORS.terracotta} />
-          </RowIconBadge>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ fontSize: 14, fontWeight: 700, color: COLORS.charcoal, letterSpacing: -0.2 }}>
-              Trip Summary
-            </p>
-            <p style={{ fontSize: 12, color: COLORS.warmGrey, marginTop: 1 }}>
-              Destination, accommodation, activities, transport & budget
-            </p>
-          </div>
-          <span style={{ fontSize: 16, color: COLORS.subtleIcon }}>›</span>
-        </button>
-
-        {/* Group Space — open, collaborative. Shown first: this is the shared
-            space testers expect to land on inside a group trip. */}
-        <div style={{
-          background: COLORS.cardBg, borderRadius: 14, boxShadow: SHADOW_CARD,
-          padding: 16, borderLeft: `3px solid ${COLORS.teal}`,
-          marginBottom: SPACING.cardGap,
-        }}>
-          <button
+          )}
+          <QuickAccessTile
+            badge={<RowIconBadge><span style={{ fontSize: 17, lineHeight: 1 }}>👥</span></RowIconBadge>}
+            title="Group Space"
+            subtitle="Collaborate and manage ideas"
             onClick={() => navigate('groupSpace')}
-            style={{
-              width: '100%', display: 'flex', alignItems: 'center', gap: 14, marginBottom: 4,
-              background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left', fontFamily: 'inherit',
-            }}
-          >
-            <span style={{ flex: 1, fontSize: 11, fontWeight: 700, color: COLORS.teal, letterSpacing: 1.5, textTransform: 'uppercase' }}>
-              Group Space
-            </span>
-            <span style={{ fontSize: 13, fontWeight: 600, color: COLORS.teal }}>
-              See all
-            </span>
-          </button>
-          <p style={{ fontSize: 12, color: COLORS.warmGrey, fontStyle: 'italic', marginBottom: 10 }}>
-            {groupItems.length === 0 ? 'Nothing saved yet' : 'Everyone in the group can see these'}
-          </p>
-          <div>
-            {groupCategoriesWithItems.map((cat, i) => (
-              <GroupCategoryRow
-                key={cat.id}
-                cat={cat}
-                count={groupItems.filter(i => i.categoryIds.includes(cat.id)).length}
-                contributors={getContributors(cat.id)}
-                isLast={i === groupCategoriesWithItems.length - 1}
-                onClick={() => navigate('groupCategory', { categoryId: cat.id, backTo: 'groupHome' })}
-              />
-            ))}
-          </div>
+          />
+          <QuickAccessTile
+            badge={<RowIconBadge bg={COLORS.sand}><span style={{ fontSize: 17, lineHeight: 1 }}>💡</span></RowIconBadge>}
+            title="My Ideas"
+            subtitle="Private, only you can see these"
+            onClick={() => navigate('myIdeasFull')}
+          />
         </div>
 
         {/* My Ideas — the same private space as the home page's My Ideas,

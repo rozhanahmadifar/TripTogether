@@ -151,9 +151,13 @@ const FLIGHT_PATH_SVG = encodeURIComponent(
 // stays as the fallback — the card never renders broken or blank.
 export function tripCardBackground(photoUrl) {
   if (photoUrl) {
+    // A much lighter wash than the fallback gradient below — the photo is
+    // the point here, so this only needs to be dark enough to keep white
+    // text legible (helped along by a text-shadow on the text itself),
+    // not a near-opaque teal tint hiding the image underneath it.
     return {
       backgroundImage: [
-        `linear-gradient(150deg, rgba(30,95,95,0.80) 0%, rgba(18,55,55,0.88) 100%)`,
+        `linear-gradient(150deg, rgba(20,45,45,0.30) 0%, rgba(12,30,30,0.55) 100%)`,
         `url("${photoUrl}")`,
       ].join(', '),
       backgroundSize: 'cover, cover',
