@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { PLATFORM_COLORS, CATEGORY_HINTS, timeAgo, truncateName, isImagePhoto, displayTitle } from '../data'
+import { PLATFORM_COLORS, CATEGORY_HINTS, timeAgo, isImagePhoto, displayTitle } from '../data'
 import { TEXT, COLORS, SPACING } from '../styles'
 import { BackButton } from '../components/BackButton'
 import { CategoryIcon } from '../components/CategoryIcons'
@@ -348,9 +348,12 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, trips, addToG
                 this screen was reached, so the exact same idea can be
                 shared whether opened from home or from inside a trip (see
                 allTrips/onlyTrip/targetTrip above). Once already shared to
-                the resolved target, the active control is replaced with a
-                plain status line so the same idea can't be copied into
-                that trip's Group Space twice. */}
+                the resolved target, the single primary action is replaced
+                with a plain status line so the same idea can't be copied
+                into that trip's Group Space twice. The trip/category
+                picker itself lives in a bottom-sheet (below), not inline
+                here, so this is the only sharing action ever visible on
+                the page itself. */}
             {allTrips.length > 0 && (
               alreadySharedWithTarget ? (
                 <div style={{
@@ -362,7 +365,7 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, trips, addToG
                 }}>
                   ✓ Already shared with {targetTrip.name}
                 </div>
-              ) : shareStep === 'closed' ? (
+              ) : (
                 <button
                   onClick={startShare}
                   style={{
@@ -374,181 +377,167 @@ export function ItemDetailScreen({ navigate, params = {}, myIdeas, trips, addToG
                 >
                   {onlyTrip ? `Share with ${onlyTrip.name}` : 'Share with Group'}
                 </button>
-              ) : shareStep === 'trip' ? (
-                <div style={{ marginBottom: 12 }}>
-                  <p style={{ fontSize: 14, fontWeight: 700, color: COLORS.charcoal, marginBottom: 4, letterSpacing: -0.2 }}>
-                    Which trip is this for?
-                  </p>
-                  <p style={{ fontSize: 12, color: COLORS.warmGrey, marginBottom: 12 }}>
-                    Choose one
-                  </p>
-                  <div style={{
-                    borderRadius: 14, overflow: 'hidden', marginBottom: 14,
-                    border: `1px solid ${COLORS.border}`,
-                  }}>
-                    {allTrips.map((t, i) => {
-                      const alreadyShared = item.sharedTripId === t.id
-                      return (
-                        <button
-                          key={t.id}
-                          onClick={() => !alreadyShared && pickTrip(t)}
-                          disabled={alreadyShared}
-                          style={{
-                            width: '100%', border: 'none', cursor: alreadyShared ? 'default' : 'pointer',
-                            display: 'flex', alignItems: 'center', gap: 12,
-                            padding: '13px 16px', textAlign: 'left',
-                            background: alreadyShared ? COLORS.bg : 'white',
-                            borderBottom: i < allTrips.length - 1 ? `1px solid ${COLORS.borderLight}` : 'none',
-                          }}
-                        >
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <span style={{ fontSize: 14, fontWeight: 700, display: 'block', color: alreadyShared ? COLORS.warmGrey : COLORS.charcoal }}>
-                              {t.name}
+              )
+            )}
+          </>
+        )}
+      </div>
+
+      {/* Share bottom-sheet — the trip picker (only when more than one
+          trip exists) and the category picker both live here instead of
+          expanding inline on the page, so the page itself only ever shows
+          the one "Share with…" action. Tapping the backdrop cancels, same
+          as Confirm/Cancel below, and never shares anything. */}
+      {shareStep !== 'closed' && (
+        <div
+          style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'flex-end', zIndex: 100 }}
+          onClick={e => { if (e.target === e.currentTarget) cancelShare() }}
+        >
+          <div style={{ background: 'white', borderRadius: '20px 20px 0 0', padding: '24px 20px 28px', width: '100%', maxHeight: '80vh', overflowY: 'auto', boxSizing: 'border-box' }}>
+            {shareStep === 'trip' ? (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', marginBottom: 20 }}>
+                  <h3 style={{ flex: 1, fontSize: 20, fontWeight: 800, color: COLORS.charcoal, letterSpacing: -0.5 }}>Which trip is this for?</h3>
+                  <button
+                    onClick={cancelShare}
+                    style={{ background: 'rgba(0,0,0,0.06)', border: 'none', borderRadius: '50%', width: 32, height: 32, cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  >
+                    ✕
+                  </button>
+                </div>
+                <div style={{ borderRadius: 14, overflow: 'hidden', border: `1px solid ${COLORS.border}` }}>
+                  {allTrips.map((t, i) => {
+                    const alreadyShared = item.sharedTripId === t.id
+                    return (
+                      <button
+                        key={t.id}
+                        onClick={() => !alreadyShared && pickTrip(t)}
+                        disabled={alreadyShared}
+                        style={{
+                          width: '100%', border: 'none', cursor: alreadyShared ? 'default' : 'pointer',
+                          display: 'flex', alignItems: 'center', gap: 12,
+                          padding: '13px 16px', textAlign: 'left',
+                          background: alreadyShared ? COLORS.bg : 'white',
+                          borderBottom: i < allTrips.length - 1 ? `1px solid ${COLORS.borderLight}` : 'none',
+                        }}
+                      >
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <span style={{ fontSize: 14, fontWeight: 700, display: 'block', color: alreadyShared ? COLORS.warmGrey : COLORS.charcoal }}>
+                            {t.name}
+                          </span>
+                          {t.destination && (
+                            <span style={{ fontSize: 12, color: COLORS.warmGrey, display: 'block', marginTop: 1 }}>
+                              📍 {t.destination}
                             </span>
-                            {t.destination && (
-                              <span style={{ fontSize: 12, color: COLORS.warmGrey, display: 'block', marginTop: 1 }}>
-                                📍 {t.destination}
-                              </span>
-                            )}
-                          </div>
-                          {alreadyShared ? (
-                            <span style={{ fontSize: 12, fontWeight: 700, color: COLORS.teal, flexShrink: 0 }}>✓ Already shared</span>
-                          ) : (
-                            <div style={{ display: 'flex', flexShrink: 0 }}>
-                              {(t.members || []).slice(0, 3).map((m, idx) => (
-                                <div key={m.id} style={{
-                                  width: 24, height: 24, borderRadius: '50%', background: m.color,
-                                  border: '2px solid white', marginLeft: idx > 0 ? -8 : 0,
-                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                  fontSize: 10, fontWeight: 700, color: 'white', lineHeight: 1,
-                                }}>
-                                  {m.initial}
-                                </div>
-                              ))}
-                            </div>
                           )}
-                        </button>
-                      )
-                    })}
-                  </div>
+                        </div>
+                        {alreadyShared ? (
+                          <span style={{ fontSize: 12, fontWeight: 700, color: COLORS.teal, flexShrink: 0 }}>✓ Already shared</span>
+                        ) : (
+                          <div style={{ display: 'flex', flexShrink: 0 }}>
+                            {(t.members || []).slice(0, 3).map((m, idx) => (
+                              <div key={m.id} style={{
+                                width: 24, height: 24, borderRadius: '50%', background: m.color,
+                                border: '2px solid white', marginLeft: idx > 0 ? -8 : 0,
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                fontSize: 10, fontWeight: 700, color: 'white', lineHeight: 1,
+                              }}>
+                                {m.initial}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              </>
+            ) : (
+              <>
+                <h3 style={{ fontSize: 20, fontWeight: 800, color: COLORS.charcoal, letterSpacing: -0.5, marginBottom: 4 }}>
+                  Which categories in Group Space?
+                </h3>
+                <p style={{ fontSize: 12, color: COLORS.warmGrey, marginBottom: 16 }}>
+                  Choose one or more{!onlyTrip && targetTrip ? ` · ${targetTrip.name}` : ''}
+                </p>
+                <div style={{
+                  borderRadius: 14, overflow: 'hidden', marginBottom: 20,
+                  border: `1px solid ${COLORS.border}`,
+                }}>
+                  {allCategories.map((c, i) => {
+                    const selected = pickedCategories.includes(c.id)
+                    return (
+                      <button
+                        key={c.id}
+                        onClick={() => togglePicked(c.id)}
+                        style={{
+                          width: '100%', border: 'none', cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', gap: 12,
+                          padding: '13px 16px', textAlign: 'left',
+                          background: selected ? `${COLORS.terracotta}12` : 'white',
+                          borderBottom: i < allCategories.length - 1 ? `1px solid ${COLORS.borderLight}` : 'none',
+                          borderLeft: selected ? `3px solid ${COLORS.terracotta}` : '3px solid transparent',
+                        }}
+                      >
+                        <span style={{
+                          width: 20, height: 20, borderRadius: 6, flexShrink: 0,
+                          border: `2px solid ${selected ? COLORS.terracotta : COLORS.border}`,
+                          background: selected ? COLORS.terracotta : 'white',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: 12, color: 'white', fontWeight: 800,
+                        }}>
+                          {selected ? '✓' : ''}
+                        </span>
+                        <span style={{ width: 24, flexShrink: 0, display: 'flex', justifyContent: 'center' }}>
+                          <CategoryIcon id={c.id} size={17} color={selected ? COLORS.terracotta : (c.shade || COLORS.charcoal)} />
+                        </span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <span style={{
+                            fontSize: 14, fontWeight: selected ? 700 : 500, display: 'block',
+                            color: selected ? COLORS.terracotta : COLORS.charcoal,
+                          }}>
+                            {c.label}
+                          </span>
+                          {CATEGORY_HINTS[c.id] && (
+                            <span style={{ fontSize: 12, color: COLORS.warmGrey, display: 'block', marginTop: 1 }}>
+                              {CATEGORY_HINTS[c.id]}
+                            </span>
+                          )}
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+                <div style={{ display: 'flex', gap: 10 }}>
                   <button
                     onClick={cancelShare}
                     style={{
-                      width: '100%', height: 44, background: 'none', border: 'none',
-                      cursor: 'pointer', fontSize: 13, color: COLORS.warmGrey, fontWeight: 600,
+                      flex: 1, minHeight: 48, borderRadius: 12, border: 'none',
+                      background: COLORS.borderLight, color: COLORS.warmGrey,
+                      fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
                     }}
                   >
                     Cancel
                   </button>
-                </div>
-              ) : (
-                <div style={{ marginBottom: 12 }}>
-                  <p style={{ fontSize: 14, fontWeight: 700, color: COLORS.charcoal, marginBottom: 4, letterSpacing: -0.2 }}>
-                    Which categories in Group Space?
-                  </p>
-                  <p style={{ fontSize: 12, color: COLORS.warmGrey, marginBottom: 12 }}>
-                    Choose one or more{!onlyTrip && targetTrip ? ` · ${targetTrip.name}` : ''}
-                  </p>
-                  <div style={{
-                    borderRadius: 14, overflow: 'hidden', marginBottom: 14,
-                    border: `1px solid ${COLORS.border}`,
-                  }}>
-                    {allCategories.map((c, i) => {
-                      const selected = pickedCategories.includes(c.id)
-                      return (
-                        <button
-                          key={c.id}
-                          onClick={() => togglePicked(c.id)}
-                          style={{
-                            width: '100%', border: 'none', cursor: 'pointer',
-                            display: 'flex', alignItems: 'center', gap: 12,
-                            padding: '13px 16px', textAlign: 'left',
-                            background: selected ? `${COLORS.terracotta}12` : 'white',
-                            borderBottom: i < allCategories.length - 1 ? `1px solid ${COLORS.borderLight}` : 'none',
-                            borderLeft: selected ? `3px solid ${COLORS.terracotta}` : '3px solid transparent',
-                          }}
-                        >
-                          <span style={{
-                            width: 20, height: 20, borderRadius: 6, flexShrink: 0,
-                            border: `2px solid ${selected ? COLORS.terracotta : COLORS.border}`,
-                            background: selected ? COLORS.terracotta : 'white',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: 12, color: 'white', fontWeight: 800,
-                          }}>
-                            {selected ? '✓' : ''}
-                          </span>
-                          <span style={{ width: 24, flexShrink: 0, display: 'flex', justifyContent: 'center' }}>
-                      <CategoryIcon id={c.id} size={17} color={selected ? COLORS.terracotta : (c.shade || COLORS.charcoal)} />
-                    </span>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <span style={{
-                              fontSize: 14, fontWeight: selected ? 700 : 500, display: 'block',
-                              color: selected ? COLORS.terracotta : COLORS.charcoal,
-                            }}>
-                              {c.label}
-                            </span>
-                            {CATEGORY_HINTS[c.id] && (
-                              <span style={{ fontSize: 12, color: COLORS.warmGrey, display: 'block', marginTop: 1 }}>
-                                {CATEGORY_HINTS[c.id]}
-                              </span>
-                            )}
-                          </div>
-                        </button>
-                      )
-                    })}
-                  </div>
                   <button
                     onClick={handleConfirmShare}
                     disabled={pickedCategories.length === 0}
                     style={{
-                      width: '100%', height: 52, borderRadius: 14, border: 'none',
+                      flex: 1, minHeight: 48, borderRadius: 12, border: 'none',
                       background: pickedCategories.length > 0 ? COLORS.action : COLORS.border,
                       color: pickedCategories.length > 0 ? 'white' : COLORS.warmGrey,
-                      fontSize: 15, fontWeight: 600,
-                      cursor: pickedCategories.length > 0 ? 'pointer' : 'default',
-                      letterSpacing: -0.2,
+                      fontSize: 14, fontWeight: 600,
+                      cursor: pickedCategories.length > 0 ? 'pointer' : 'default', fontFamily: 'inherit',
                     }}
                   >
                     Confirm
                   </button>
                 </div>
-              )
+              </>
             )}
-
-            <button
-              onClick={handleBack}
-              style={{
-                width: '100%', height: 48, background: 'none', border: 'none',
-                cursor: 'pointer', fontSize: 14, color: COLORS.warmGrey, fontWeight: 500,
-              }}
-            >
-              {allTrips.length > 0 ? 'Keep private for now' : 'Back'}
-            </button>
-
-            {targetTrip && targetTrip.members && targetTrip.members.length > 0 && (
-              <div style={{ marginTop: 28, borderTop: `1px solid ${COLORS.border}`, paddingTop: 20 }}>
-                <p style={{ fontSize: 12, color: COLORS.warmGrey, marginBottom: 14, fontWeight: 500 }}>
-                  Your group · {targetTrip.name}
-                </p>
-                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                  {targetTrip.members.map(m => (
-                    <div key={m.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
-                      <div style={{
-                        width: 36, height: 36, borderRadius: '50%', background: m.color,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 13, fontWeight: 700, color: 'white', lineHeight: 1,
-                      }}>
-                        {m.initial}
-                      </div>
-                      <span style={{ fontSize: 10, color: COLORS.warmGrey, fontWeight: 600 }} title={m.name}>{truncateName(m.name)}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </>
-        )}
-      </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
