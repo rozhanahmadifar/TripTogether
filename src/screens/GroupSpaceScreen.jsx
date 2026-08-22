@@ -73,14 +73,9 @@ export function GroupSpaceScreen({
       <div style={{ padding: '16px 20px 16px', background: 'white', borderBottom: `1px solid ${COLORS.border}` }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
           <BackButton onClick={() => navigate('groupHome')} />
-          <div>
-            <p style={{ ...TEXT.subtext, marginBottom: 3 }}>
-              {currentTrip ? currentTrip.name : 'Group'}
-            </p>
-            <h1 style={TEXT.screenTitle}>
-              Group Space
-            </h1>
-          </div>
+          <h1 style={TEXT.screenTitle}>
+            Group Space
+          </h1>
         </div>
         <p style={{ ...TEXT.subtext, marginTop: 4 }}>
           Everyone in the group can see these
@@ -151,10 +146,10 @@ export function GroupSpaceScreen({
           )
         ) : (
         <>
-        {/* Trip status strip — one combined line, not a standalone countdown
-            followed by a separate progress line. Trip home already owns the
-            prominent countdown moment; here it's just folded into the same
-            status line as everything else. */}
+        {/* Trip status strip — a bold countdown headline with the category
+            progress as a smaller subtext line beneath it, not one combined
+            sentence. No decorative checkmark/circle here — this is just a
+            status readout, not a completion indicator. */}
         {currentTrip?.startDate ? (
           <div style={{
             background: `linear-gradient(135deg, ${COLORS.teal} 0%, ${COLORS.tealLight} 100%)`,
@@ -162,9 +157,14 @@ export function GroupSpaceScreen({
             display: 'flex', alignItems: 'center', gap: 10,
           }}>
             <span style={{ fontSize: 18, lineHeight: 1.4 }}>🗓️</span>
-            <p style={{ fontSize: 13, fontWeight: 700, color: 'white', lineHeight: 1.4 }}>
-              {countdownLabel(daysUntil(currentTrip.startDate))} · {categoryCompletionLabel}
-            </p>
+            <div>
+              <p style={{ fontSize: 14, fontWeight: 700, color: 'white', lineHeight: 1.3 }}>
+                {countdownLabel(daysUntil(currentTrip.startDate))}
+              </p>
+              <p style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.85)', lineHeight: 1.3, marginTop: 2 }}>
+                {categoryCompletionLabel}
+              </p>
+            </div>
           </div>
         ) : (
           <button
