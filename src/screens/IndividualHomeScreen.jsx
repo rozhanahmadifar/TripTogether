@@ -237,7 +237,7 @@ export function IndividualHomeScreen({ navigate, userName, myIdeas, currentTrip,
                 <img
                   src={CATEGORY_PHOTOS.destination}
                   alt=""
-                  style={{ width: 96, height: 132, borderRadius: 16, objectFit: 'cover', flexShrink: 0 }}
+                  style={{ width: 96, height: 132, borderRadius: 16, objectFit: 'cover', flexShrink: 0, marginTop: -6 }}
                 />
               )}
             </div>

@@ -185,9 +185,10 @@ export function MyTripsScreen({ navigate, trips, openTrip, deleteTrip, allGroupI
                               display: 'inline-flex', alignItems: 'center', gap: 5,
                               background: imminent ? COLORS.milestoneTint : COLORS.sand,
                               borderRadius: 20, padding: '4px 10px', marginBottom: 8, marginLeft: -4,
+                              flexShrink: 0,
                             }}>
                               <span style={{ fontSize: 11 }}>{days <= 0 ? '✈️' : '📅'}</span>
-                              <span style={{ fontSize: 11, fontWeight: 700, color: imminent ? COLORS.milestone : COLORS.terracotta }}>
+                              <span style={{ fontSize: 11, fontWeight: 700, color: imminent ? COLORS.milestone : COLORS.terracotta, whiteSpace: 'nowrap' }}>
                                 {countdownLabel(days)}
                               </span>
                             </div>
