@@ -8,6 +8,10 @@ export function DiscussThreadScreen({ navigate, params = {}, currentTrip, userNa
   const { threadId } = params
   const threads = currentTrip ? (customThreads?.[currentTrip.id] || []) : []
   const thread = threads.find(t => t.id === threadId) || DEFAULT_THREAD
+  // The pinned thread's title is frozen at trip-creation time and goes
+  // stale after a rename — it always tracks this one trip, so its display
+  // title comes from the trip's current name instead.
+  const displayTitle = thread.pinned ? ((currentTrip?.name) || 'My Trip') : thread.title
   const tripMembers = currentTrip?.members || []
   const [text, setText] = useState('')
   const listRef = useRef(null)
@@ -45,7 +49,7 @@ export function DiscussThreadScreen({ navigate, params = {}, currentTrip, userNa
       }}>
         <BackButton onClick={() => navigate(params.backTo || 'discuss')} />
         <p style={{ flex: 1, textAlign: 'center', fontSize: 18, fontWeight: 600, color: COLORS.charcoal }}>
-          {thread.title}
+          {displayTitle}
         </p>
         <div style={{ width: 36, flexShrink: 0 }} />
       </div>

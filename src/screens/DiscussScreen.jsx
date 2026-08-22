@@ -13,7 +13,7 @@ function ChatBubbleIcon({ size = 20, color = COLORS.teal }) {
 
 // Every trip has exactly one auto-created discussion thread, always pinned —
 // there is no way to create another, so no per-thread delete menu is needed.
-function ThreadCard({ thread, messages, onOpen, onLongPressPinned }) {
+function ThreadCard({ thread, displayTitle, messages, onOpen, onLongPressPinned }) {
   const cardRef = useRef(null)
   const last = messages[messages.length - 1]
 
@@ -38,7 +38,7 @@ function ThreadCard({ thread, messages, onOpen, onLongPressPinned }) {
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
             <span style={{ fontSize: 16, fontWeight: 600, color: COLORS.charcoal, display: 'flex', alignItems: 'center', gap: 5 }}>
-              📌 {thread.title}
+              📌 {displayTitle}
             </span>
             <span style={{ fontSize: 12, color: COLORS.warmGrey, flexShrink: 0 }}>
               {messages.length} {messages.length === 1 ? 'reply' : 'replies'}
@@ -107,15 +107,23 @@ export function DiscussScreen({ navigate, currentTrip, discussMessages, customTh
 
       <div className="screen-scroll" style={{ padding: `0 ${SPACING.screenX}px ${SPACING.scrollBottomPad}px` }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {threads.map(thread => (
-            <ThreadCard
-              key={thread.id}
-              thread={thread}
-              messages={getMessages(thread)}
-              onOpen={() => navigate('discussThread', { threadId: thread.id, backTo: 'discuss' })}
-              onLongPressPinned={() => showToast(`The ${thread.title} discussion cannot be deleted.`)}
-            />
-          ))}
+          {threads.map(thread => {
+            // The pinned thread's title is frozen at trip-creation time and
+            // goes stale after a rename — it always tracks this one trip, so
+            // its display title comes from the trip's current name instead.
+            // A hypothetical future non-pinned thread keeps its own title.
+            const displayTitle = thread.pinned ? (currentTrip.name || 'My Trip') : thread.title
+            return (
+              <ThreadCard
+                key={thread.id}
+                thread={thread}
+                displayTitle={displayTitle}
+                messages={getMessages(thread)}
+                onOpen={() => navigate('discussThread', { threadId: thread.id, backTo: 'discuss' })}
+                onLongPressPinned={() => showToast(`The ${displayTitle} discussion cannot be deleted.`)}
+              />
+            )
+          })}
         </div>
       </div>
 
