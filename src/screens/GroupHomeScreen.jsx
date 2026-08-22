@@ -283,7 +283,7 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
                   readable against the teal background; only the "not set
                   yet" placeholder state stays dimmed and italic. */}
               {hasAnyTripDetails && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 20 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 10 }}>
                   <p style={{ fontSize: 13, fontWeight: 600, color: currentTrip.dates ? 'white' : 'rgba(255,255,255,0.55)', fontStyle: currentTrip.dates ? 'normal' : 'italic', textShadow: currentTrip.dates ? '0 1px 5px rgba(0,0,0,0.3)' : 'none' }}>
                     📅 {currentTrip.dates || 'Dates not set yet'}
                   </p>
@@ -299,7 +299,7 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
                   the point, not each individual name) ending in a dashed
                   "+" button so inviting someone is a one-tap action right
                   here, not buried inside the full trip-edit panel. */}
-              <div style={{ marginTop: 6, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.16)' }}>
+              <div style={{ paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.16)' }}>
                 <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.75)', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12, textShadow: '0 1px 5px rgba(0,0,0,0.3)' }}>
                   Traveling with
                 </p>
@@ -480,7 +480,9 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
         </div>
 
         {/* Direct link into this trip's discussion thread — so users don't
-            have to guess which thread in the global Discuss tab is theirs. */}
+            have to guess which thread in the global Discuss tab is theirs.
+            Uses the trip's current name, not pinnedThread.title, which is
+            frozen at trip-creation time and goes stale after a rename. */}
         {pinnedThread && (
           <button
             onClick={() => navigate('discussThread', { threadId: pinnedThread.id, backTo: 'groupHome' })}
@@ -496,7 +498,7 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
             </RowIconBadge>
             <div style={{ flex: 1, minWidth: 0 }}>
               <p style={{ fontSize: 14, fontWeight: 700, color: COLORS.charcoal, letterSpacing: -0.2 }}>
-                {pinnedThread.title} discussion
+                {currentTrip.name || 'My Trip'} discussion
               </p>
               <p style={{ fontSize: 12, color: COLORS.warmGrey, marginTop: 1 }}>
                 Jump into your trip's conversation
