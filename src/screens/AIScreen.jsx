@@ -146,15 +146,28 @@ export function AIScreen({ currentTrip }) {
       }}>
         {showEmptyState && (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-            <div style={{ marginBottom: 16 }}>
-              <AIIntroIllustration size={168} />
+            {/* Same contained-card treatment as My Trips' empty state, so
+                the illustration + heading read as one grouped unit instead
+                of floating separately on the plain background. */}
+            <div style={{
+              width: '100%', textAlign: 'center', padding: '48px 24px 28px',
+              background: 'white', borderRadius: 16,
+              boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+              marginBottom: suggestionChips.length > 0 ? 20 : 0,
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
+                <AIIntroIllustration size={168} />
+              </div>
+              {/* One line here, not two — the header subtitle above already
+                  covers "ask me anything about your trip", so this is just
+                  the single prompt, not a restatement of it. */}
+              <p style={{ fontSize: 18, fontWeight: 800, color: COLORS.charcoal, marginBottom: 8, letterSpacing: -0.3 }}>
+                What would you like to know?
+              </p>
+              <p style={{ fontSize: 14, color: COLORS.warmGrey, lineHeight: 1.5, fontWeight: 400, maxWidth: 240, marginLeft: 'auto', marginRight: 'auto' }}>
+                I can help with visas, weather, budgets, and more.
+              </p>
             </div>
-            {/* One line here, not two — the header subtitle above already
-                covers "ask me anything about your trip", so this is just
-                the single prompt, not a restatement of it. */}
-            <p style={{ fontSize: 18, fontWeight: 700, color: COLORS.charcoal, marginBottom: 28, letterSpacing: -0.2 }}>
-              What would you like to know?
-            </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%' }}>
               {suggestionChips.map((chip, i) => {
                 const Icon = CHIP_ICONS[chip.type]
