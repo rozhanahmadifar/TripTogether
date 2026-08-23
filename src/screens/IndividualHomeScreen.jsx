@@ -46,14 +46,19 @@ export function IndividualHomeScreen({ navigate, userName, myIdeas, currentTrip,
             Plan better trips, together.
           </p>
         </div>
-        <div style={{
-          width: 44, height: 44, borderRadius: '50%', background: COLORS.terracotta,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 18, fontWeight: 800, color: 'white', lineHeight: 1,
-          boxShadow: `0 2px 10px ${COLORS.terracotta}4D`, flexShrink: 0,
-        }}>
+        <button
+          onClick={() => navigate('about')}
+          aria-label="About"
+          style={{
+            width: 44, height: 44, borderRadius: '50%', background: COLORS.terracotta,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 18, fontWeight: 800, color: 'white', lineHeight: 1,
+            boxShadow: `0 2px 10px ${COLORS.terracotta}4D`, flexShrink: 0,
+            border: 'none', cursor: 'pointer', padding: 0,
+          }}
+        >
           {initial}
-        </div>
+        </button>
       </div>
 
       <div className="screen-scroll" style={{ padding: `4px ${SPACING.screenX}px ${SPACING.scrollBottomPad}px` }}>

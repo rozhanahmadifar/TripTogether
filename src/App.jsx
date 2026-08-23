@@ -21,6 +21,7 @@ import { MyTripsScreen }         from './screens/MyTripsScreen'
 import { DiscussScreen }         from './screens/DiscussScreen'
 import { DiscussThreadScreen }   from './screens/DiscussThreadScreen'
 import { TripSummaryScreen }     from './screens/TripSummaryScreen'
+import { AboutScreen }           from './screens/AboutScreen'
 
 const SCREEN_MAP = {
   welcome:         WelcomeScreen,
@@ -40,6 +41,7 @@ const SCREEN_MAP = {
   discuss:         DiscussScreen,
   discussThread:   DiscussThreadScreen,
   tripSummary:     TripSummaryScreen,
+  about:           AboutScreen,
 }
 
 const MAIN_NAV = [
