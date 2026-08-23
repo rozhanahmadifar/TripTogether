@@ -126,14 +126,17 @@ export function DiscussScreen({ navigate, currentTrip, discussMessages, customTh
 
   if (!currentTrip) {
     return (
-      <div className="screen" style={{ background: COLORS.bgGroupSpace }}>
+      <div className="screen" style={{ background: COLORS.bg }}>
         <div style={{ padding: '20px 20px 16px', background: 'white', borderBottom: `1px solid ${COLORS.border}` }}>
           <h1 style={{ fontSize: 22, fontWeight: 800, color: COLORS.charcoal, letterSpacing: -0.4, marginBottom: 6 }}>
             Group Discussions
           </h1>
           <p style={{ fontSize: 14, color: COLORS.warmGrey }}>Talk through your plans together</p>
         </div>
-        <div style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: `0 ${SPACING.screenX}px` }}>
+        {/* Biased toward the top rather than dead-centered — a taller
+            bottom padding shrinks the box flex centers within, so the card
+            lands a bit above true center instead of reading as too low. */}
+        <div style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: `0 ${SPACING.screenX}px 64px` }}>
           <div style={{
             width: '100%', textAlign: 'center', padding: '40px 24px 32px',
             background: 'white', borderRadius: 16,
@@ -168,7 +171,7 @@ export function DiscussScreen({ navigate, currentTrip, discussMessages, customTh
   }
 
   return (
-    <div className="screen" style={{ background: COLORS.bgGroupSpace }}>
+    <div className="screen" style={{ background: COLORS.bg }}>
       <div style={{ padding: '20px 20px 16px', background: 'white', borderBottom: `1px solid ${COLORS.border}` }}>
         <h1 style={{ fontSize: 22, fontWeight: 800, color: COLORS.charcoal, letterSpacing: -0.4, marginBottom: 6 }}>
           Group Discussions

@@ -134,9 +134,9 @@ export function AIScreen({ currentTrip }) {
   const canSend = input.trim().length > 0 && !sending
 
   return (
-    <div className="screen" style={{ background: 'white' }}>
-      {/* Header — thin divider beneath it, matching My Trips' header treatment. */}
-      <div style={{ padding: '16px 20px 14px', flexShrink: 0, borderBottom: `1px solid ${COLORS.border}` }}>
+    <div className="screen" style={{ background: COLORS.bg }}>
+      {/* Header — white background + thin divider, matching My Trips' header treatment. */}
+      <div style={{ padding: '16px 20px 14px', flexShrink: 0, background: 'white', borderBottom: `1px solid ${COLORS.border}` }}>
         <h1 style={{ ...TEXT.screenTitle, marginBottom: SPACING.headingGap }}>
           Ask the AI ✨
         </h1>
