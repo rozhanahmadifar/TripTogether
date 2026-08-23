@@ -73,7 +73,7 @@ export function MyTripsScreen({ navigate, trips, openTrip, deleteTrip, allGroupI
 
   return (
     <div className="screen" style={{ background: COLORS.bg }}>
-      <div style={{ padding: '20px 20px 16px', background: 'white' }}>
+      <div style={{ padding: '20px 20px 16px', background: 'white', borderBottom: `1px solid ${COLORS.border}` }}>
         <h1 style={{ ...TEXT.screenTitle, marginBottom: SPACING.headingGap }}>
           My Trips
         </h1>

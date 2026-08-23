@@ -135,9 +135,8 @@ export function AIScreen({ currentTrip }) {
 
   return (
     <div className="screen" style={{ background: 'white' }}>
-      {/* Header — no divider beneath it; whitespace alone separates it
-          from the chat area below, matching My Trips' header treatment. */}
-      <div style={{ padding: '16px 20px 14px', flexShrink: 0 }}>
+      {/* Header — thin divider beneath it, matching My Trips' header treatment. */}
+      <div style={{ padding: '16px 20px 14px', flexShrink: 0, borderBottom: `1px solid ${COLORS.border}` }}>
         <h1 style={{ ...TEXT.screenTitle, marginBottom: SPACING.headingGap }}>
           Ask the AI ✨
         </h1>
@@ -151,12 +150,12 @@ export function AIScreen({ currentTrip }) {
         padding: '16px 20px 16px', display: 'flex', flexDirection: 'column', gap: 16,
       }}>
         {showEmptyState && (
-          // `margin: auto 0` rather than the parent `justifyContent: center`
-          // — centering via the parent clips the top of this block off-screen
-          // (unreachable by scrolling) whenever it's taller than the
-          // available space; auto margins center it the same way when it
-          // fits, but still scroll cleanly from the top when it doesn't.
-          <div style={{ margin: 'auto 0', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+          // Fixed top offset rather than vertical centering — centering the
+          // whole (card + chips) block made the illustration land at a
+          // different height depending on whether chips were present below
+          // it. A fixed distance from the header keeps it anchored in the
+          // same place either way; any leftover space just falls below.
+          <div style={{ marginTop: 24, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
             {/* Same contained-card treatment as My Trips' empty state, so
                 the illustration + heading read as one grouped unit instead
                 of floating separately on the plain background. */}

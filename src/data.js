@@ -51,12 +51,6 @@ export const MY_IDEAS_PHOTO = 'https://images.pexels.com/photos/7235807/pexels-p
 // full-bleed strip and still leaves room for a line of text.
 export const ATMOSPHERE_PHOTO = 'https://images.pexels.com/photos/30784224/pexels-photo-30784224.jpeg?auto=compress&cs=tinysrgb&w=1000'
 
-// Group Discussions' empty-state illustration — paired with
-// CATEGORY_PHOTOS.destination (green hillside) as the second of two
-// overlapping photo cards, so the empty state reads as "a place to talk
-// about the trips you're dreaming up" rather than a bare icon.
-export const DISCUSS_EMPTY_PHOTO = 'https://images.pexels.com/photos/3225528/pexels-photo-3225528.jpeg?auto=compress&cs=tinysrgb&w=400'
-
 // One-line clarifying hints shown under each category name in the tag
 // picker, so it's obvious at a glance where something belongs instead of
 // guessing from the label alone.
