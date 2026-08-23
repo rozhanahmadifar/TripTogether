@@ -90,7 +90,7 @@ export function MyTripsScreen({ navigate, trips, openTrip, deleteTrip, allGroupI
             boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
           }}>
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
-              <TripsEmptyIllustration />
+              <TripsEmptyIllustration size={168} />
             </div>
             <p style={{ fontSize: 18, fontWeight: 800, color: COLORS.charcoal, marginBottom: 8, letterSpacing: -0.3 }}>
               No trips yet

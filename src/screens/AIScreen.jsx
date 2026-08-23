@@ -140,11 +140,14 @@ export function AIScreen({ currentTrip }) {
       </div>
 
       {/* Chat scroll area */}
-      <div className="screen-scroll" style={{ padding: '16px 20px 16px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div className="screen-scroll" style={{
+        padding: '16px 20px 16px', display: 'flex', flexDirection: 'column', gap: 16,
+        justifyContent: showEmptyState ? 'center' : 'flex-start',
+      }}>
         {showEmptyState && (
-          <div style={{ paddingTop: 20, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
             <div style={{ marginBottom: 16 }}>
-              <AIIntroIllustration />
+              <AIIntroIllustration size={168} />
             </div>
             {/* One line here, not two — the header subtitle above already
                 covers "ask me anything about your trip", so this is just
