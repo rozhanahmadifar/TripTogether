@@ -154,10 +154,15 @@ export function tripCardBackground(photoUrl) {
     // A much lighter wash than the fallback gradient below — the photo is
     // the point here, so this only needs to be dark enough to keep white
     // text legible (helped along by a text-shadow on the text itself),
-    // not a near-opaque teal tint hiding the image underneath it.
+    // not a near-opaque teal tint hiding the image underneath it. Vertical
+    // (not diagonal) and three-stop so it darkens smoothly and predictably
+    // top-to-bottom regardless of what the photo itself looks like at any
+    // given height — text near the bottom of a tall card (dates, budget,
+    // a "traveling with" section) gets the strongest help, since that's
+    // furthest from the top-anchored title and its own heavier shadow.
     return {
       backgroundImage: [
-        `linear-gradient(150deg, rgba(20,45,45,0.30) 0%, rgba(12,30,30,0.55) 100%)`,
+        `linear-gradient(180deg, rgba(15,35,35,0.34) 0%, rgba(10,26,26,0.46) 45%, rgba(6,18,18,0.66) 100%)`,
         `url("${photoUrl}")`,
       ].join(', '),
       backgroundSize: 'cover, cover',

@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { colorForName, truncateName, isValidEmail } from '../data'
+import { MEMBER_COLORS, nextMemberColor, truncateName, isValidEmail } from '../data'
 import { DateRangePicker, fmtDate } from '../components/DateRangePicker'
 import { BackButton } from '../components/BackButton'
 import { XIcon } from '../components/ActionMenu'
@@ -66,9 +66,12 @@ export function CreateGroupTripScreen({ navigate, params = {}, startGroupTrip, u
     const n = nameInput.trim()
     const email = emailInput.trim()
     if (!n || !isValidEmail(email)) return
-    // Derived from the name itself, not list position, so this same person
-    // reads as the same color on every screen they appear on.
-    const color = colorForName(n)
+    // Picked to be distinct from every color already in use on this trip —
+    // the creator's own color (always MEMBER_COLORS[0], see the preview
+    // avatar above) plus whichever crew members have already been added —
+    // rather than hashed from the name, which can collide and put two
+    // similar-looking avatars side by side in "Traveling with".
+    const color = nextMemberColor([MEMBER_COLORS[0], ...members.map(m => m.color)])
     // A counter (not just Date.now()) guarantees unique ids even when two
     // members are added in the same millisecond — colliding ids meant
     // removing one member could silently remove both.
@@ -322,7 +325,7 @@ export function CreateGroupTripScreen({ navigate, params = {}, startGroupTrip, u
                   boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
                 }}>
                   <div style={{
-                    width: 38, height: 38, borderRadius: '50%', background: colorForName(userName),
+                    width: 38, height: 38, borderRadius: '50%', background: MEMBER_COLORS[0],
                     border: '2px solid white', boxShadow: `0 0 0 1px ${COLORS.border}`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: 14, fontWeight: 700, color: 'white', lineHeight: 1, flexShrink: 0,

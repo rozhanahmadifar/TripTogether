@@ -1,10 +1,9 @@
 import { useState } from 'react'
-import { colorForName, truncateName, isValidEmail, daysUntil, countdownLabel, CATEGORY_PHOTOS } from '../data'
+import { nextMemberColor, truncateName, isValidEmail, daysUntil, countdownLabel, CATEGORY_PHOTOS } from '../data'
 import { DateRangePicker, fmtDate } from '../components/DateRangePicker'
 import { BackButton } from '../components/BackButton'
 import { XIcon, PlusIcon } from '../components/ActionMenu'
 import { ChatIcon } from '../components/TabIcons'
-import { CategoryIconBadge } from '../components/CategoryIcons'
 import { ProgressRing } from '../components/ProgressRing'
 import { TEXT, COLORS, SPACING, SHADOW_CARD, tripCardBackground } from '../styles'
 
@@ -87,7 +86,7 @@ function QuickAccessTile({ badge, title, subtitle, onClick }) {
   )
 }
 
-export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, groupItems, updateTrip, setTripDestination, customThreads, allCategories }) {
+export function GroupHomeScreen({ navigate, params = {}, currentTrip, groupItems, updateTrip, setTripDestination, customThreads, allCategories }) {
   // Everything about the card — name, destination, dates, budget, and
   // members — now opens from the single edit icon at the top of the card
   // instead of a pencil scattered next to each field.
@@ -129,12 +128,6 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
     groupItems.some(i => i.categoryIds.includes(cat.id) && (i.starredBy || []).length > 0)
   ).length
   const allCategoriesDecided = visibleCategories.length > 0 && decidedCategoriesCount === visibleCategories.length
-  // My Ideas is the same flat, unfiltered list shown everywhere — never a
-  // trip-scoped subset, even here inside a trip. Only Inspiration gets its
-  // own standalone row below (see render) — everything else in My Ideas is
-  // reached through the grid tile's "See all" instead of a preview here.
-  const inspirationCat = allCategories.find(c => c.id === 'inspiration')
-  const inspirationCount = myIdeas.filter(i => i.categoryIds.includes('inspiration')).length
 
   // Name, destination, dates, and budget open together in one panel —
   // separately they added up to a pencil per field scattered around the
@@ -172,7 +165,10 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
     const n = newMemberName.trim()
     const email = newMemberEmail.trim()
     if (!n || !isValidEmail(email)) return
-    const color = colorForName(n)
+    // Picked to be distinct from every existing member's color, rather than
+    // hashed from the name, which can collide and put two similar-looking
+    // avatars side by side in "Traveling with".
+    const color = nextMemberColor(tripMembers.map(m => m.color))
     updateTrip(currentTrip.id, {
       members: [...tripMembers, { id: `m-${Date.now()}`, name: n, email, color, initial: n.charAt(0).toUpperCase() }]
     })
@@ -207,11 +203,19 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
         }}>
           {!cardEditing ? (
             <>
+              {/* A small, consistent spacing scale for the whole card
+                  instead of ad-hoc margins: 4px within the identity block
+                  (label/name/location) and again between the countdown
+                  badge and the dates/budget line right after it, since
+                  each of those pairs reads as one grouped unit; 8px for
+                  the one "next section" transition (location into the
+                  badge); 16px (2x the 8px unit) before Traveling With,
+                  the one deliberate section break on the card. */}
               {/* Trip name — the primary heading of the card: largest and
                   boldest text here, with the edit icon for the whole card
                   next to it. Destination is a supporting detail below it,
                   not the other way around. */}
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, marginBottom: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, marginBottom: 4 }}>
                 <div style={{ flex: 1 }}>
                   <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.75)', fontWeight: 700, letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 4, textShadow: '0 1px 6px rgba(0,0,0,0.35)' }}>Current trip</p>
                   <h2 style={{ fontSize: 27, fontWeight: 800, color: 'white', letterSpacing: -0.6, lineHeight: 1.1, textShadow: '0 1px 8px rgba(0,0,0,0.4)' }}>{currentTrip.name}</h2>
@@ -245,7 +249,7 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
                 <button
                   onClick={openCardEdit}
                   style={{
-                    display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10,
+                    display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8,
                     background: 'none', border: 'none', cursor: 'pointer', padding: 0, width: '100%', textAlign: 'left',
                   }}
                 >
@@ -267,7 +271,7 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
                   <div style={{
                     display: 'inline-flex', alignItems: 'center', gap: 6,
                     background: imminent ? COLORS.milestone : 'rgba(255,255,255,0.16)',
-                    borderRadius: 20, padding: '6px 12px', marginBottom: 14,
+                    borderRadius: 20, padding: '6px 12px', marginBottom: 4,
                   }}>
                     <span style={{ fontSize: 13 }}>🗓️</span>
                     <span style={{ fontSize: 13, fontWeight: 700, color: 'white' }}>
@@ -283,11 +287,11 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
                   readable against the teal background; only the "not set
                   yet" placeholder state stays dimmed and italic. */}
               {hasAnyTripDetails && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 10 }}>
-                  <p style={{ fontSize: 13, fontWeight: 600, color: currentTrip.dates ? 'white' : 'rgba(255,255,255,0.55)', fontStyle: currentTrip.dates ? 'normal' : 'italic', textShadow: currentTrip.dates ? '0 1px 5px rgba(0,0,0,0.3)' : 'none' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 0 }}>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: currentTrip.dates ? 'white' : 'rgba(255,255,255,0.55)', fontStyle: currentTrip.dates ? 'normal' : 'italic', textShadow: currentTrip.dates ? '0 1px 6px rgba(0,0,0,0.45)' : 'none' }}>
                     📅 {currentTrip.dates || 'Dates not set yet'}
                   </p>
-                  <p style={{ fontSize: 13, fontWeight: 600, color: currentTrip.budget ? 'white' : 'rgba(255,255,255,0.55)', fontStyle: currentTrip.budget ? 'normal' : 'italic', textShadow: currentTrip.budget ? '0 1px 5px rgba(0,0,0,0.3)' : 'none' }}>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: currentTrip.budget ? 'white' : 'rgba(255,255,255,0.55)', fontStyle: currentTrip.budget ? 'normal' : 'italic', textShadow: currentTrip.budget ? '0 1px 6px rgba(0,0,0,0.45)' : 'none' }}>
                     💰 {currentTrip.budget ? `Budget: ${currentTrip.budget}` : 'Budget not set yet'}
                   </p>
                 </div>
@@ -299,8 +303,8 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
                   the point, not each individual name) ending in a dashed
                   "+" button so inviting someone is a one-tap action right
                   here, not buried inside the full trip-edit panel. */}
-              <div style={{ paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.16)' }}>
-                <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.75)', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12, textShadow: '0 1px 5px rgba(0,0,0,0.3)' }}>
+              <div style={{ paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.16)' }}>
+                <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.85)', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12, textShadow: '0 1px 6px rgba(0,0,0,0.45)' }}>
                   Traveling with
                 </p>
                 <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -556,33 +560,6 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, myIdeas, g
             onClick={() => navigate('myIdeasFull')}
           />
         </div>
-
-        {/* Inspiration — its own standalone row now, in the same page
-            position the old detailed My Ideas card used to occupy. My
-            Ideas itself is fully represented by the grid tile above now
-            (no duplicate surface for it), but Inspiration specifically
-            stays put here rather than disappearing along with that card. */}
-        {inspirationCat && (
-          <button
-            onClick={() => navigate('myIdeasCategory', { categoryId: 'inspiration', backTo: 'groupHome' })}
-            style={{
-              width: '100%', display: 'flex', alignItems: 'center', gap: 12,
-              background: COLORS.cardBg, borderRadius: 14, boxShadow: SHADOW_CARD,
-              padding: 16, border: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit',
-            }}
-          >
-            <CategoryIconBadge id="inspiration" tint={inspirationCat.color} shade={inspirationCat.shade} size={ROW_ICON_SIZE} />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontSize: 14, fontWeight: 700, color: COLORS.charcoal, letterSpacing: -0.2 }}>
-                Inspiration
-              </p>
-              <p style={{ fontSize: 12, color: COLORS.warmGrey, marginTop: 1 }}>
-                {inspirationCount === 0 ? 'Nothing saved yet' : `${inspirationCount} ${inspirationCount === 1 ? 'idea' : 'ideas'} saved`}
-              </p>
-            </div>
-            <span style={{ fontSize: 16, color: COLORS.subtleIcon }}>›</span>
-          </button>
-        )}
       </div>
     </div>
   )

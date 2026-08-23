@@ -113,10 +113,27 @@ function hashString(s) {
 // A person's avatar color is derived from their name, not their position in
 // whatever members list happens to be rendering them — so the same person
 // (e.g. the trip creator, or a crew member added to more than one trip)
-// reads as the same color on every screen, regardless of join order.
+// reads as the same color on every screen, regardless of join order. Used
+// for one-off lookups (contributor avatars on a saved item, a message
+// sender) where there's no "list of members" to assign against — a hash
+// can collide (two different names landing on the same or a similarly-toned
+// color), which is fine there since it's never comparing two colors
+// side by side, just identifying one person consistently.
 export function colorForName(name) {
   if (!name) return MEMBER_COLORS[0]
   return MEMBER_COLORS[hashString(name) % MEMBER_COLORS.length]
+}
+
+// For assigning a *new* trip member's permanent color, where a hash
+// collision would actually be visible (two avatars sitting side by side in
+// "Traveling with"). Picks the first palette color not already used by this
+// trip's existing members, so every member reads as a distinct color for as
+// long as the palette allows — only repeating once a trip has more members
+// than MEMBER_COLORS has entries.
+export function nextMemberColor(usedColors = []) {
+  const used = new Set(usedColors)
+  const unused = MEMBER_COLORS.find(c => !used.has(c))
+  return unused || MEMBER_COLORS[usedColors.length % MEMBER_COLORS.length]
 }
 
 // Keeps long member names from breaking avatar/member-list layouts.
