@@ -1,7 +1,9 @@
 import { useRef, useState } from 'react'
 import { buildSimulatedThreadMessages } from '../discuss'
 import { COLORS, SPACING, SHADOW_CARD } from '../styles'
+import { CATEGORY_PHOTOS } from '../data'
 import { useLongPress } from '../hooks/useLongPress'
+import { DiscussEmptyIllustration } from '../components/Illustrations'
 
 function ChatBubbleIcon({ size = 20, color = COLORS.teal }) {
   return (
@@ -11,9 +13,50 @@ function ChatBubbleIcon({ size = 20, color = COLORS.teal }) {
   )
 }
 
+function ChevronIcon({ size = 14, color = COLORS.subtleIcon }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 6l6 6-6 6" />
+    </svg>
+  )
+}
+
+// Tiny overlapping avatar cluster meant to sit inline next to the reply
+// count rather than as its own row — kept local and sized down from
+// MyTripsScreen's CompactAvatars, which is built for a full-width row.
+function CompactThreadAvatars({ members, max = 3 }) {
+  if (!members || members.length === 0) return null
+  const shown = members.slice(0, max)
+  const overflow = members.length - shown.length
+  return (
+    <div style={{ display: 'flex', alignItems: 'center' }}>
+      {shown.map((m, i) => (
+        <div key={m.id} title={m.name} style={{
+          width: 18, height: 18, borderRadius: '50%', background: m.color,
+          border: '1.5px solid white', marginLeft: i > 0 ? -6 : 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 8, fontWeight: 700, color: 'white', lineHeight: 1, flexShrink: 0,
+        }}>
+          {m.initial}
+        </div>
+      ))}
+      {overflow > 0 && (
+        <div style={{
+          width: 18, height: 18, borderRadius: '50%', background: COLORS.warmGrey,
+          border: '1.5px solid white', marginLeft: -6,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 8, fontWeight: 700, color: 'white', lineHeight: 1, flexShrink: 0,
+        }}>
+          +{overflow}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // Every trip has exactly one auto-created discussion thread, always pinned —
 // there is no way to create another, so no per-thread delete menu is needed.
-function ThreadCard({ thread, displayTitle, messages, onOpen, onLongPressPinned }) {
+function ThreadCard({ displayTitle, destination, members, messages, onOpen, onLongPressPinned }) {
   const cardRef = useRef(null)
   const last = messages[messages.length - 1]
 
@@ -26,29 +69,45 @@ function ThreadCard({ thread, displayTitle, messages, onOpen, onLongPressPinned 
       onClick={onOpen}
       style={{
         width: '100%', textAlign: 'left', cursor: 'pointer',
-        background: COLORS.cardBg, borderRadius: 14, padding: 16,
+        background: COLORS.cardBg, borderRadius: 14, padding: 14,
         boxShadow: SHADOW_CARD, border: 'none',
-        borderLeft: `3px solid ${COLORS.teal}`,
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-        <div style={{ flexShrink: 0, marginTop: 2 }}>
-          <ChatBubbleIcon />
-        </div>
+      <div style={{ display: 'flex', gap: 12 }}>
+        {destination && (
+          <img
+            src={CATEGORY_PHOTOS.destination}
+            alt=""
+            style={{ width: 64, height: 64, borderRadius: 12, objectFit: 'cover', flexShrink: 0 }}
+          />
+        )}
         <div style={{ flex: 1, minWidth: 0 }}>
+          {/* Avatars + reply count share this row with the title instead of
+              stacking as their own row underneath — that's what stretched
+              this card taller than My Trips' equivalent-height row card. */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-            <span style={{ fontSize: 16, fontWeight: 600, color: COLORS.charcoal, display: 'flex', alignItems: 'center', gap: 5 }}>
-              📌 {displayTitle}
+            <span style={{
+              flex: 1, minWidth: 0, fontSize: 15, fontWeight: 700, color: COLORS.charcoal,
+              display: 'flex', alignItems: 'center', gap: 5,
+            }}>
+              <ChatBubbleIcon size={15} />
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayTitle}</span>
             </span>
-            <span style={{ fontSize: 12, color: COLORS.warmGrey, flexShrink: 0 }}>
-              {messages.length} {messages.length === 1 ? 'reply' : 'replies'}
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
+              <CompactThreadAvatars members={members} />
+              <span style={{ fontSize: 11, color: COLORS.warmGrey, fontWeight: 600 }}>
+                {messages.length} {messages.length === 1 ? 'reply' : 'replies'}
+              </span>
+              <ChevronIcon />
+            </div>
           </div>
-          {thread.subtext && (
-            <p style={{ fontSize: 12, color: COLORS.warmGrey, fontStyle: 'italic', marginTop: 2, marginBottom: 8 }}>
-              {thread.subtext}
+
+          {destination && (
+            <p style={{ fontSize: 12, color: COLORS.warmGrey, fontWeight: 500, marginTop: 3, marginBottom: 5 }}>
+              📍 {destination}
             </p>
           )}
+
           <p style={{
             fontSize: 13, color: COLORS.warmGrey, fontStyle: last ? 'normal' : 'italic',
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
@@ -74,10 +133,22 @@ export function DiscussScreen({ navigate, currentTrip, discussMessages, customTh
           </h1>
           <p style={{ fontSize: 14, color: COLORS.warmGrey }}>Talk through your plans together</p>
         </div>
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 40px', textAlign: 'center' }}>
-          <p style={{ fontSize: 14, color: COLORS.warmGrey, lineHeight: 1.5 }}>
-            Create a group trip to start discussing plans together.
-          </p>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: `0 ${SPACING.screenX}px` }}>
+          <div style={{
+            width: '100%', textAlign: 'center', padding: '40px 24px 32px',
+            background: 'white', borderRadius: 16,
+            boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
+              <DiscussEmptyIllustration size={160} />
+            </div>
+            <p style={{ fontSize: 18, fontWeight: 800, color: COLORS.charcoal, marginBottom: 8, letterSpacing: -0.3 }}>
+              No discussions yet
+            </p>
+            <p style={{ fontSize: 14, color: COLORS.warmGrey, lineHeight: 1.5, fontWeight: 400, maxWidth: 260, marginLeft: 'auto', marginRight: 'auto' }}>
+              Once you start planning a trip with your crew, your conversations will show up here.
+            </p>
+          </div>
         </div>
       </div>
     )
@@ -116,8 +187,9 @@ export function DiscussScreen({ navigate, currentTrip, discussMessages, customTh
             return (
               <ThreadCard
                 key={thread.id}
-                thread={thread}
                 displayTitle={displayTitle}
+                destination={currentTrip.destination}
+                members={tripMembers}
                 messages={getMessages(thread)}
                 onOpen={() => navigate('discussThread', { threadId: thread.id, backTo: 'discuss' })}
                 onLongPressPinned={() => showToast(`The ${displayTitle} discussion cannot be deleted.`)}
