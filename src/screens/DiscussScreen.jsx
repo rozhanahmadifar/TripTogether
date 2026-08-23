@@ -133,12 +133,15 @@ export function DiscussScreen({ navigate, currentTrip, discussMessages, customTh
           </h1>
           <p style={{ fontSize: 14, color: COLORS.warmGrey }}>Talk through your plans together</p>
         </div>
-        {/* Biased toward the top rather than dead-centered — a taller
-            bottom padding shrinks the box flex centers within, so the card
-            lands a bit above true center instead of reading as too low. */}
-        <div style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: `0 ${SPACING.screenX}px 64px` }}>
+        {/* Same `.screen-scroll` + fixed top offset as My Trips' empty
+            state (16px scroll padding + sectionGap margin) rather than
+            vertically centering — keeps the card at the same distance from
+            the header on every tab instead of each page finding its own
+            "center." */}
+        <div className="screen-scroll" style={{ padding: `16px ${SPACING.screenX}px ${SPACING.scrollBottomPad}px` }}>
           <div style={{
             width: '100%', textAlign: 'center', padding: '40px 24px 32px',
+            marginTop: SPACING.sectionGap,
             background: 'white', borderRadius: 16,
             boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
           }}>

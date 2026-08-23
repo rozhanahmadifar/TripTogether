@@ -155,7 +155,7 @@ export function AIScreen({ currentTrip }) {
           // different height depending on whether chips were present below
           // it. A fixed distance from the header keeps it anchored in the
           // same place either way; any leftover space just falls below.
-          <div style={{ marginTop: 24, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+          <div style={{ marginTop: SPACING.sectionGap, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
             {/* Same contained-card treatment as My Trips' empty state, so
                 the illustration + heading read as one grouped unit instead
                 of floating separately on the plain background. */}

@@ -1,6 +1,6 @@
 import myTripsGroupUrl from '../assets/illustrations/my-trips-group.svg'
 import aiRobotUrl from '../assets/illustrations/ai-robot.svg'
-import discussConversationUrl from '../assets/illustrations/discuss-conversation.svg'
+import discussGroupChatUrl from '../assets/illustrations/discuss-group-chat.svg'
 
 // My Trips empty state — a group of friends (not a solo traveler) with a
 // suitcase and a plane trailing overhead, sourced from Storyset's "Group
@@ -15,10 +15,11 @@ export function AIIntroIllustration({ size = 120 }) {
   return <img src={aiRobotUrl} alt="" width={size} height={size} style={{ display: 'block' }} />
 }
 
-// Group Discussions empty state — Storyset's "Discussion" illustration
-// (two people talking over a table, with floating speech-bubble icons),
-// same declutter-and-recolor treatment as the other two illustrations, so
-// all three empty states share one consistent linework/color language.
+// Group Discussions empty state — Storyset's "Group Chat" illustration
+// (three people talking inside a speech-bubble frame) with a suitcase
+// composited in at their feet, extracted from the same "Departing" asset
+// used on My Trips — the bubble alone read as generic office chat, so the
+// suitcase is what actually signals "a trip" is what's being discussed.
 export function DiscussEmptyIllustration({ size = 120 }) {
-  return <img src={discussConversationUrl} alt="" width={size} height={size} style={{ display: 'block' }} />
+  return <img src={discussGroupChatUrl} alt="" width={size} height={size} style={{ display: 'block' }} />
 }
