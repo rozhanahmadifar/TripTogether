@@ -3,7 +3,7 @@ import { TEXT, COLORS, SPACING } from '../styles'
 import { askGemini, parseAIResponse, buildTripContextBlock } from '../gemini'
 import { AIIntroIllustration } from '../components/Illustrations'
 
-function PlaneIcon({ size = 16, color = COLORS.teal }) {
+function PlaneIcon({ size = 16, color = COLORS.terracotta }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
       <path d="M21 3 3 10.5l6.5 2 2 6.5L15 13l6-10Z" />
@@ -11,7 +11,7 @@ function PlaneIcon({ size = 16, color = COLORS.teal }) {
   )
 }
 
-function ChipPeopleIcon({ size = 16, color = COLORS.teal }) {
+function ChipPeopleIcon({ size = 16, color = COLORS.terracotta }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="9" cy="8" r="3" />
@@ -22,10 +22,27 @@ function ChipPeopleIcon({ size = 16, color = COLORS.teal }) {
   )
 }
 
-function WeatherIcon({ size = 16, color = COLORS.teal }) {
+function WeatherIcon({ size = 16, color = COLORS.terracotta }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
       <path d="M7 18a4.5 4.5 0 0 1-.4-9 6.5 6.5 0 0 1 12.4 2c0 .1 0 .3 0 .4A3.5 3.5 0 0 1 19.5 18H7Z" />
+    </svg>
+  )
+}
+
+function ChecklistIcon({ size = 16, color = COLORS.terracotta }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 6h2M4 12h2M4 18h2" />
+      <path d="M9 6h11M9 12h11M9 18h11" />
+    </svg>
+  )
+}
+
+function SparkleChipIcon({ size = 16, color = COLORS.terracotta }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+      <path d="M12 2c.6 3.8 2.2 5.4 6 6-3.8.6-5.4 2.2-6 6-.6-3.8-2.2-5.4-6-6 3.8-.6 5.4-2.2 6-6Z" />
     </svg>
   )
 }
@@ -51,11 +68,22 @@ function dayBucket(startDate) {
   return `${part} ${month}`
 }
 
+// Before any trip exists there's no destination/dates/crew to build a
+// question from, so these onboarding-flavored chips stand in instead of
+// showing nothing (or a trip-specific chip with blanks in it).
+const GENERIC_CHIPS = [
+  { type: 'howItWorks', text: 'How does group trip planning work?' },
+  { type: 'invite', text: 'How do I invite friends to a trip?' },
+  { type: 'capabilities', text: 'What can I ask you once I create a trip?' },
+]
+
 // Opening chips only — one fixed template per fact (visa/destination, group
 // discount/member count, weather/destination+when), each omitted outright
 // when its underlying trip data isn't set, rather than falling back to a
 // generic version of itself. `type` picks which icon a chip renders with.
 function buildOpeningChips(currentTrip) {
+  if (!currentTrip) return GENERIC_CHIPS
+
   const destination = currentTrip?.destination?.trim()
   const count = currentTrip?.members?.length
   const when = dayBucket(currentTrip?.startDate)
@@ -67,7 +95,10 @@ function buildOpeningChips(currentTrip) {
   return chips
 }
 
-const CHIP_ICONS = { visa: PlaneIcon, discount: ChipPeopleIcon, weather: WeatherIcon }
+const CHIP_ICONS = {
+  visa: PlaneIcon, discount: ChipPeopleIcon, weather: WeatherIcon,
+  howItWorks: ChecklistIcon, invite: ChipPeopleIcon, capabilities: SparkleChipIcon,
+}
 
 const ERROR_TEXT = 'Sorry, I could not connect right now. Please try again in a moment.'
 
@@ -92,7 +123,10 @@ export function AIScreen({ currentTrip }) {
   const showEmptyState = messages.length === 0 && input === ''
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    // Guarded so this doesn't fire on initial mount with zero messages —
+    // scrolling the empty-state's centered card to the bottom clipped its
+    // top off-screen instead of leaving it centered.
+    if (messages.length > 0) bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
   const sendMessage = async (override) => {
@@ -142,21 +176,25 @@ export function AIScreen({ currentTrip }) {
       {/* Chat scroll area */}
       <div className="screen-scroll" style={{
         padding: '16px 20px 16px', display: 'flex', flexDirection: 'column', gap: 16,
-        justifyContent: showEmptyState ? 'center' : 'flex-start',
       }}>
         {showEmptyState && (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+          // `margin: auto 0` rather than the parent `justifyContent: center`
+          // — centering via the parent clips the top of this block off-screen
+          // (unreachable by scrolling) whenever it's taller than the
+          // available space; auto margins center it the same way when it
+          // fits, but still scroll cleanly from the top when it doesn't.
+          <div style={{ margin: 'auto 0', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
             {/* Same contained-card treatment as My Trips' empty state, so
                 the illustration + heading read as one grouped unit instead
                 of floating separately on the plain background. */}
             <div style={{
-              width: '100%', textAlign: 'center', padding: '48px 24px 28px',
+              width: '100%', textAlign: 'center', padding: '32px 24px 24px',
               background: 'white', borderRadius: 16,
               boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-              marginBottom: suggestionChips.length > 0 ? 20 : 0,
+              marginBottom: suggestionChips.length > 0 ? 16 : 0,
             }}>
-              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
-                <AIIntroIllustration size={168} />
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}>
+                <AIIntroIllustration size={132} />
               </div>
               {/* One line here, not two — the header subtitle above already
                   covers "ask me anything about your trip", so this is just
@@ -165,7 +203,7 @@ export function AIScreen({ currentTrip }) {
                 What would you like to know?
               </p>
               <p style={{ fontSize: 14, color: COLORS.warmGrey, lineHeight: 1.5, fontWeight: 400, maxWidth: 240, marginLeft: 'auto', marginRight: 'auto' }}>
-                I can help with visas, weather, budgets, and more.
+                {currentTrip ? 'I can help with visas, weather, budgets, and more.' : 'Create a trip to get personalized answers, or ask a general question below.'}
               </p>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%' }}>
@@ -177,7 +215,7 @@ export function AIScreen({ currentTrip }) {
                     onClick={() => sendMessage(chip.text)}
                     style={{
                       display: 'flex', alignItems: 'center', gap: 12,
-                      background: 'white', border: `1.5px solid ${COLORS.teal}`,
+                      background: 'white', border: `1.5px solid ${COLORS.terracotta}`,
                       borderRadius: 12, padding: '12px 14px',
                       fontSize: 14, fontWeight: 600, color: COLORS.charcoal,
                       textAlign: 'left', cursor: 'pointer',
@@ -185,7 +223,7 @@ export function AIScreen({ currentTrip }) {
                   >
                     <div style={{
                       width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
-                      background: COLORS.tealTint,
+                      background: COLORS.sand,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }}>
                       <Icon />
