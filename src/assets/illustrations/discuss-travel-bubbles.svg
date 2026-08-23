@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 170">
+  <circle cx="100" cy="88" r="82" fill="#E4F0EF"/>
+
+  <!-- Bubble A: plane -->
+  <path d="M36,25 h90 a16,16 0 0 1 16,16 v34 a16,16 0 0 1 -16,16 h-58 l-18,20 v-20 h-14 a16,16 0 0 1 -16,-16 v-34 a16,16 0 0 1 16,-16 Z"
+        fill="#FFFFFF" stroke="#1E5F5F" stroke-width="3.5"/>
+  <g transform="translate(58,35) scale(1.4)">
+    <path d="M21 3 3 10.5l6.5 2 2 6.5L15 13l6-10Z" fill="#1E5F5F"/>
+  </g>
+
+  <!-- Bubble B: map pin -->
+  <rect x="100" y="10" width="78" height="56" rx="16" fill="#F0E8DC"/>
+  <path d="M139,24 c-8,0 -14,6 -14,14 0,10 14,24 14,24 s14,-14 14,-24 c0,-8 -6,-14 -14,-14 Z" fill="#AA5B3B"/>
+  <circle cx="139" cy="38" r="5" fill="#F0E8DC"/>
+
+  <!-- Bubble C: suitcase, front-most, overlapping both -->
+  <path d="M50,88 h84 a15,15 0 0 1 15,15 v30 a15,15 0 0 1 -15,15 h-52 l-17,18 v-18 h-15 a15,15 0 0 1 -15,-15 v-30 a15,15 0 0 1 15,-15 Z"
+        fill="#1E5F5F"/>
+  <rect x="80" y="100" width="14" height="8" rx="2" fill="none" stroke="#FFFFFF" stroke-width="2.5"/>
+  <rect x="70" y="108" width="34" height="26" rx="4" fill="#FFFFFF"/>
+  <rect x="70" y="118" width="34" height="4" fill="#AA5B3B"/>
+</svg>

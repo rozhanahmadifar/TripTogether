@@ -1,6 +1,6 @@
 import myTripsGroupUrl from '../assets/illustrations/my-trips-group.svg'
 import aiRobotUrl from '../assets/illustrations/ai-robot.svg'
-import discussGroupChatUrl from '../assets/illustrations/discuss-group-chat.svg'
+import discussTravelBubblesUrl from '../assets/illustrations/discuss-travel-bubbles.svg'
 
 // My Trips empty state — a group of friends (not a solo traveler) with a
 // suitcase and a plane trailing overhead, sourced from Storyset's "Group
@@ -15,14 +15,13 @@ export function AIIntroIllustration({ size = 120 }) {
   return <img src={aiRobotUrl} alt="" width={size} height={size} style={{ display: 'block' }} />
 }
 
-// Group Discussions empty state — Storyset's "Group Chat" illustration
-// (three people talking inside a speech-bubble frame) with a suitcase
-// composited in at their feet, extracted from the same "Departing" asset
-// used on My Trips — the bubble alone read as generic office chat, so the
-// suitcase is what actually signals "a trip" is what's being discussed.
-// The source asset's own background shape was a heavily white-washed teal
-// blob in an odd elongated silhouette — replaced with a plain circle in
-// the app's actual tealTint, matching the other two illustrations.
+// Group Discussions empty state — three overlapping speech bubbles, each
+// holding one travel icon (plane, map pin, suitcase) instead of text, so
+// the illustration reads as "a conversation about a trip" without a
+// literal meeting/whiteboard scene or any human figures. Hand-built from
+// simple flat shapes — the same kind of icon glyph already used
+// throughout this app (PlaneIcon, ChevronIcon, etc.) rather than a
+// character illustration — in the app's own palette.
 export function DiscussEmptyIllustration({ size = 120 }) {
-  return <img src={discussGroupChatUrl} alt="" width={size} height={size} style={{ display: 'block' }} />
+  return <img src={discussTravelBubblesUrl} alt="" width={size} height={size * 0.85} style={{ display: 'block' }} />
 }
