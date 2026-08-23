@@ -30,23 +30,6 @@ function WeatherIcon({ size = 16, color = COLORS.terracotta }) {
   )
 }
 
-function ChecklistIcon({ size = 16, color = COLORS.terracotta }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M4 6h2M4 12h2M4 18h2" />
-      <path d="M9 6h11M9 12h11M9 18h11" />
-    </svg>
-  )
-}
-
-function SparkleChipIcon({ size = 16, color = COLORS.terracotta }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
-      <path d="M12 2c.6 3.8 2.2 5.4 6 6-3.8.6-5.4 2.2-6 6-.6-3.8-2.2-5.4-6-6 3.8-.6 5.4-2.2 6-6Z" />
-    </svg>
-  )
-}
-
 function ChevronIcon({ size = 16, color = COLORS.subtleIcon }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
@@ -68,21 +51,14 @@ function dayBucket(startDate) {
   return `${part} ${month}`
 }
 
-// Before any trip exists there's no destination/dates/crew to build a
-// question from, so these onboarding-flavored chips stand in instead of
-// showing nothing (or a trip-specific chip with blanks in it).
-const GENERIC_CHIPS = [
-  { type: 'howItWorks', text: 'How does group trip planning work?' },
-  { type: 'invite', text: 'How do I invite friends to a trip?' },
-  { type: 'capabilities', text: 'What can I ask you once I create a trip?' },
-]
-
 // Opening chips only — one fixed template per fact (visa/destination, group
 // discount/member count, weather/destination+when), each omitted outright
 // when its underlying trip data isn't set, rather than falling back to a
 // generic version of itself. `type` picks which icon a chip renders with.
+// Before any trip exists there's no destination/dates/crew to build a
+// question from, so no chips show at all rather than generic filler ones.
 function buildOpeningChips(currentTrip) {
-  if (!currentTrip) return GENERIC_CHIPS
+  if (!currentTrip) return []
 
   const destination = currentTrip?.destination?.trim()
   const count = currentTrip?.members?.length
@@ -95,10 +71,7 @@ function buildOpeningChips(currentTrip) {
   return chips
 }
 
-const CHIP_ICONS = {
-  visa: PlaneIcon, discount: ChipPeopleIcon, weather: WeatherIcon,
-  howItWorks: ChecklistIcon, invite: ChipPeopleIcon, capabilities: SparkleChipIcon,
-}
+const CHIP_ICONS = { visa: PlaneIcon, discount: ChipPeopleIcon, weather: WeatherIcon }
 
 const ERROR_TEXT = 'Sorry, I could not connect right now. Please try again in a moment.'
 
@@ -206,6 +179,7 @@ export function AIScreen({ currentTrip }) {
                 {currentTrip ? 'I can help with visas, weather, budgets, and more.' : 'Create a trip to get personalized answers, or ask a general question below.'}
               </p>
             </div>
+            {suggestionChips.length > 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%' }}>
               {suggestionChips.map((chip, i) => {
                 const Icon = CHIP_ICONS[chip.type]
@@ -234,6 +208,7 @@ export function AIScreen({ currentTrip }) {
                 )
               })}
             </div>
+            )}
           </div>
         )}
 
