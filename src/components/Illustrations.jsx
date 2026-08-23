@@ -20,6 +20,9 @@ export function AIIntroIllustration({ size = 120 }) {
 // composited in at their feet, extracted from the same "Departing" asset
 // used on My Trips — the bubble alone read as generic office chat, so the
 // suitcase is what actually signals "a trip" is what's being discussed.
+// The source asset's own background shape was a heavily white-washed teal
+// blob in an odd elongated silhouette — replaced with a plain circle in
+// the app's actual tealTint, matching the other two illustrations.
 export function DiscussEmptyIllustration({ size = 120 }) {
   return <img src={discussGroupChatUrl} alt="" width={size} height={size} style={{ display: 'block' }} />
 }
