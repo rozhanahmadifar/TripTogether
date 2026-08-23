@@ -7,20 +7,6 @@ import { ChatIcon } from '../components/TabIcons'
 import { ProgressRing } from '../components/ProgressRing'
 import { TEXT, COLORS, SPACING, SHADOW_CARD, tripCardBackground } from '../styles'
 
-// Proportional rather than a fixed "out of 6" — the category list is
-// dynamic (custom categories, hidden ones), so this scales to whatever
-// count a given trip actually has. "Exactly one left" is called out on
-// its own so a near-complete trip (4 of 5, 5 of 6, ...) reads as "almost
-// ready" rather than landing in the same bucket as a plain 50/50 split.
-function progressMicrocopy(decided, total) {
-  if (total === 0) return ''
-  if (decided === 0) return 'Just getting started'
-  if (decided === total) return 'All set!'
-  if (total - decided === 1) return 'Almost ready to go'
-  if (decided / total >= 0.5) return 'Halfway there'
-  return 'Making progress'
-}
-
 function PencilIcon({ size = 13, color = COLORS.warmGrey }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -542,8 +528,8 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, groupItems
                   trackColor={allCategoriesDecided ? COLORS.milestoneTint : COLORS.borderLight}
                 />
               }
-              title="Categories"
-              subtitle={allCategoriesDecided ? '🎉 All decided!' : progressMicrocopy(decidedCategoriesCount, visibleCategories.length)}
+              title="Decided"
+              subtitle={allCategoriesDecided ? '🎉 All decided!' : decidedCategoriesCount === 0 ? 'Nothing decided yet' : `${decidedCategoriesCount} of ${visibleCategories.length} decided`}
               onClick={() => navigate('groupSpace', { initialView: 'decided' })}
             />
           )}
