@@ -2,6 +2,18 @@ import { useState } from 'react'
 import { TEXT, COLORS, SPACING, SHADOW_SOFT } from '../styles'
 import { daysUntil, countdownLabel, CATEGORY_PHOTOS } from '../data'
 import { ActionMenu, TrashIcon } from '../components/ActionMenu'
+import { TripsEmptyIllustration } from '../components/Illustrations'
+
+function PeopleIcon({ size = 16, color = 'white' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="9" cy="8" r="3" />
+      <path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6" />
+      <circle cx="17" cy="9" r="2.5" />
+      <path d="M15.5 14.2c2.4.5 4.5 2.6 4.5 5.8" />
+    </svg>
+  )
+}
 
 // A compact overlapping avatar row (no name labels, "+N" overflow badge)
 // instead of the old full labeled stack — matches the reference's denser,
@@ -61,8 +73,8 @@ export function MyTripsScreen({ navigate, trips, openTrip, deleteTrip, allGroupI
 
   return (
     <div className="screen" style={{ background: COLORS.bg }}>
-      <div style={{ padding: '20px 20px 16px', background: 'white', borderBottom: `1px solid ${COLORS.border}` }}>
-        <h1 style={{ ...TEXT.screenTitle, marginBottom: 3 }}>
+      <div style={{ padding: '20px 20px 16px', background: 'white' }}>
+        <h1 style={{ ...TEXT.screenTitle, marginBottom: SPACING.headingGap }}>
           My Trips
         </h1>
         <p style={TEXT.subtext}>
@@ -77,15 +89,14 @@ export function MyTripsScreen({ navigate, trips, openTrip, deleteTrip, allGroupI
             background: 'white', borderRadius: 16,
             boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
           }}>
-            <div style={{ position: 'relative', width: 100, height: 64, margin: '0 auto 20px' }}>
-              <span style={{ fontSize: 44, position: 'absolute', left: 8, top: 0 }}>🧳</span>
-              <span style={{ fontSize: 34, position: 'absolute', right: 4, bottom: 0 }}>✨</span>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
+              <TripsEmptyIllustration />
             </div>
             <p style={{ fontSize: 18, fontWeight: 800, color: COLORS.charcoal, marginBottom: 8, letterSpacing: -0.3 }}>
               No trips yet
             </p>
             <p style={{ fontSize: 14, color: COLORS.warmGrey, lineHeight: 1.5, marginBottom: 28, fontWeight: 400, maxWidth: 240, marginLeft: 'auto', marginRight: 'auto' }}>
-              Start planning with your crew.
+              Start planning your next adventure with your crew.
             </p>
             <button
               onClick={() => navigate('createTrip', { backTo: 'myTrips' })}
@@ -93,8 +104,10 @@ export function MyTripsScreen({ navigate, trips, openTrip, deleteTrip, allGroupI
                 minHeight: SPACING.buttonMinHeight, background: COLORS.action, color: 'white', border: 'none',
                 borderRadius: 12, padding: '0 28px',
                 fontSize: 15, fontWeight: 600, cursor: 'pointer',
+                display: 'inline-flex', alignItems: 'center', gap: 8,
               }}
             >
+              <PeopleIcon />
               Create a Group Trip
             </button>
           </div>

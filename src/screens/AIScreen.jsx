@@ -1,6 +1,42 @@
 import { useState, useRef, useEffect } from 'react'
-import { TEXT, COLORS } from '../styles'
+import { TEXT, COLORS, SPACING } from '../styles'
 import { askGemini, parseAIResponse, buildTripContextBlock } from '../gemini'
+import { AIIntroIllustration } from '../components/Illustrations'
+
+function PlaneIcon({ size = 16, color = COLORS.teal }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+      <path d="M21 3 3 10.5l6.5 2 2 6.5L15 13l6-10Z" />
+    </svg>
+  )
+}
+
+function ChipPeopleIcon({ size = 16, color = COLORS.teal }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="9" cy="8" r="3" />
+      <path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6" />
+      <circle cx="17" cy="9" r="2.5" />
+      <path d="M15.5 14.2c2.4.5 4.5 2.6 4.5 5.8" />
+    </svg>
+  )
+}
+
+function WeatherIcon({ size = 16, color = COLORS.teal }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+      <path d="M7 18a4.5 4.5 0 0 1-.4-9 6.5 6.5 0 0 1 12.4 2c0 .1 0 .3 0 .4A3.5 3.5 0 0 1 19.5 18H7Z" />
+    </svg>
+  )
+}
+
+function ChevronIcon({ size = 16, color = COLORS.subtleIcon }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 6l6 6-6 6" />
+    </svg>
+  )
+}
 
 // Natural-language stand-in for the trip's start date since the trip only
 // stores a startDate ISO string (no endDate) — "late August" rather than
@@ -18,18 +54,20 @@ function dayBucket(startDate) {
 // Opening chips only — one fixed template per fact (visa/destination, group
 // discount/member count, weather/destination+when), each omitted outright
 // when its underlying trip data isn't set, rather than falling back to a
-// generic version of itself.
+// generic version of itself. `type` picks which icon a chip renders with.
 function buildOpeningChips(currentTrip) {
   const destination = currentTrip?.destination?.trim()
   const count = currentTrip?.members?.length
   const when = dayBucket(currentTrip?.startDate)
 
   const chips = []
-  if (destination) chips.push(`Do we need a visa for ${destination}?`)
-  if (count) chips.push(`Are there group discounts for ${count} people?`)
-  if (destination && when) chips.push(`What is the weather like in ${destination} in ${when}?`)
+  if (destination) chips.push({ type: 'visa', text: `Do we need a visa for ${destination}?` })
+  if (count) chips.push({ type: 'discount', text: `Are there group discounts for ${count} people?` })
+  if (destination && when) chips.push({ type: 'weather', text: `What is the weather like in ${destination} in ${when}?` })
   return chips
 }
+
+const CHIP_ICONS = { visa: PlaneIcon, discount: ChipPeopleIcon, weather: WeatherIcon }
 
 const ERROR_TEXT = 'Sorry, I could not connect right now. Please try again in a moment.'
 
@@ -90,42 +128,57 @@ export function AIScreen({ currentTrip }) {
 
   return (
     <div className="screen" style={{ background: 'white' }}>
-      {/* Header */}
-      <div style={{ padding: '16px 20px 14px', borderBottom: `1px solid ${COLORS.border}`, flexShrink: 0 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 800, color: COLORS.charcoal, letterSpacing: -0.4, marginBottom: 8 }}>
+      {/* Header — no divider beneath it; whitespace alone separates it
+          from the chat area below, matching My Trips' header treatment. */}
+      <div style={{ padding: '16px 20px 14px', flexShrink: 0 }}>
+        <h1 style={{ ...TEXT.screenTitle, marginBottom: SPACING.headingGap }}>
           Ask the AI ✨
         </h1>
         <p style={TEXT.subtext}>
-          Ask me anything about your trip. I am here to help.
+          Ask me anything about your trip.
         </p>
       </div>
 
       {/* Chat scroll area */}
       <div className="screen-scroll" style={{ padding: '16px 20px 16px', display: 'flex', flexDirection: 'column', gap: 16 }}>
         {showEmptyState && (
-          <div style={{ paddingTop: 36, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-            <span style={{ fontSize: 48, marginBottom: 16 }}>✨</span>
-            <p style={{ fontSize: 18, fontWeight: 600, color: COLORS.charcoal, marginBottom: 8, letterSpacing: -0.2 }}>
+          <div style={{ paddingTop: 20, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+            <div style={{ marginBottom: 16 }}>
+              <AIIntroIllustration />
+            </div>
+            {/* One line here, not two — the header subtitle above already
+                covers "ask me anything about your trip", so this is just
+                the single prompt, not a restatement of it. */}
+            <p style={{ fontSize: 18, fontWeight: 700, color: COLORS.charcoal, marginBottom: 28, letterSpacing: -0.2 }}>
               What would you like to know?
             </p>
-            <p style={{ fontSize: 14, color: COLORS.warmGrey, lineHeight: 1.5, marginBottom: 28, maxWidth: 260 }}>
-              Ask me anything about your trip and I will help you think it through.
-            </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%' }}>
-              {suggestionChips.map((q, i) => (
-                <button
-                  key={i}
-                  onClick={() => sendMessage(q)}
-                  style={{
-                    background: 'white', border: `1.5px solid ${COLORS.teal}`,
-                    borderRadius: 12, padding: 14,
-                    fontSize: 14, fontWeight: 600, color: COLORS.teal,
-                    textAlign: 'left', cursor: 'pointer',
-                  }}
-                >
-                  {q}
-                </button>
-              ))}
+              {suggestionChips.map((chip, i) => {
+                const Icon = CHIP_ICONS[chip.type]
+                return (
+                  <button
+                    key={i}
+                    onClick={() => sendMessage(chip.text)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 12,
+                      background: 'white', border: `1.5px solid ${COLORS.teal}`,
+                      borderRadius: 12, padding: '12px 14px',
+                      fontSize: 14, fontWeight: 600, color: COLORS.charcoal,
+                      textAlign: 'left', cursor: 'pointer',
+                    }}
+                  >
+                    <div style={{
+                      width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
+                      background: COLORS.tealTint,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <Icon />
+                    </div>
+                    <span style={{ flex: 1 }}>{chip.text}</span>
+                    <ChevronIcon />
+                  </button>
+                )
+              })}
             </div>
           </div>
         )}
