@@ -126,13 +126,18 @@ export function IndividualHomeScreen({ navigate, userName, myIdeas, currentTrip,
           display: 'flex', flexDirection: 'column',
         }}>
           <div>
-            <p style={{ ...LABEL, color: 'rgba(255,255,255,0.7)', marginBottom: 8 }}>
+            {/* This card shares tripCardBackground's lightened photo
+                overlay with the trip hero card, which favors showing the
+                photo over darkening it — a text-shadow (matching that
+                card's own treatment) is what keeps this text readable
+                against a bright photo instead of a heavier overlay. */}
+            <p style={{ ...LABEL, color: 'rgba(255,255,255,0.85)', marginBottom: 8, textShadow: '0 1px 6px rgba(0,0,0,0.45)' }}>
               Ready to collaborate?
             </p>
-            <h3 style={{ ...HEADLINE, color: 'white', marginBottom: 8 }}>
+            <h3 style={{ ...HEADLINE, color: 'white', marginBottom: 8, textShadow: '0 1px 8px rgba(0,0,0,0.5)' }}>
               Plan a trip together
             </h3>
-            <p style={{ ...BODY, color: 'rgba(255,255,255,0.78)' }}>
+            <p style={{ ...BODY, color: 'rgba(255,255,255,0.92)', textShadow: '0 1px 6px rgba(0,0,0,0.45)' }}>
               Bring your ideas together with your travel crew.
             </p>
           </div>
