@@ -125,7 +125,7 @@ These are real hex values found in the codebase that don't trace back to any tok
 
 ## 3. Typography
 
-No custom `font-family` is defined anywhere in the codebase — every screen renders in the browser/OS default sans-serif. *(Flagged in [Section 8](#8-audit-findings) as a gap: a system this considered about color contrast has no stated type family.)*
+The app's typeface is **Plus Jakarta Sans**, loaded from Google Fonts (`src/index.css:1`) and applied globally via `body { font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }` (`src/index.css:16`). Five weights are imported — 400, 500, 600, 700, 800 — plus a 400 italic, which is why every tier in the scale below can render as true bold/regular/italic rather than a browser-faked slant.
 
 Eight tiers, defined once in `TEXT` (`styles.js:66-81`) and applied everywhere by reference — no screen hand-rolls its own font sizes for these roles.
 
@@ -310,7 +310,7 @@ One-off hex values found with no corresponding token:
 
 ### Typography
 
-- No `font-family` token is defined anywhere — the app currently renders in the browser/OS default sans-serif rather than a chosen typeface.
+- ~~No `font-family` token is defined anywhere~~ — **correction**: the app does use a real, deliberate typeface (Plus Jakarta Sans, see [Section 3](#3-typography)). The one genuine gap is narrower than originally stated: the family is set once, globally, in `index.css` rather than being tokenized per-tier alongside size/weight/color the way the rest of `TEXT` is — so a screen-level override could theoretically drift from it silently, even though nothing currently does.
 
 ### Legacy / possibly-orphaned screens
 
