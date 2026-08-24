@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { TEXT, COLORS, SPACING, SHADOW_SOFT } from '../styles'
-import { daysUntil, countdownLabel, CATEGORY_PHOTOS } from '../data'
+import { daysUntil, CATEGORY_PHOTOS } from '../data'
 import { ActionMenu, TrashIcon } from '../components/ActionMenu'
 import { TripsEmptyIllustration } from '../components/Illustrations'
+import { CountdownPill } from '../components/CountdownPill'
 
 function PeopleIcon({ size = 16, color = 'white' }) {
   return (
@@ -184,29 +185,15 @@ export function MyTripsScreen({ navigate, trips, openTrip, deleteTrip, allGroupI
                           </p>
                         )}
 
-                        {/* Countdown — imminent trips (departing within a
-                            week, or already underway) get a solid green
-                            pill with a plane mark; everything further out
-                            stays a neutral sand/terracotta pill. Same
-                            urgency threshold as before, just recolored for
-                            a white card instead of a photo background. */}
-                        {trip.startDate && (() => {
-                          const days = daysUntil(trip.startDate)
-                          const imminent = days <= 7
-                          return (
-                            <div style={{
-                              display: 'inline-flex', alignItems: 'center', gap: 5,
-                              background: imminent ? COLORS.milestoneTint : COLORS.sand,
-                              borderRadius: 20, padding: '4px 10px', marginBottom: 8, marginLeft: -4,
-                              flexShrink: 0,
-                            }}>
-                              <span style={{ fontSize: 11 }}>{days <= 0 ? '✈️' : '📅'}</span>
-                              <span style={{ fontSize: 11, fontWeight: 700, color: imminent ? COLORS.milestone : COLORS.terracotta, whiteSpace: 'nowrap' }}>
-                                {countdownLabel(days)}
-                              </span>
-                            </div>
-                          )
-                        })()}
+                        {/* Countdown — shared component with the trip-detail
+                            hero card's pill, so both read as the same
+                            teal-glass element instead of two different
+                            color pairings for the same thing. Imminent
+                            trips (departing within a week, or already
+                            underway) get the solid milestone-green variant. */}
+                        {trip.startDate && (
+                          <CountdownPill days={daysUntil(trip.startDate)} compact style={{ marginBottom: 8, marginLeft: -4 }} />
+                        )}
 
                         {trip.dates && (
                           <p style={{ fontSize: 13, color: COLORS.warmGrey, fontWeight: 500, marginBottom: trip.members?.length ? 10 : 0 }}>

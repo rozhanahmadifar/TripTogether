@@ -1,5 +1,32 @@
-import { COLORS, SPACING, tripCardBackground } from '../styles'
-import { PLAN_TOGETHER_PHOTO, MY_IDEAS_PHOTO, CATEGORY_PHOTOS } from '../data'
+import { COLORS, SPACING } from '../styles'
+import { MY_IDEAS_PHOTO, CATEGORY_PHOTOS } from '../data'
+
+// Small flat two-person mark for the "Plan a trip together" card — kept as
+// a simple local icon rather than importing one of the full Storyset scene
+// illustrations, which are detailed/busy at the size this card needs.
+function GroupMark({ size = 56 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 64 64" fill="none" style={{ flexShrink: 0 }}>
+      <circle cx="44" cy="23" r="8" fill="rgba(255,255,255,0.45)" />
+      <path d="M44 33c-7.7 0-14 5.6-14 12.5V50h28v-4.5c0-6.9-6.3-12.5-14-12.5z" fill="rgba(255,255,255,0.45)" />
+      <circle cx="23" cy="25" r="9.5" fill="white" />
+      <path d="M23 36.5c-8.8 0-16 6.3-16 14V54h32v-3.5c0-7.7-7.2-14-16-14z" fill="white" />
+    </svg>
+  )
+}
+
+// Leading icon for the "Create a Group Trip" button — same two-person mark,
+// recolored to sit on the white pill.
+function GroupIconSmall({ size = 16 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 64 64" fill="none" style={{ flexShrink: 0 }}>
+      <circle cx="44" cy="23" r="8" fill={COLORS.tealLight} />
+      <path d="M44 33c-7.7 0-14 5.6-14 12.5V50h28v-4.5c0-6.9-6.3-12.5-14-12.5z" fill={COLORS.tealLight} />
+      <circle cx="23" cy="25" r="9.5" fill={COLORS.teal} />
+      <path d="M23 36.5c-8.8 0-16 6.3-16 14V54h32v-3.5c0-7.7-7.2-14-16-14z" fill={COLORS.teal} />
+    </svg>
+  )
+}
 
 // One explicit type scale for the whole screen — header included — so every
 // text element traces to a deliberate tier instead of a hand-typed one-off
@@ -85,22 +112,22 @@ export function IndividualHomeScreen({ navigate, userName, myIdeas, currentTrip,
             backgroundPosition: 'center, center 38%',
             backgroundRepeat: 'no-repeat, no-repeat',
             backgroundColor: COLORS.bgMyIdeas,
-            borderRadius: 20, padding: '22px 20px 28px',
+            borderRadius: 20, padding: '18px 20px 20px',
             marginBottom: SPACING.cardGap,
             boxShadow: '0 4px 16px rgba(26,18,12,0.08)',
           }}
         >
-          <p style={{ ...LABEL, color: COLORS.terracotta, marginBottom: 8 }}>
+          <p style={{ ...LABEL, color: COLORS.terracotta, marginBottom: 6 }}>
             🔒 My ideas
           </p>
-          <h3 style={{ ...HEADLINE, color: COLORS.charcoal, marginBottom: 8 }}>
+          <h3 style={{ ...HEADLINE, color: COLORS.charcoal, marginBottom: 6 }}>
             {totalItems === 0 ? 'Nothing saved yet' : `${totalItems} saved`}
           </h3>
           <p style={{ ...BODY, color: COLORS.warmGrey }}>
             Tap to browse or save something new
           </p>
           <span style={{
-            position: 'absolute', top: 22, right: 20,
+            position: 'absolute', top: 18, right: 20,
             width: 34, height: 34, borderRadius: '50%',
             background: 'white',
             boxShadow: '0 1px 4px rgba(26,18,12,0.14)',
@@ -120,44 +147,42 @@ export function IndividualHomeScreen({ navigate, userName, myIdeas, currentTrip,
 
         {/* Create a Group — always present, trip or no trip, since starting
             another trip is a real, supported action (MyTripsScreen also has
-            its own entry point for this). A real minimum height plus two
-            equal flexible spacers around the button center it in the space
-            below the text, instead of the button just hugging the copy. */}
+            its own entry point for this). Flat brand-teal fill (no photo
+            overlay) plus a small illustrated group mark, kept short — text
+            and button sit directly against each other instead of being
+            centered inside extra minimum-height padding. */}
         <div style={{
-          ...tripCardBackground(PLAN_TOGETHER_PHOTO),
-          borderRadius: 20, padding: '20px 20px',
-          marginBottom: SPACING.cardGap, minHeight: 196,
+          background: COLORS.teal,
+          borderRadius: 20, padding: '16px 18px',
+          marginBottom: SPACING.cardGap,
           boxShadow: `0 4px 16px ${COLORS.teal}28`,
-          display: 'flex', flexDirection: 'column',
         }}>
-          <div>
-            {/* This card shares tripCardBackground's lightened photo
-                overlay with the trip hero card, which favors showing the
-                photo over darkening it — a text-shadow (matching that
-                card's own treatment) is what keeps this text readable
-                against a bright photo instead of a heavier overlay. */}
-            <p style={{ ...LABEL, color: 'rgba(255,255,255,0.85)', marginBottom: 8, textShadow: '0 1px 6px rgba(0,0,0,0.45)' }}>
-              Ready to collaborate?
-            </p>
-            <h3 style={{ ...HEADLINE, color: 'white', marginBottom: 8, textShadow: '0 1px 8px rgba(0,0,0,0.5)' }}>
-              Plan a trip together
-            </h3>
-            <p style={{ ...BODY, color: 'rgba(255,255,255,0.92)', textShadow: '0 1px 6px rgba(0,0,0,0.45)' }}>
-              Bring your ideas together with your travel crew.
-            </p>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ ...LABEL, color: 'rgba(255,255,255,0.85)', marginBottom: 6 }}>
+                Ready to collaborate?
+              </p>
+              <h3 style={{ ...HEADLINE, color: 'white', marginBottom: 6 }}>
+                Plan a trip together
+              </h3>
+              <p style={{ ...BODY, color: 'rgba(255,255,255,0.92)' }}>
+                Bring your ideas together with your travel crew.
+              </p>
+            </div>
+            <GroupMark size={52} />
           </div>
-          <div style={{ flex: 1 }} />
           <button
             onClick={() => navigate('createTrip')}
             style={{
-              width: '100%', background: 'white', color: COLORS.teal, border: 'none',
-              borderRadius: 12, minHeight: SPACING.buttonMinHeight, padding: '0 22px',
+              marginTop: 14, width: '100%', background: 'white', color: COLORS.teal, border: 'none',
+              borderRadius: 999, minHeight: SPACING.buttonMinHeight, padding: '0 22px',
               ...BUTTON, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             }}
           >
+            <GroupIconSmall />
             Create a Group Trip
           </button>
-          <div style={{ flex: 1 }} />
         </div>
 
         {/* Current Trip — a compact white summary row instead of a
@@ -172,7 +197,7 @@ export function IndividualHomeScreen({ navigate, userName, myIdeas, currentTrip,
             onClick={() => openTrip(currentTrip.id)}
             style={{
               width: '100%', border: `1px solid ${COLORS.borderLight}`, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit',
-              background: COLORS.cardBg, borderRadius: 20, padding: '16px 18px',
+              background: COLORS.cardBg, borderRadius: 20, padding: '14px 16px',
               boxShadow: '0 4px 16px rgba(26,18,12,0.10)',
             }}
           >
@@ -180,13 +205,13 @@ export function IndividualHomeScreen({ navigate, userName, myIdeas, currentTrip,
                 text column) — so the row's only two children are the text
                 column and the photo, and the photo's top naturally lines
                 up with the trip title instead of with this label. */}
-            <p style={{ ...LABEL, color: COLORS.teal, marginBottom: 7 }}>
+            <p style={{ ...LABEL, color: COLORS.teal, marginBottom: 5 }}>
               Your trip
             </p>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <h3 style={{
-                  ...HEADLINE, color: COLORS.charcoal, marginBottom: 4,
+                  ...HEADLINE, color: COLORS.charcoal, marginBottom: 2,
                   overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                 }}>
                   {currentTrip.name}
@@ -204,12 +229,12 @@ export function IndividualHomeScreen({ navigate, userName, myIdeas, currentTrip,
                     between title/destination/dates/members reads as one
                     consistent gap, not a mix of different spacings. */}
                 {currentTrip.destination && (
-                  <p style={{ ...BODY, color: COLORS.warmGrey, marginBottom: 4 }}>
+                  <p style={{ ...BODY, color: COLORS.warmGrey, marginBottom: 2 }}>
                     {currentTrip.destination}
                   </p>
                 )}
                 {currentTrip.dates && (
-                  <p style={{ ...BODY, color: COLORS.warmGrey, marginBottom: currentTrip.members?.length ? 4 : 0 }}>
+                  <p style={{ ...BODY, color: COLORS.warmGrey, marginBottom: currentTrip.members?.length ? 2 : 0 }}>
                     {currentTrip.dates}
                   </p>
                 )}
@@ -232,7 +257,7 @@ export function IndividualHomeScreen({ navigate, userName, myIdeas, currentTrip,
                     the brand teal) — that token is explicitly reserved in
                     styles.js for progress/completion moments like this. */}
                 {totalCategories > 0 && (
-                  <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 10 }}>
                     <span style={{
                       fontSize: 12, fontWeight: 600, color: COLORS.teal, background: COLORS.tealTint,
                       borderRadius: 999, padding: '4px 10px', flexShrink: 0, whiteSpace: 'nowrap',
@@ -250,7 +275,7 @@ export function IndividualHomeScreen({ navigate, userName, myIdeas, currentTrip,
                 <img
                   src={CATEGORY_PHOTOS.destination}
                   alt=""
-                  style={{ width: 96, height: 132, borderRadius: 16, objectFit: 'cover', flexShrink: 0, marginTop: -12 }}
+                  style={{ width: 64, height: 64, borderRadius: 14, objectFit: 'cover', flexShrink: 0 }}
                 />
               )}
             </div>

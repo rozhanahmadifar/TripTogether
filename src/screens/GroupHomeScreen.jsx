@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { nextMemberColor, truncateName, isValidEmail, daysUntil, countdownLabel, CATEGORY_PHOTOS } from '../data'
+import { nextMemberColor, truncateName, isValidEmail, daysUntil, CATEGORY_PHOTOS } from '../data'
+import { CountdownPill } from '../components/CountdownPill'
 import { DateRangePicker, fmtDate } from '../components/DateRangePicker'
 import { BackButton } from '../components/BackButton'
 import { XIcon, PlusIcon } from '../components/ActionMenu'
@@ -247,25 +248,13 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, groupItems
               )}
 
               {/* Countdown — a real, computed "X days until departure" pill,
-                  directly under the destination name. Turns milestone-green
-                  once departure is a week out or closer, imminent or already
-                  underway; otherwise a neutral glass pill. */}
-              {currentTrip.destination && currentTrip.startDate && (() => {
-                const days = daysUntil(currentTrip.startDate)
-                const imminent = days <= 7
-                return (
-                  <div style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 6,
-                    background: imminent ? COLORS.milestone : 'rgba(255,255,255,0.16)',
-                    borderRadius: 20, padding: '6px 12px', marginBottom: 4,
-                  }}>
-                    <span style={{ fontSize: 13 }}>🗓️</span>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: 'white' }}>
-                      {countdownLabel(days)}
-                    </span>
-                  </div>
-                )
-              })()}
+                  directly under the destination name. Shared component with
+                  the My Trips list card's pill, so both read as the same
+                  teal-glass element; turns milestone-green once departure
+                  is a week out or closer, imminent or already underway. */}
+              {currentTrip.destination && currentTrip.startDate && (
+                <CountdownPill days={daysUntil(currentTrip.startDate)} style={{ marginBottom: 4 }} />
+              )}
 
               {/* Dates and budget — smaller still than the destination line,
                   a clear step down in the hierarchy, but solid white (not a
