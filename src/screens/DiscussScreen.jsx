@@ -182,7 +182,7 @@ export function DiscussScreen({ navigate, currentTrip, discussMessages, customTh
         <p style={{ fontSize: 14, color: COLORS.warmGrey }}>Talk through your plans together</p>
       </div>
 
-      <div className="screen-scroll" style={{ padding: `0 ${SPACING.screenX}px ${SPACING.scrollBottomPad}px` }}>
+      <div className="screen-scroll" style={{ padding: `16px ${SPACING.screenX}px ${SPACING.scrollBottomPad}px` }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {threads.map(thread => {
             // The pinned thread's title is frozen at trip-creation time and
