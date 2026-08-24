@@ -1,12 +1,12 @@
-import { COLORS, SPACING } from '../styles'
-import { MY_IDEAS_PHOTO, CATEGORY_PHOTOS } from '../data'
+import { COLORS, SPACING, tripCardBackground } from '../styles'
+import { PLAN_TOGETHER_PHOTO, MY_IDEAS_PHOTO, CATEGORY_PHOTOS } from '../data'
 
 // Small flat two-person mark for the "Plan a trip together" card — kept as
 // a simple local icon rather than importing one of the full Storyset scene
 // illustrations, which are detailed/busy at the size this card needs.
 function GroupMark({ size = 56 }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 64 64" fill="none" style={{ flexShrink: 0 }}>
+    <svg width={size} height={size} viewBox="0 0 64 64" fill="none" style={{ flexShrink: 0, filter: 'drop-shadow(0 1px 6px rgba(0,0,0,0.35))' }}>
       <circle cx="44" cy="23" r="8" fill="rgba(255,255,255,0.45)" />
       <path d="M44 33c-7.7 0-14 5.6-14 12.5V50h28v-4.5c0-6.9-6.3-12.5-14-12.5z" fill="rgba(255,255,255,0.45)" />
       <circle cx="23" cy="25" r="9.5" fill="white" />
@@ -147,25 +147,26 @@ export function IndividualHomeScreen({ navigate, userName, myIdeas, currentTrip,
 
         {/* Create a Group — always present, trip or no trip, since starting
             another trip is a real, supported action (MyTripsScreen also has
-            its own entry point for this). Flat brand-teal fill (no photo
-            overlay) plus a small illustrated group mark, kept short — text
-            and button sit directly against each other instead of being
-            centered inside extra minimum-height padding. */}
+            its own entry point for this). Back to the photo-background
+            treatment (with a text-shadow for legibility) plus a small
+            illustrated group mark, kept short — text and button sit
+            directly against each other instead of being centered inside
+            extra minimum-height padding. */}
         <div style={{
-          background: COLORS.teal,
+          ...tripCardBackground(PLAN_TOGETHER_PHOTO),
           borderRadius: 20, padding: '16px 18px',
           marginBottom: SPACING.cardGap,
           boxShadow: `0 4px 16px ${COLORS.teal}28`,
         }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ ...LABEL, color: 'rgba(255,255,255,0.85)', marginBottom: 6 }}>
+              <p style={{ ...LABEL, color: 'rgba(255,255,255,0.85)', marginBottom: 6, textShadow: '0 1px 6px rgba(0,0,0,0.45)' }}>
                 Ready to collaborate?
               </p>
-              <h3 style={{ ...HEADLINE, color: 'white', marginBottom: 6 }}>
+              <h3 style={{ ...HEADLINE, color: 'white', marginBottom: 6, textShadow: '0 1px 8px rgba(0,0,0,0.5)' }}>
                 Plan a trip together
               </h3>
-              <p style={{ ...BODY, color: 'rgba(255,255,255,0.92)' }}>
+              <p style={{ ...BODY, color: 'rgba(255,255,255,0.92)', textShadow: '0 1px 6px rgba(0,0,0,0.45)' }}>
                 Bring your ideas together with your travel crew.
               </p>
             </div>
@@ -175,7 +176,7 @@ export function IndividualHomeScreen({ navigate, userName, myIdeas, currentTrip,
             onClick={() => navigate('createTrip')}
             style={{
               marginTop: 14, width: '100%', background: 'white', color: COLORS.teal, border: 'none',
-              borderRadius: 999, minHeight: SPACING.buttonMinHeight, padding: '0 22px',
+              borderRadius: 12, minHeight: SPACING.buttonMinHeight, padding: '0 22px',
               ...BUTTON, cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             }}
@@ -275,7 +276,7 @@ export function IndividualHomeScreen({ navigate, userName, myIdeas, currentTrip,
                 <img
                   src={CATEGORY_PHOTOS.destination}
                   alt=""
-                  style={{ width: 64, height: 64, borderRadius: 14, objectFit: 'cover', flexShrink: 0 }}
+                  style={{ width: 96, height: 132, borderRadius: 16, objectFit: 'cover', flexShrink: 0, marginTop: -12 }}
                 />
               )}
             </div>
