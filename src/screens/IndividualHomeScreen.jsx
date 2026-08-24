@@ -1,20 +1,6 @@
 import { COLORS, SPACING, tripCardBackground } from '../styles'
 import { PLAN_TOGETHER_PHOTO, MY_IDEAS_PHOTO, CATEGORY_PHOTOS } from '../data'
 
-// Small flat two-person mark for the "Plan a trip together" card — kept as
-// a simple local icon rather than importing one of the full Storyset scene
-// illustrations, which are detailed/busy at the size this card needs.
-function GroupMark({ size = 56 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 64 64" fill="none" style={{ flexShrink: 0, filter: 'drop-shadow(0 1px 6px rgba(0,0,0,0.35))' }}>
-      <circle cx="44" cy="23" r="8" fill="rgba(255,255,255,0.45)" />
-      <path d="M44 33c-7.7 0-14 5.6-14 12.5V50h28v-4.5c0-6.9-6.3-12.5-14-12.5z" fill="rgba(255,255,255,0.45)" />
-      <circle cx="23" cy="25" r="9.5" fill="white" />
-      <path d="M23 36.5c-8.8 0-16 6.3-16 14V54h32v-3.5c0-7.7-7.2-14-16-14z" fill="white" />
-    </svg>
-  )
-}
-
 // Leading icon for the "Create a Group Trip" button — same two-person mark,
 // recolored to sit on the white pill.
 function GroupIconSmall({ size = 16 }) {
@@ -147,9 +133,8 @@ export function IndividualHomeScreen({ navigate, userName, myIdeas, currentTrip,
 
         {/* Create a Group — always present, trip or no trip, since starting
             another trip is a real, supported action (MyTripsScreen also has
-            its own entry point for this). Back to the photo-background
-            treatment (with a text-shadow for legibility) plus a small
-            illustrated group mark, kept short — text and button sit
+            its own entry point for this). Photo-background treatment (with
+            a text-shadow for legibility), kept short — text and button sit
             directly against each other instead of being centered inside
             extra minimum-height padding. */}
         <div style={{
@@ -158,19 +143,16 @@ export function IndividualHomeScreen({ navigate, userName, myIdeas, currentTrip,
           marginBottom: SPACING.cardGap,
           boxShadow: `0 4px 16px ${COLORS.teal}28`,
         }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ ...LABEL, color: 'rgba(255,255,255,0.85)', marginBottom: 6, textShadow: '0 1px 6px rgba(0,0,0,0.45)' }}>
-                Ready to collaborate?
-              </p>
-              <h3 style={{ ...HEADLINE, color: 'white', marginBottom: 6, textShadow: '0 1px 8px rgba(0,0,0,0.5)' }}>
-                Plan a trip together
-              </h3>
-              <p style={{ ...BODY, color: 'rgba(255,255,255,0.92)', textShadow: '0 1px 6px rgba(0,0,0,0.45)' }}>
-                Bring your ideas together with your travel crew.
-              </p>
-            </div>
-            <GroupMark size={52} />
+          <div>
+            <p style={{ ...LABEL, color: 'rgba(255,255,255,0.85)', marginBottom: 6, textShadow: '0 1px 6px rgba(0,0,0,0.45)' }}>
+              Ready to collaborate?
+            </p>
+            <h3 style={{ ...HEADLINE, color: 'white', marginBottom: 6, textShadow: '0 1px 8px rgba(0,0,0,0.5)' }}>
+              Plan a trip together
+            </h3>
+            <p style={{ ...BODY, color: 'rgba(255,255,255,0.92)', textShadow: '0 1px 6px rgba(0,0,0,0.45)' }}>
+              Bring your ideas together with your travel crew.
+            </p>
           </div>
           <button
             onClick={() => navigate('createTrip')}
