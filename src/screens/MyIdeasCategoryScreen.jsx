@@ -8,7 +8,12 @@ import { CATEGORY_PHOTOS, MY_IDEAS_PHOTO } from '../data'
 import { COLORS, SPACING } from '../styles'
 
 export function MyIdeasCategoryScreen({ navigate, params = {}, myIdeas, trips, allCategories, deleteMyIdea, updateMyIdea }) {
-  const { categoryId, backTo = 'individualHome' } = params
+  // `parentBackTo` is the *opener's own* backTo (e.g. My Ideas' own way
+  // back to Home or Group Home) — it has to be handed back on our own
+  // back button below, or it's lost the moment we navigate away and My
+  // Ideas' back button falls through to its default instead of where the
+  // user actually came from.
+  const { categoryId, backTo = 'individualHome', parentBackTo } = params
   const cat = allCategories.find(c => c.id === categoryId) || allCategories[0] || { id: '', icon: '✨', label: 'Ideas', color: '#1E5F5F' }
   // One flat list, shown identically everywhere it's reached from — no
   // filtering by trip, whether opened from the home page or from inside a
@@ -46,7 +51,7 @@ export function MyIdeasCategoryScreen({ navigate, params = {}, myIdeas, trips, a
           position: 'absolute', top: 16, left: 20, right: 20,
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         }}>
-          <BackButton onClick={() => navigate(backTo)} />
+          <BackButton onClick={() => navigate(backTo, parentBackTo ? { backTo: parentBackTo } : {})} />
           {items.length > 0 && <ViewToggle view={view} setView={setView} />}
         </div>
       </div>

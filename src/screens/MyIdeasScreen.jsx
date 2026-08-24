@@ -128,7 +128,7 @@ export function MyIdeasScreen({ navigate, params = {}, userName, myIdeas, allCat
                     </div>
                   ) : (
                     <button
-                      onClick={() => navigate('myIdeasCategory', { categoryId: cat.id, backTo: 'myIdeasFull' })}
+                      onClick={() => navigate('myIdeasCategory', { categoryId: cat.id, backTo: 'myIdeasFull', parentBackTo: backTo })}
                       style={{
                         flex: 1, border: 'none', background: 'none', cursor: 'pointer',
                         display: 'flex', alignItems: 'center', gap: 14,
