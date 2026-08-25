@@ -191,20 +191,19 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, groupItems
           {!cardEditing ? (
             <>
               {/* A small, consistent spacing scale for the whole card
-                  instead of ad-hoc margins: 4px within the identity block
-                  (label/name/location) and again between the countdown
-                  badge and the dates/budget line right after it, since
-                  each of those pairs reads as one grouped unit; 8px for
-                  the one "next section" transition (location into the
-                  badge); 16px (2x the 8px unit) before Traveling With,
-                  the one deliberate section break on the card. */}
+                  instead of ad-hoc margins, given a bit more breathing
+                  room throughout: 6px within the identity block
+                  (label/name), 12px between location/countdown/dates as
+                  each pair transitions into the next, and 20px before
+                  Traveling With, the one deliberate section break on
+                  the card. */}
               {/* Trip name — the primary heading of the card: largest and
                   boldest text here, with the edit icon for the whole card
                   next to it. Destination is a supporting detail below it,
                   not the other way around. */}
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, marginBottom: 4 }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, marginBottom: 6 }}>
                 <div style={{ flex: 1 }}>
-                  <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.75)', fontWeight: 700, letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 4, textShadow: '0 1px 6px rgba(0,0,0,0.35)' }}>Current trip</p>
+                  <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.75)', fontWeight: 700, letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 5, textShadow: '0 1px 6px rgba(0,0,0,0.35)' }}>Current trip</p>
                   <h2 style={{ fontSize: 27, fontWeight: 800, color: 'white', letterSpacing: -0.6, lineHeight: 1.1, textShadow: '0 1px 8px rgba(0,0,0,0.4)' }}>{currentTrip.name}</h2>
                 </div>
                 <button
@@ -225,18 +224,18 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, groupItems
                   a second headline: noticeably smaller than the name above
                   it. */}
               {currentTrip.destination ? (
-                <p style={{ fontSize: 17, fontWeight: 700, color: 'rgba(255,255,255,0.95)', letterSpacing: -0.2, lineHeight: 1.3, marginBottom: 8, textShadow: '0 1px 6px rgba(0,0,0,0.35)' }}>
+                <p style={{ fontSize: 17, fontWeight: 700, color: 'rgba(255,255,255,0.95)', letterSpacing: -0.2, lineHeight: 1.3, marginBottom: 12, textShadow: '0 1px 6px rgba(0,0,0,0.35)' }}>
                   📍 {currentTrip.destination}
                 </p>
               ) : hasAnyTripDetails ? (
-                <p style={{ fontSize: 13, fontStyle: 'italic', color: 'rgba(255,255,255,0.65)', fontWeight: 500, marginBottom: 8 }}>
+                <p style={{ fontSize: 13, fontStyle: 'italic', color: 'rgba(255,255,255,0.65)', fontWeight: 500, marginBottom: 12 }}>
                   Destination not set yet
                 </p>
               ) : (
                 <button
                   onClick={openCardEdit}
                   style={{
-                    display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8,
+                    display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12,
                     background: 'none', border: 'none', cursor: 'pointer', padding: 0, width: '100%', textAlign: 'left',
                   }}
                 >
@@ -253,7 +252,7 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, groupItems
                   teal-glass element; turns milestone-green once departure
                   is a week out or closer, imminent or already underway. */}
               {currentTrip.destination && currentTrip.startDate && (
-                <CountdownPill days={daysUntil(currentTrip.startDate)} style={{ marginBottom: 4 }} />
+                <CountdownPill days={daysUntil(currentTrip.startDate)} style={{ marginBottom: 10 }} />
               )}
 
               {/* Dates and budget — smaller still than the destination line,
@@ -262,7 +261,7 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, groupItems
                   readable against the teal background; only the "not set
                   yet" placeholder state stays dimmed and italic. */}
               {hasAnyTripDetails && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 0 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 0 }}>
                   <p style={{ fontSize: 13, fontWeight: 600, color: currentTrip.dates ? 'white' : 'rgba(255,255,255,0.55)', fontStyle: currentTrip.dates ? 'normal' : 'italic', textShadow: currentTrip.dates ? '0 1px 6px rgba(0,0,0,0.45)' : 'none' }}>
                     📅 {currentTrip.dates || 'Dates not set yet'}
                   </p>
@@ -278,8 +277,8 @@ export function GroupHomeScreen({ navigate, params = {}, currentTrip, groupItems
                   the point, not each individual name) ending in a dashed
                   "+" button so inviting someone is a one-tap action right
                   here, not buried inside the full trip-edit panel. */}
-              <div style={{ paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.16)' }}>
-                <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.85)', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12, textShadow: '0 1px 6px rgba(0,0,0,0.45)' }}>
+              <div style={{ marginTop: 6, paddingTop: 20, borderTop: '1px solid rgba(255,255,255,0.16)' }}>
+                <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.85)', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 14, textShadow: '0 1px 6px rgba(0,0,0,0.45)' }}>
                   Traveling with
                 </p>
                 <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>

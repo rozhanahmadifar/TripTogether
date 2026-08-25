@@ -12,7 +12,8 @@ html, body {
 }
 
 body {
-  background: #D9D2C7;
+  /* The desktop backdrop behind the phone-frame mockup. */
+  background: #FFF7EE;
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
 }
