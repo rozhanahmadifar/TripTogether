@@ -31,6 +31,17 @@ body {
   align-items: center;
   justify-content: center;
   padding: 32px 0;
+  /* This is a tap-driven app UI, not text content — without this, a quick
+     double-click or slight drag on a button/label selects its text and
+     leaves a native text caret sitting in it, which reads as broken. Real
+     text entry (below) opts back in explicitly. */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+input, textarea {
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 .phone-frame {
